@@ -14,7 +14,455 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      campaigns: {
+        Row: {
+          booking_goal: number | null
+          budget: number | null
+          created_at: string | null
+          end_date: string | null
+          enrollment_goal: number | null
+          goal: string | null
+          id: string
+          lead_goal: number | null
+          lead_magnet_id: string | null
+          name: string
+          notes: string | null
+          offer_id: string | null
+          primary_channel: string | null
+          spend_to_date: number | null
+          start_date: string | null
+          status: string | null
+          type: string | null
+        }
+        Insert: {
+          booking_goal?: number | null
+          budget?: number | null
+          created_at?: string | null
+          end_date?: string | null
+          enrollment_goal?: number | null
+          goal?: string | null
+          id?: string
+          lead_goal?: number | null
+          lead_magnet_id?: string | null
+          name: string
+          notes?: string | null
+          offer_id?: string | null
+          primary_channel?: string | null
+          spend_to_date?: number | null
+          start_date?: string | null
+          status?: string | null
+          type?: string | null
+        }
+        Update: {
+          booking_goal?: number | null
+          budget?: number | null
+          created_at?: string | null
+          end_date?: string | null
+          enrollment_goal?: number | null
+          goal?: string | null
+          id?: string
+          lead_goal?: number | null
+          lead_magnet_id?: string | null
+          name?: string
+          notes?: string | null
+          offer_id?: string | null
+          primary_channel?: string | null
+          spend_to_date?: number | null
+          start_date?: string | null
+          status?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_lead_magnet_id_fkey"
+            columns: ["lead_magnet_id"]
+            isOneToOne: false
+            referencedRelation: "lead_magnets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      channel_metrics: {
+        Row: {
+          avg_watch_time: string | null
+          channel: string | null
+          created_at: string | null
+          ctr: number | null
+          followers_subs: number | null
+          id: string
+          net_change: number | null
+          notes: string | null
+          open_rate: number | null
+          posts_episodes_released: number | null
+          reach_28d: number | null
+          snapshot_date: string | null
+          watch_time_hrs: number | null
+        }
+        Insert: {
+          avg_watch_time?: string | null
+          channel?: string | null
+          created_at?: string | null
+          ctr?: number | null
+          followers_subs?: number | null
+          id?: string
+          net_change?: number | null
+          notes?: string | null
+          open_rate?: number | null
+          posts_episodes_released?: number | null
+          reach_28d?: number | null
+          snapshot_date?: string | null
+          watch_time_hrs?: number | null
+        }
+        Update: {
+          avg_watch_time?: string | null
+          channel?: string | null
+          created_at?: string | null
+          ctr?: number | null
+          followers_subs?: number | null
+          id?: string
+          net_change?: number | null
+          notes?: string | null
+          open_rate?: number | null
+          posts_episodes_released?: number | null
+          reach_28d?: number | null
+          snapshot_date?: string | null
+          watch_time_hrs?: number | null
+        }
+        Relationships: []
+      }
+      content: {
+        Row: {
+          campaign_id: string | null
+          channel: string | null
+          created_at: string | null
+          effect_rating: string | null
+          engagement: number | null
+          followers_gained: number | null
+          format: string | null
+          id: string
+          key_word: string | null
+          leads_attributed: number | null
+          link: string | null
+          notes: string | null
+          profile_views: number | null
+          publish_date: string | null
+          reach: number | null
+          title: string
+          topic: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          channel?: string | null
+          created_at?: string | null
+          effect_rating?: string | null
+          engagement?: number | null
+          followers_gained?: number | null
+          format?: string | null
+          id?: string
+          key_word?: string | null
+          leads_attributed?: number | null
+          link?: string | null
+          notes?: string | null
+          profile_views?: number | null
+          publish_date?: string | null
+          reach?: number | null
+          title: string
+          topic?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          channel?: string | null
+          created_at?: string | null
+          effect_rating?: string | null
+          engagement?: number | null
+          followers_gained?: number | null
+          format?: string | null
+          id?: string
+          key_word?: string | null
+          leads_attributed?: number | null
+          link?: string | null
+          notes?: string | null
+          profile_views?: number | null
+          publish_date?: string | null
+          reach?: number | null
+          title?: string
+          topic?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discovery_calls: {
+        Row: {
+          call_date: string | null
+          call_type: string | null
+          created_at: string | null
+          fit_rating: number | null
+          follow_up_actions: string[] | null
+          fu_date: string | null
+          id: string
+          lead_id: string | null
+          lead_source: string | null
+          location: string | null
+          name: string
+          notes: string | null
+          offer_id: string | null
+          role_position: string | null
+          status: string | null
+        }
+        Insert: {
+          call_date?: string | null
+          call_type?: string | null
+          created_at?: string | null
+          fit_rating?: number | null
+          follow_up_actions?: string[] | null
+          fu_date?: string | null
+          id?: string
+          lead_id?: string | null
+          lead_source?: string | null
+          location?: string | null
+          name: string
+          notes?: string | null
+          offer_id?: string | null
+          role_position?: string | null
+          status?: string | null
+        }
+        Update: {
+          call_date?: string | null
+          call_type?: string | null
+          created_at?: string | null
+          fit_rating?: number | null
+          follow_up_actions?: string[] | null
+          fu_date?: string | null
+          id?: string
+          lead_id?: string | null
+          lead_source?: string | null
+          location?: string | null
+          name?: string
+          notes?: string | null
+          offer_id?: string | null
+          role_position?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discovery_calls_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discovery_calls_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_content: {
+        Row: {
+          content_id: string
+          lead_id: string
+        }
+        Insert: {
+          content_id: string
+          lead_id: string
+        }
+        Update: {
+          content_id?: string
+          lead_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_content_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_content_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_magnets: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          hosted_on: string | null
+          id: string
+          name: string
+          notes: string | null
+          sequence_days: number | null
+          status: string | null
+          total_downloads: number | null
+          type: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          hosted_on?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          sequence_days?: number | null
+          status?: string | null
+          total_downloads?: number | null
+          type?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          hosted_on?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          sequence_days?: number | null
+          status?: string | null
+          total_downloads?: number | null
+          type?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          campaign_id: string | null
+          created_at: string | null
+          email: string | null
+          first_touch_date: string | null
+          gender: string | null
+          how_did_you_hear: string | null
+          id: string
+          lead_magnet_id: string | null
+          lead_source: string | null
+          name: string
+          notes: string | null
+          opt_in: string | null
+          phone: string | null
+          status: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_touch_date?: string | null
+          gender?: string | null
+          how_did_you_hear?: string | null
+          id?: string
+          lead_magnet_id?: string | null
+          lead_source?: string | null
+          name: string
+          notes?: string | null
+          opt_in?: string | null
+          phone?: string | null
+          status?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_touch_date?: string | null
+          gender?: string | null
+          how_did_you_hear?: string | null
+          id?: string
+          lead_magnet_id?: string | null
+          lead_source?: string | null
+          name?: string
+          notes?: string | null
+          opt_in?: string | null
+          phone?: string | null
+          status?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_lead_magnet_id_fkey"
+            columns: ["lead_magnet_id"]
+            isOneToOne: false
+            referencedRelation: "lead_magnets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offers: {
+        Row: {
+          cohort_size: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          notes: string | null
+          price: number | null
+          status: string | null
+          type: string | null
+          url: string | null
+        }
+        Insert: {
+          cohort_size?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          price?: number | null
+          status?: string | null
+          type?: string | null
+          url?: string | null
+        }
+        Update: {
+          cohort_size?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          price?: number | null
+          status?: string | null
+          type?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
