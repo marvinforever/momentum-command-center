@@ -6,7 +6,7 @@ import { useCampaigns, useDiscoveryCalls, useLeads, monthFilter } from "@/lib/qu
 import { fmtNum, fmtUSD, fmtPct } from "@/lib/format";
 import { useMemo } from "react";
 
-export const Route = createFileRoute("/campaigns")({
+export const Route = createFileRoute("/campaigns/")({
   head: () => ({ meta: [{ title: "Campaign Performance — Momentum" }] }),
   component: CampaignsPage,
 });
