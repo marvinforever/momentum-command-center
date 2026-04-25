@@ -71,7 +71,7 @@ function renderForm(key: FormKey) {
 }
 
 // ---------- shared form pieces ----------
-function FormCard({ title, children, onSubmit }: { title: string; children: React.ReactNode; onSubmit: (e: React.FormEvent) => Promise<void> | void }) {
+function FormCard({ title, children, onSubmit }: { title: string; children: React.ReactNode; onSubmit: (e: React.FormEvent) => Promise<unknown> | unknown }) {
   const [busy, setBusy] = useState(false);
   return (
     <MCCard className="p-8">
