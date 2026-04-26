@@ -191,11 +191,24 @@ function YouTubeVideosPage() {
                 </tr>
               )}
               {filtered.map((v) => (
-                <tr key={v.id} className="border-t border-line-soft hover:bg-cream-deep/40 transition-colors">
+                <tr
+                  key={v.id}
+                  onClick={() => setSelectedId(v.id)}
+                  className={cn(
+                    "border-t border-line-soft hover:bg-cream-deep/40 transition-colors cursor-pointer",
+                    selectedId === v.id && "bg-gold/10",
+                  )}
+                >
                   <td className="px-3 py-3 text-ink-soft whitespace-nowrap">{v.publish_date ? fmtDate(v.publish_date) : "—"}</td>
                   <td className="px-3 py-3">
                     {v.link ? (
-                      <a href={v.link} target="_blank" rel="noreferrer" className="text-ink hover:text-gold transition-colors line-clamp-2">
+                      <a
+                        href={v.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-ink hover:text-gold transition-colors line-clamp-2"
+                      >
                         {v.title}
                       </a>
                     ) : (
@@ -216,7 +229,13 @@ function YouTubeVideosPage() {
                   </td>
                   <td className="px-3 py-3 text-right num-serif text-ink">{fmtNum(v.reach ?? 0)}</td>
                   <td className="px-3 py-3 text-right num-serif text-ink-soft">{fmtNum(v.engagement ?? 0)}</td>
-                  <td className="px-3 py-3 text-right num-serif text-ink-soft">{fmtNum(v.leads_attributed ?? 0)}</td>
+                  <td className="px-3 py-3 text-right num-serif text-ink-soft">
+                    {(v.leads_attributed ?? 0) > 0 ? (
+                      <span className="text-gold font-medium">{fmtNum(v.leads_attributed)}</span>
+                    ) : (
+                      <span className="text-ink-muted">0</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
