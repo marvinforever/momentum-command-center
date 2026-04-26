@@ -18,6 +18,7 @@ import { Route as CampaignsIndexRouteImport } from './routes/campaigns.index'
 import { Route as CampaignsIdRouteImport } from './routes/campaigns.$id'
 import { Route as AdminIntegrationsRouteImport } from './routes/admin.integrations'
 import { Route as ApiPublicZapierLeadRouteImport } from './routes/api/public/zapier-lead'
+import { Route as ApiPublicKajabiSyncRouteImport } from './routes/api/public/kajabi-sync'
 
 const YoutubeRoute = YoutubeRouteImport.update({
   id: '/youtube',
@@ -64,6 +65,11 @@ const ApiPublicZapierLeadRoute = ApiPublicZapierLeadRouteImport.update({
   path: '/api/public/zapier-lead',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicKajabiSyncRoute = ApiPublicKajabiSyncRouteImport.update({
+  id: '/api/public/kajabi-sync',
+  path: '/api/public/kajabi-sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/campaigns/$id': typeof CampaignsIdRoute
   '/campaigns/': typeof CampaignsIndexRoute
+  '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
 }
 export interface FileRoutesByTo {
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/campaigns/$id': typeof CampaignsIdRoute
   '/campaigns': typeof CampaignsIndexRoute
+  '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
 }
 export interface FileRoutesById {
@@ -97,6 +105,7 @@ export interface FileRoutesById {
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/campaigns/$id': typeof CampaignsIdRoute
   '/campaigns/': typeof CampaignsIndexRoute
+  '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
 }
 export interface FileRouteTypes {
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
     | '/admin/integrations'
     | '/campaigns/$id'
     | '/campaigns/'
+    | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
     | '/admin/integrations'
     | '/campaigns/$id'
     | '/campaigns'
+    | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
   id:
     | '__root__'
@@ -132,6 +143,7 @@ export interface FileRouteTypes {
     | '/admin/integrations'
     | '/campaigns/$id'
     | '/campaigns/'
+    | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
   fileRoutesById: FileRoutesById
 }
@@ -143,6 +155,7 @@ export interface RootRouteChildren {
   YoutubeRoute: typeof YoutubeRoute
   CampaignsIdRoute: typeof CampaignsIdRoute
   CampaignsIndexRoute: typeof CampaignsIndexRoute
+  ApiPublicKajabiSyncRoute: typeof ApiPublicKajabiSyncRoute
   ApiPublicZapierLeadRoute: typeof ApiPublicZapierLeadRoute
 }
 
@@ -211,6 +224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicZapierLeadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/kajabi-sync': {
+      id: '/api/public/kajabi-sync'
+      path: '/api/public/kajabi-sync'
+      fullPath: '/api/public/kajabi-sync'
+      preLoaderRoute: typeof ApiPublicKajabiSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -232,17 +252,9 @@ const rootRouteChildren: RootRouteChildren = {
   YoutubeRoute: YoutubeRoute,
   CampaignsIdRoute: CampaignsIdRoute,
   CampaignsIndexRoute: CampaignsIndexRoute,
+  ApiPublicKajabiSyncRoute: ApiPublicKajabiSyncRoute,
   ApiPublicZapierLeadRoute: ApiPublicZapierLeadRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
