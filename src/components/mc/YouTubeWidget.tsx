@@ -83,7 +83,7 @@ export function YouTubeWidget() {
       <CardHeader
         title="YouTube Performance"
         meta={
-          <Link to="/admin/youtube" className="text-gold hover:underline">
+          <Link to="/youtube" className="text-gold hover:underline">
             View all videos →
           </Link>
         }
