@@ -17,6 +17,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CampaignsIndexRouteImport } from './routes/campaigns.index'
 import { Route as CampaignsIdRouteImport } from './routes/campaigns.$id'
 import { Route as AdminIntegrationsRouteImport } from './routes/admin.integrations'
+import { Route as ApiPublicZapierLeadRouteImport } from './routes/api/public/zapier-lead'
 
 const YoutubeRoute = YoutubeRouteImport.update({
   id: '/youtube',
@@ -58,6 +59,11 @@ const AdminIntegrationsRoute = AdminIntegrationsRouteImport.update({
   path: '/integrations',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiPublicZapierLeadRoute = ApiPublicZapierLeadRouteImport.update({
+  id: '/api/public/zapier-lead',
+  path: '/api/public/zapier-lead',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/campaigns/$id': typeof CampaignsIdRoute
   '/campaigns/': typeof CampaignsIndexRoute
+  '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/campaigns/$id': typeof CampaignsIdRoute
   '/campaigns': typeof CampaignsIndexRoute
+  '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/campaigns/$id': typeof CampaignsIdRoute
   '/campaigns/': typeof CampaignsIndexRoute
+  '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/admin/integrations'
     | '/campaigns/$id'
     | '/campaigns/'
+    | '/api/public/zapier-lead'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/admin/integrations'
     | '/campaigns/$id'
     | '/campaigns'
+    | '/api/public/zapier-lead'
   id:
     | '__root__'
     | '/'
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '/admin/integrations'
     | '/campaigns/$id'
     | '/campaigns/'
+    | '/api/public/zapier-lead'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -131,6 +143,7 @@ export interface RootRouteChildren {
   YoutubeRoute: typeof YoutubeRoute
   CampaignsIdRoute: typeof CampaignsIdRoute
   CampaignsIndexRoute: typeof CampaignsIndexRoute
+  ApiPublicZapierLeadRoute: typeof ApiPublicZapierLeadRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -191,6 +204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIntegrationsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/api/public/zapier-lead': {
+      id: '/api/public/zapier-lead'
+      path: '/api/public/zapier-lead'
+      fullPath: '/api/public/zapier-lead'
+      preLoaderRoute: typeof ApiPublicZapierLeadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -212,6 +232,7 @@ const rootRouteChildren: RootRouteChildren = {
   YoutubeRoute: YoutubeRoute,
   CampaignsIdRoute: CampaignsIdRoute,
   CampaignsIndexRoute: CampaignsIndexRoute,
+  ApiPublicZapierLeadRoute: ApiPublicZapierLeadRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
