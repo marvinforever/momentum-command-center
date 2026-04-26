@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/mc/PageShell";
 import { PageHeader } from "@/components/mc/PageHeader";
 import { MCCard, SectionTitle, CardHeader, StatusBadge, ChannelBadge, Avatar, KpiTile } from "@/components/mc/Primitives";
@@ -273,17 +273,34 @@ function Dashboard() {
       <div className="grid grid-cols-[1.1fr_1fr_1fr] gap-6 mb-9">
         <YouTubeWidget />
         <MCCard>
-          <CardHeader title="Recent Leads" meta="Latest 6" />
+          <CardHeader
+            title="Recent Leads"
+            meta={
+              <Link to="/leads" className="text-gold hover:underline">
+                Manage all leads →
+              </Link>
+            }
+          />
           <div className="p-2">
             {recentLeads.map((l, i) => (
-              <div key={l.id} className="flex items-center gap-3 px-4 py-3 mc-row-hover rounded-lg">
+              <Link
+                key={l.id}
+                to="/leads"
+                className="flex items-center gap-3 px-4 py-3 mc-row-hover rounded-lg"
+              >
                 <Avatar name={l.name} idx={i} />
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] text-ink font-medium truncate">{l.name}</div>
-                  <div className="text-[11px] text-ink-muted">{l.lead_source} · {l.opt_in}</div>
+                  <div className="text-[11px] text-ink-muted">
+                    {l.lead_source ? (
+                      <>{l.lead_source} · {l.opt_in}</>
+                    ) : (
+                      <span className="text-burgundy font-medium">⚠ No source set</span>
+                    )}
+                  </div>
                 </div>
                 <div className="text-[11px] text-ink-muted">{timeAgo(l.created_at)}</div>
-              </div>
+              </Link>
             ))}
           </div>
         </MCCard>
