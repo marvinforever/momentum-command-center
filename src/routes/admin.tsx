@@ -52,7 +52,7 @@ function AdminPage() {
           ))}
           <div className="border-t border-line-soft my-2 mx-2" />
           <Link
-            to="/admin/youtube"
+            to="/youtube"
             className="block w-full text-left rounded-lg px-4 py-3 text-[13px] text-ink-soft hover:bg-cream-deep/60 transition-colors"
           >
             <span className="flex items-center justify-between">
