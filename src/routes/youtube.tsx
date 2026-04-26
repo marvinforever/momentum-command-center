@@ -131,7 +131,7 @@ function YouTubeVideosPage() {
           >
             <option value="all">All formats</option>
             <option value="Short">Shorts</option>
-            <option value="Long-form">Long-form</option>
+            <option value="Long-form Video">Long-form</option>
           </select>
         </div>
       </MCCard>
