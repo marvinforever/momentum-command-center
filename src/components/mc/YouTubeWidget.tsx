@@ -83,7 +83,7 @@ export function YouTubeWidget() {
       <CardHeader
         title="YouTube Performance"
         meta={
-          <Link to="/admin/youtube" className="text-gold hover:underline">
+          <Link to="/youtube" className="text-gold hover:underline">
             View all videos →
           </Link>
         }
@@ -91,13 +91,20 @@ export function YouTubeWidget() {
       <div className="p-6">
         <div className="grid grid-cols-2 gap-3 mb-5">
           {latestByChannel.map((s) => (
-            <div key={s.account_label} className="rounded-lg bg-cream border border-line-soft p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ background: CHANNEL_COLORS[s.account_label] ?? "#C4924A" }}
-                />
-                <span className="text-[11px] text-ink-soft font-medium truncate">{s.account_label}</span>
+            <Link
+              key={s.account_label}
+              to="/youtube"
+              className="rounded-lg bg-cream border border-line-soft p-3 hover:border-gold-soft hover:shadow-sm transition-all group"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span
+                    className="h-2 w-2 rounded-full shrink-0"
+                    style={{ background: CHANNEL_COLORS[s.account_label] ?? "#C4924A" }}
+                  />
+                  <span className="text-[11px] text-ink-soft font-medium truncate">{s.account_label}</span>
+                </div>
+                <span className="text-[10px] text-ink-muted opacity-0 group-hover:opacity-100 transition-opacity">→</span>
               </div>
               <div className="num-serif text-[24px] text-ink leading-none">
                 {fmtNum(s.followers_subs)}
@@ -108,7 +115,7 @@ export function YouTubeWidget() {
               <div className="text-[11px] text-ink-soft mt-2">
                 {fmtNum(s.reach_28d)} views · 28d
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
