@@ -142,8 +142,8 @@ async function syncPurchases() {
       const purchaseId = String(row.id ?? "");
       if (!purchaseId) continue;
 
-      const kajabiContactId = String(r?.member?.data?.id ?? r?.contact?.data?.id ?? "") || null;
-      const kajabiOfferId = String(r?.offer?.data?.id ?? "") || null;
+      const kajabiContactId = (String(r?.member?.data?.id ?? r?.contact?.data?.id ?? "")) || null;
+      const kajabiOfferId = (String(r?.offer?.data?.id ?? "")) || null;
       const email = a.member_email ?? a.buyer_email ?? a.email ?? null;
       const name = a.member_name ?? a.buyer_name ?? null;
       const offerName = a.offer_title ?? a.offer_name ?? null;
