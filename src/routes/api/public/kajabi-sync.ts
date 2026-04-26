@@ -134,53 +134,52 @@ async function syncContacts() {
 
 async function syncPurchases() {
   let synced = 0, errors = 0;
-  for await (const page of paginate("/purchases")) {
-    for (const row of page.data) {
-      try {
-        const a = row.attributes ?? {};
-        const r = row.relationships ?? {};
-        const purchaseId = String(row.id ?? "");
-        if (!purchaseId) continue;
+  const rows = await fetchAllPages("/purchases");
+  for (const row of rows) {
+    try {
+      const a = row.attributes ?? {};
+      const r = row.relationships ?? {};
+      const purchaseId = String(row.id ?? "");
+      if (!purchaseId) continue;
 
-        const kajabiContactId = String(r?.member?.data?.id ?? r?.contact?.data?.id ?? "") || null;
-        const kajabiOfferId = String(r?.offer?.data?.id ?? "") || null;
-        const email = a.member_email ?? a.buyer_email ?? a.email ?? null;
-        const name = a.member_name ?? a.buyer_name ?? null;
-        const offerName = a.offer_title ?? a.offer_name ?? null;
-        const amount = Number(a.amount_cents ?? a.total_cents ?? a.price_cents ?? 0);
-        const currency = a.currency ?? "USD";
-        const purchasedAt = a.purchased_at ?? a.created_at ?? new Date().toISOString();
-        const refunded = String(a.status ?? "").toLowerCase().includes("refund");
+      const kajabiContactId = String(r?.member?.data?.id ?? r?.contact?.data?.id ?? "") || null;
+      const kajabiOfferId = String(r?.offer?.data?.id ?? "") || null;
+      const email = a.member_email ?? a.buyer_email ?? a.email ?? null;
+      const name = a.member_name ?? a.buyer_name ?? null;
+      const offerName = a.offer_title ?? a.offer_name ?? null;
+      const amount = Number(a.amount_cents ?? a.total_cents ?? a.price_cents ?? 0);
+      const currency = a.currency ?? "USD";
+      const purchasedAt = a.purchased_at ?? a.created_at ?? new Date().toISOString();
+      const refunded = String(a.status ?? "").toLowerCase().includes("refund");
 
-        const leadId = await findOrCreateLead(email, name, kajabiContactId);
+      const leadId = await findOrCreateLead(email, name, kajabiContactId);
 
-        let offerUuid: string | null = null;
-        if (kajabiOfferId) {
-          const { data: offer } = await supabaseAdmin
-            .from("offers").select("id").eq("kajabi_offer_id", kajabiOfferId).maybeSingle();
-          offerUuid = offer?.id ?? null;
-        }
-
-        await supabaseAdmin.from("kajabi_purchases").upsert({
-          kajabi_purchase_id: purchaseId,
-          kajabi_offer_id: kajabiOfferId,
-          offer_id: offerUuid,
-          lead_id: leadId,
-          buyer_email: email,
-          buyer_name: name,
-          offer_name: offerName,
-          amount_cents: Math.round(amount),
-          currency,
-          status: refunded ? "refunded" : "completed",
-          purchased_at: purchasedAt,
-          refunded_at: refunded ? (a.refunded_at ?? new Date().toISOString()) : null,
-          raw: row,
-        }, { onConflict: "kajabi_purchase_id" });
-        synced++;
-      } catch (e) {
-        console.error("purchase sync error", e);
-        errors++;
+      let offerUuid: string | null = null;
+      if (kajabiOfferId) {
+        const { data: offer } = await supabaseAdmin
+          .from("offers").select("id").eq("kajabi_offer_id", kajabiOfferId).maybeSingle();
+        offerUuid = offer?.id ?? null;
       }
+
+      await supabaseAdmin.from("kajabi_purchases").upsert({
+        kajabi_purchase_id: purchaseId,
+        kajabi_offer_id: kajabiOfferId,
+        offer_id: offerUuid,
+        lead_id: leadId,
+        buyer_email: email,
+        buyer_name: name,
+        offer_name: offerName,
+        amount_cents: Math.round(amount),
+        currency,
+        status: refunded ? "refunded" : "completed",
+        purchased_at: purchasedAt,
+        refunded_at: refunded ? (a.refunded_at ?? new Date().toISOString()) : null,
+        raw: row,
+      }, { onConflict: "kajabi_purchase_id" });
+      synced++;
+    } catch (e) {
+      console.error("purchase sync error", e);
+      errors++;
     }
   }
   return { resource: "purchases" as const, synced, errors };
