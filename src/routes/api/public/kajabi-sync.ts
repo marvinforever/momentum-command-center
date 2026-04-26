@@ -116,7 +116,7 @@ async function syncContacts() {
       try {
         const a = row.attributes ?? {};
         const email = a.email ?? null;
-        const name = a.name ?? [a.first_name, a.last_name].filter(Boolean).join(" ") || null;
+        const name = a.name ?? ([a.first_name, a.last_name].filter(Boolean).join(" ") || null);
         const id = String(row.id ?? "");
         const before = await supabaseAdmin.from("leads").select("id").eq("kajabi_contact_id", id).maybeSingle();
         const leadId = await findOrCreateLead(email, name, id);
