@@ -80,7 +80,14 @@ export function YouTubeWidget() {
 
   return (
     <MCCard>
-      <CardHeader title="YouTube Performance" meta="Both channels · Last 30d" />
+      <CardHeader
+        title="YouTube Performance"
+        meta={
+          <Link to="/admin/youtube" className="text-gold hover:underline">
+            View all videos →
+          </Link>
+        }
+      />
       <div className="p-6">
         <div className="grid grid-cols-2 gap-3 mb-5">
           {latestByChannel.map((s) => (
