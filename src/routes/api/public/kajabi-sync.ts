@@ -241,10 +241,24 @@ export const Route = createFileRoute("/api/public/kajabi-sync")({
           status: 204,
           headers: {
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type",
           },
         }),
+      GET: async () =>
+        new Response(
+          JSON.stringify({
+            ok: true,
+            message: "Kajabi sync endpoint. Trigger from Admin → Integrations → 'Kajabi Direct API Sync'. POST to this URL with ?resource=contacts|purchases|form_submissions|all to run a sync.",
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          },
+        ),
       POST: async ({ request }) => {
         const url = new URL(request.url);
         const resourceParam = (url.searchParams.get("resource") ?? "all") as SyncResource | "all";
