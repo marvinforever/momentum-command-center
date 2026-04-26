@@ -84,8 +84,7 @@ function YouTubeVideosPage() {
           subtitle="All synced videos · Both channels"
           breadcrumbs={[
             { label: "Command Center", to: "/" },
-            { label: "Admin", to: "/admin" },
-            { label: "YouTube" },
+            { label: "YouTube Videos" },
           ]}
         />
         <Link
