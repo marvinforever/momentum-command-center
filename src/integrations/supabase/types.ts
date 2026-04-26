@@ -91,6 +91,7 @@ export type Database = {
       }
       channel_metrics: {
         Row: {
+          account_label: string | null
           avg_watch_time: string | null
           channel: string | null
           created_at: string | null
@@ -106,6 +107,7 @@ export type Database = {
           watch_time_hrs: number | null
         }
         Insert: {
+          account_label?: string | null
           avg_watch_time?: string | null
           channel?: string | null
           created_at?: string | null
@@ -121,6 +123,7 @@ export type Database = {
           watch_time_hrs?: number | null
         }
         Update: {
+          account_label?: string | null
           avg_watch_time?: string | null
           channel?: string | null
           created_at?: string | null
@@ -156,6 +159,8 @@ export type Database = {
           reach: number | null
           title: string
           topic: string | null
+          youtube_channel_id: string | null
+          youtube_video_id: string | null
         }
         Insert: {
           campaign_id?: string | null
@@ -175,6 +180,8 @@ export type Database = {
           reach?: number | null
           title: string
           topic?: string | null
+          youtube_channel_id?: string | null
+          youtube_video_id?: string | null
         }
         Update: {
           campaign_id?: string | null
@@ -194,6 +201,8 @@ export type Database = {
           reach?: number | null
           title?: string
           topic?: string | null
+          youtube_channel_id?: string | null
+          youtube_video_id?: string | null
         }
         Relationships: [
           {
@@ -201,6 +210,13 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_youtube_channel_id_fkey"
+            columns: ["youtube_channel_id"]
+            isOneToOne: false
+            referencedRelation: "youtube_channels"
             referencedColumns: ["id"]
           },
         ]
@@ -460,6 +476,33 @@ export type Database = {
           status?: string | null
           type?: string | null
           url?: string | null
+        }
+        Relationships: []
+      }
+      youtube_channels: {
+        Row: {
+          channel_id: string
+          created_at: string | null
+          handle: string | null
+          id: string
+          name: string
+          status: string | null
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string | null
+          handle?: string | null
+          id?: string
+          name: string
+          status?: string | null
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string | null
+          handle?: string | null
+          id?: string
+          name?: string
+          status?: string | null
         }
         Relationships: []
       }

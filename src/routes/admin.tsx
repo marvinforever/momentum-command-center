@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/mc/PageShell";
 import { PageHeader } from "@/components/mc/PageHeader";
 import { MCCard } from "@/components/mc/Primitives";
@@ -50,6 +50,16 @@ function AdminPage() {
               {f.label}
             </button>
           ))}
+          <div className="border-t border-line-soft my-2 mx-2" />
+          <Link
+            to="/admin/integrations"
+            className="block w-full text-left rounded-lg px-4 py-3 text-[13px] text-ink-soft hover:bg-cream-deep/60 transition-colors"
+          >
+            <span className="flex items-center justify-between">
+              <span>Integrations</span>
+              <span className="text-[10px] uppercase tracking-[0.14em] text-gold">YouTube</span>
+            </span>
+          </Link>
         </MCCard>
         <div>{renderForm(active)}</div>
       </div>

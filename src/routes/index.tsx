@@ -6,6 +6,7 @@ import { useLeads, useDiscoveryCalls, useCampaigns, useContent, monthFilter, las
 import { fmtNum, fmtUSD, fmtPct, fmtDate, timeAgo, isoDate, daysAgo } from "@/lib/format";
 import { ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Tooltip } from "recharts";
 import { useMemo } from "react";
+import { YouTubeWidget } from "@/components/mc/YouTubeWidget";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "Dashboard — Momentum Command Center" }] }),
@@ -268,8 +269,9 @@ function Dashboard() {
         </table>
       </MCCard>
 
-      {/* Two column row */}
-      <div className="grid grid-cols-2 gap-6 mb-9">
+      {/* YouTube + Recent activity row */}
+      <div className="grid grid-cols-[1.1fr_1fr_1fr] gap-6 mb-9">
+        <YouTubeWidget />
         <MCCard>
           <CardHeader title="Recent Leads" meta="Latest 6" />
           <div className="p-2">
