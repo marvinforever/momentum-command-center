@@ -87,7 +87,11 @@ async function syncChannel(
   reach_28d: number;
   posts_last_7d: number;
 }> {
-  const channelId = Deno.env.get(ch.envVar);
+  // Defensive: strip any "KEY = " prefix and quotes/whitespace, then extract the
+  // first UC... token so a paste like "YOUTUBE_CHANNEL_ID_X = UCabc..." still works.
+  const rawEnv = Deno.env.get(ch.envVar) ?? "";
+  const ucMatch = rawEnv.match(/UC[A-Za-z0-9_-]{10,}/);
+  const channelId = ucMatch ? ucMatch[0] : rawEnv.trim();
   if (!channelId) throw new Error(`Missing env var ${ch.envVar}`);
 
   // 1) Channel snippet + statistics + uploads playlist
