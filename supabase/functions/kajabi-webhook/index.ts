@@ -228,6 +228,13 @@ async function handleFormSubmission(sb: SB, payload: any) {
 // ---------- main handler ----------
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  // Kajabi (and other webhook providers) ping the URL with GET to verify it's reachable.
+  if (req.method === "GET") {
+    return new Response(
+      JSON.stringify({ ok: true, message: "Kajabi webhook endpoint is live. Send POST events here." }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405, headers: corsHeaders });
   }
