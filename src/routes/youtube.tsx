@@ -21,12 +21,19 @@ type SortDir = "asc" | "desc";
 function YouTubeVideosPage() {
   const { data: videos = [], isLoading } = useYoutubeContent();
   const { data: channels = [] } = useYoutubeChannels();
+  const qc = useQueryClient();
 
   const [search, setSearch] = useState("");
   const [channelFilter, setChannelFilter] = useState<string>("all");
   const [formatFilter, setFormatFilter] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>("publish_date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const selectedVideo = useMemo(
+    () => (videos as any[]).find((v) => v.id === selectedId) ?? null,
+    [videos, selectedId],
+  );
 
   // channel id -> name lookup
   const channelNameById = useMemo(() => {
