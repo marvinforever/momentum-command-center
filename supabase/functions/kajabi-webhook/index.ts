@@ -223,10 +223,6 @@ async function handleFormSubmission(sb: SB, payload: any) {
     const cur = Number(lm?.total_downloads ?? 0);
     await sb.from("lead_magnets").update({ total_downloads: cur + 1 }).eq("id", leadMagnetId);
   }
-    const { data: lm } = await sb.from("lead_magnets").select("total_downloads").eq("id", leadMagnetId).maybeSingle();
-    const cur = Number(lm?.total_downloads ?? 0);
-    await sb.from("lead_magnets").update({ total_downloads: cur + 1 }).eq("id", leadMagnetId);
-  }
 }
 
 // ---------- main handler ----------
