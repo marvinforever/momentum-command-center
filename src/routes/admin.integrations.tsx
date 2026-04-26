@@ -166,3 +166,115 @@ function Stat({ label, value }: { label: string; value: string | number }) {
     </div>
   );
 }
+
+// ============================================================
+// Kajabi (webhook-only)
+// ============================================================
+function KajabiCard() {
+  const [copied, setCopied] = useState(false);
+
+  const events = useQuery({
+    queryKey: ["kajabi_webhook_events"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("kajabi_webhook_events")
+        .select("*")
+        .order("received_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data ?? [];
+    },
+    refetchInterval: 10000, // poll every 10s so live events appear
+  });
+
+  const counts = useQuery({
+    queryKey: ["kajabi_counts"],
+    queryFn: async () => {
+      const [{ count: leadsCount }, { count: purchasesCount }, { count: formsCount }] = await Promise.all([
+        supabase.from("leads").select("id", { count: "exact", head: true }).eq("lead_source", "Kajabi"),
+        supabase.from("kajabi_purchases").select("id", { count: "exact", head: true }),
+        supabase.from("kajabi_form_submissions").select("id", { count: "exact", head: true }),
+      ]);
+      return { leadsCount: leadsCount ?? 0, purchasesCount: purchasesCount ?? 0, formsCount: formsCount ?? 0 };
+    },
+    refetchInterval: 15000,
+  });
+
+  async function copyUrl() {
+    await navigator.clipboard.writeText(KAJABI_WEBHOOK_URL);
+    setCopied(true);
+    toast.success("Webhook URL copied");
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <MCCard className="p-8 mb-6">
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h2 className="serif text-[26px] text-ink">Kajabi (Live Webhooks)</h2>
+          <p className="text-[13px] text-ink-soft mt-1">
+            Listens for new contacts, purchases, refunds, and form submissions. No backfill — events stream in live as they happen in Kajabi.
+          </p>
+        </div>
+      </div>
+
+      <div className="rounded-lg bg-cream border border-line-soft p-4 mb-5">
+        <div className="label-eyebrow mb-2">Webhook URL — paste this into Kajabi → Settings → Webhooks</div>
+        <div className="flex items-center gap-2">
+          <code className="flex-1 text-[12px] text-ink bg-cream-deep rounded px-3 py-2 font-mono break-all">
+            {KAJABI_WEBHOOK_URL}
+          </code>
+          <button
+            onClick={copyUrl}
+            className="rounded-lg bg-gold px-4 py-2 text-[12px] font-medium text-white hover:bg-gold/90 transition-colors whitespace-nowrap"
+          >
+            {copied ? "Copied!" : "Copy"}
+          </button>
+        </div>
+        <div className="text-[11px] text-ink-muted mt-2">
+          Use the same signing secret you saved as <code className="bg-cream-deep px-1.5 py-0.5 rounded">KAJABI_WEBHOOK_SECRET</code>.
+          Subscribe to: <code>contact.created</code>, <code>purchase.created</code>, <code>purchase.refunded</code>, <code>form_submission.created</code>.
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3 mb-5">
+        <Stat label="Kajabi Leads" value={counts.data?.leadsCount.toLocaleString() ?? "—"} />
+        <Stat label="Purchases Logged" value={counts.data?.purchasesCount.toLocaleString() ?? "—"} />
+        <Stat label="Form Submissions" value={counts.data?.formsCount.toLocaleString() ?? "—"} />
+      </div>
+
+      <div className="border-t border-line-soft pt-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="label-eyebrow">Recent webhook activity</div>
+          <div className="text-[10px] text-ink-muted">Auto-refreshing every 10s</div>
+        </div>
+        {!events.data?.length ? (
+          <div className="text-[12px] text-ink-muted py-6 text-center bg-cream-deep rounded-lg">
+            No webhook events yet. Once you wire the webhook in Kajabi and trigger a test, events will appear here.
+          </div>
+        ) : (
+          <div className="space-y-1.5 max-h-[280px] overflow-auto">
+            {events.data.map((e: any) => (
+              <div key={e.id} className="flex items-center gap-3 text-[12px] py-2 px-3 rounded-lg bg-cream border border-line-soft">
+                <span className={cn(
+                  "inline-block w-2 h-2 rounded-full shrink-0",
+                  !e.signature_valid ? "bg-burgundy"
+                    : e.error ? "bg-amber-500"
+                    : e.processed ? "bg-green-600"
+                    : "bg-ink-muted",
+                )} />
+                <span className="font-mono text-ink min-w-[180px]">{e.event_type}</span>
+                <span className="text-ink-muted text-[11px] flex-1">
+                  {new Date(e.received_at).toLocaleString()}
+                </span>
+                {!e.signature_valid && <span className="text-burgundy text-[11px] font-medium">invalid signature</span>}
+                {e.error && <span className="text-amber-700 text-[11px] truncate max-w-[200px]" title={e.error}>{e.error}</span>}
+                {e.signature_valid && e.processed && !e.error && <span className="text-green-700 text-[11px]">processed</span>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </MCCard>
+  );
+}
