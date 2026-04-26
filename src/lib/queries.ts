@@ -110,6 +110,32 @@ export function useChannelMetrics() {
   });
 }
 
+export function useYoutubeChannels() {
+  return useQuery({
+    queryKey: ["youtube_channels"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("youtube_channels").select("*").order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useYoutubeContent() {
+  return useQuery({
+    queryKey: ["content", "youtube"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("content")
+        .select("*")
+        .not("youtube_video_id", "is", null)
+        .order("publish_date", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
 export function monthFilter() {
   return { from: startOfMonth().toISOString().slice(0, 10), to: endOfMonth().toISOString().slice(0, 10) };
 }
