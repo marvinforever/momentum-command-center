@@ -45,7 +45,7 @@ function normalizeSignature(raw: string | null): string {
 }
 
 // ---------- types ----------
-type SB = ReturnType<typeof createClient>;
+type SB = any;
 
 // ---------- handlers per event type ----------
 async function findOrCreateLead(
@@ -217,11 +217,12 @@ async function handleFormSubmission(sb: SB, payload: any) {
     raw: payload,
   }, { onConflict: "kajabi_submission_id" });
 
-  // If we matched a lead magnet, also link via lead_content (lead<->content table is
-  // for content not magnets; lead_magnet is the campaign side, so we just bump the
-  // magnet's total_downloads counter).
+  // If we matched a lead magnet, bump its total_downloads counter.
   if (leadMagnetId) {
-    await sb.rpc("noop").catch(() => {}); // placeholder, ignore
+    const { data: lm } = await sb.from("lead_magnets").select("total_downloads").eq("id", leadMagnetId).maybeSingle();
+    const cur = Number(lm?.total_downloads ?? 0);
+    await sb.from("lead_magnets").update({ total_downloads: cur + 1 }).eq("id", leadMagnetId);
+  }
     const { data: lm } = await sb.from("lead_magnets").select("total_downloads").eq("id", leadMagnetId).maybeSingle();
     const cur = Number(lm?.total_downloads ?? 0);
     await sb.from("lead_magnets").update({ total_downloads: cur + 1 }).eq("id", leadMagnetId);
