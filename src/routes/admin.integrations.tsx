@@ -4,9 +4,11 @@ import { PageHeader } from "@/components/mc/PageHeader";
 import { MCCard } from "@/components/mc/Primitives";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+
+const KAJABI_WEBHOOK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/kajabi-webhook`;
 
 export const Route = createFileRoute("/admin/integrations")({
   head: () => ({ meta: [{ title: "Integrations — Momentum Command Center" }] }),
