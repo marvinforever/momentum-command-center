@@ -23,8 +23,11 @@ export function YouTubeWidget() {
   const latestByChannel = useMemo(() => {
     const map = new Map<string, any>();
     for (const s of ytSnapshots) {
+      if (!s.account_label || !s.snapshot_date) continue;
       const existing = map.get(s.account_label);
-      if (!existing || s.snapshot_date > existing.snapshot_date) map.set(s.account_label, s);
+      if (!existing || (s.snapshot_date as string) > (existing.snapshot_date as string)) {
+        map.set(s.account_label, s);
+      }
     }
     return Array.from(map.values());
   }, [ytSnapshots]);
@@ -37,6 +40,7 @@ export function YouTubeWidget() {
       days[d] = { day: d };
     }
     for (const s of ytSnapshots) {
+      if (!s.snapshot_date || !s.account_label) continue;
       if (!days[s.snapshot_date]) continue;
       days[s.snapshot_date][s.account_label] = s.followers_subs;
     }
