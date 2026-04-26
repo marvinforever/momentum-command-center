@@ -79,7 +79,7 @@ function LeadsPage() {
     }
   }
 
-  async function updateLead(id: string, patch: Record<string, any>) {
+  async function updateLead(id: string, patch: { lead_source?: string | null; status?: string }) {
     const { error } = await supabase.from("leads").update(patch).eq("id", id);
     if (error) {
       toast.error(error.message);
