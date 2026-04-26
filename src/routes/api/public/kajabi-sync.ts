@@ -37,16 +37,18 @@ async function kajabiFetch(path: string, params: Record<string, string> = {}) {
 }
 
 // Walk paginated JSON:API responses. Stop at maxPages to avoid runaway loops.
-async function* paginate(path: string, pageSize = 100, maxPages = 50) {
+async function fetchAllPages(path: string, pageSize = 100, maxPages = 50): Promise<any[]> {
+  const all: any[] = [];
   for (let page = 1; page <= maxPages; page++) {
     const json = await kajabiFetch(path, {
       "page[size]": String(pageSize),
       "page[number]": String(page),
     });
     const data = json?.data ?? [];
-    yield { data, included: json?.included ?? [], meta: json?.meta };
-    if (!Array.isArray(data) || data.length < pageSize) return;
+    if (Array.isArray(data)) all.push(...data);
+    if (!Array.isArray(data) || data.length < pageSize) break;
   }
+  return all;
 }
 
 // ---------- lead matcher (same logic as webhook handler) ----------
