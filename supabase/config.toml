@@ -2,3 +2,6 @@ project_id = "vvojyawhuflpvukpsyyt"
 
 [functions.youtube-sync]
 verify_jwt = false
+
+[functions.kajabi-webhook]
+verify_jwt = false

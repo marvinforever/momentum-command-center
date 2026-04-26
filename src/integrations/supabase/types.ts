@@ -290,6 +290,165 @@ export type Database = {
           },
         ]
       }
+      kajabi_form_submissions: {
+        Row: {
+          contact_email: string | null
+          contact_name: string | null
+          created_at: string | null
+          form_name: string | null
+          id: string
+          kajabi_form_id: string | null
+          kajabi_submission_id: string
+          lead_id: string | null
+          lead_magnet_id: string | null
+          raw: Json | null
+          submitted_at: string | null
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          form_name?: string | null
+          id?: string
+          kajabi_form_id?: string | null
+          kajabi_submission_id: string
+          lead_id?: string | null
+          lead_magnet_id?: string | null
+          raw?: Json | null
+          submitted_at?: string | null
+        }
+        Update: {
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          form_name?: string | null
+          id?: string
+          kajabi_form_id?: string | null
+          kajabi_submission_id?: string
+          lead_id?: string | null
+          lead_magnet_id?: string | null
+          raw?: Json | null
+          submitted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kajabi_form_submissions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kajabi_form_submissions_lead_magnet_id_fkey"
+            columns: ["lead_magnet_id"]
+            isOneToOne: false
+            referencedRelation: "lead_magnets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kajabi_purchases: {
+        Row: {
+          amount_cents: number | null
+          buyer_email: string | null
+          buyer_name: string | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          kajabi_offer_id: string | null
+          kajabi_purchase_id: string
+          lead_id: string | null
+          offer_id: string | null
+          offer_name: string | null
+          purchased_at: string | null
+          raw: Json | null
+          refunded_at: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount_cents?: number | null
+          buyer_email?: string | null
+          buyer_name?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          kajabi_offer_id?: string | null
+          kajabi_purchase_id: string
+          lead_id?: string | null
+          offer_id?: string | null
+          offer_name?: string | null
+          purchased_at?: string | null
+          raw?: Json | null
+          refunded_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount_cents?: number | null
+          buyer_email?: string | null
+          buyer_name?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          kajabi_offer_id?: string | null
+          kajabi_purchase_id?: string
+          lead_id?: string | null
+          offer_id?: string | null
+          offer_name?: string | null
+          purchased_at?: string | null
+          raw?: Json | null
+          refunded_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kajabi_purchases_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kajabi_purchases_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kajabi_webhook_events: {
+        Row: {
+          error: string | null
+          event_type: string
+          id: string
+          payload: Json | null
+          processed: boolean | null
+          received_at: string | null
+          signature_valid: boolean
+        }
+        Insert: {
+          error?: string | null
+          event_type: string
+          id?: string
+          payload?: Json | null
+          processed?: boolean | null
+          received_at?: string | null
+          signature_valid: boolean
+        }
+        Update: {
+          error?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json | null
+          processed?: boolean | null
+          received_at?: string | null
+          signature_valid?: boolean
+        }
+        Relationships: []
+      }
       lead_content: {
         Row: {
           content_id: string
@@ -371,6 +530,8 @@ export type Database = {
           gender: string | null
           how_did_you_hear: string | null
           id: string
+          kajabi_contact_id: string | null
+          kajabi_synced_at: string | null
           lead_magnet_id: string | null
           lead_source: string | null
           name: string
@@ -391,6 +552,8 @@ export type Database = {
           gender?: string | null
           how_did_you_hear?: string | null
           id?: string
+          kajabi_contact_id?: string | null
+          kajabi_synced_at?: string | null
           lead_magnet_id?: string | null
           lead_source?: string | null
           name: string
@@ -411,6 +574,8 @@ export type Database = {
           gender?: string | null
           how_did_you_hear?: string | null
           id?: string
+          kajabi_contact_id?: string | null
+          kajabi_synced_at?: string | null
           lead_magnet_id?: string | null
           lead_source?: string | null
           name?: string
@@ -446,6 +611,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          kajabi_offer_id: string | null
           name: string
           notes: string | null
           price: number | null
@@ -458,6 +624,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          kajabi_offer_id?: string | null
           name: string
           notes?: string | null
           price?: number | null
@@ -470,6 +637,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          kajabi_offer_id?: string | null
           name?: string
           notes?: string | null
           price?: number | null
