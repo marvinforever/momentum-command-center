@@ -113,21 +113,20 @@ async function findOrCreateLead(
 // ---------- per-resource sync ----------
 async function syncContacts() {
   let synced = 0, created = 0, errors = 0;
-  for await (const page of paginate("/contacts")) {
-    for (const row of page.data) {
-      try {
-        const a = row.attributes ?? {};
-        const email = a.email ?? null;
-        const name = a.name ?? ([a.first_name, a.last_name].filter(Boolean).join(" ") || null);
-        const id = String(row.id ?? "");
-        const before = await supabaseAdmin.from("leads").select("id").eq("kajabi_contact_id", id).maybeSingle();
-        const leadId = await findOrCreateLead(email, name, id);
-        if (leadId && !before.data?.id) created++;
-        synced++;
-      } catch (e) {
-        console.error("contact sync error", e);
-        errors++;
-      }
+  const rows = await fetchAllPages("/contacts");
+  for (const row of rows) {
+    try {
+      const a = row.attributes ?? {};
+      const email = a.email ?? null;
+      const name = a.name ?? ([a.first_name, a.last_name].filter(Boolean).join(" ") || null);
+      const id = String(row.id ?? "");
+      const before = await supabaseAdmin.from("leads").select("id").eq("kajabi_contact_id", id).maybeSingle();
+      const leadId = await findOrCreateLead(email, name, id);
+      if (leadId && !before.data?.id) created++;
+      synced++;
+    } catch (e) {
+      console.error("contact sync error", e);
+      errors++;
     }
   }
   return { resource: "contacts" as const, synced, created, errors };
