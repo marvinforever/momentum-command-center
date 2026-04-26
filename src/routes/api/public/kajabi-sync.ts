@@ -198,8 +198,8 @@ async function syncFormSubmissions() {
       const email = a.email ?? a.contact_email ?? null;
       const name = a.name ?? a.contact_name ?? null;
       const formName = a.form_title ?? a.form_name ?? null;
-      const kajabiFormId = String(r?.form?.data?.id ?? "") || null;
-      const kajabiContactId = String(r?.contact?.data?.id ?? "") || null;
+      const kajabiFormId = (String(r?.form?.data?.id ?? "")) || null;
+      const kajabiContactId = (String(r?.contact?.data?.id ?? "")) || null;
       const submittedAt = a.submitted_at ?? a.created_at ?? new Date().toISOString();
 
       const leadId = await findOrCreateLead(email, name, kajabiContactId);
