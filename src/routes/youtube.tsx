@@ -7,7 +7,7 @@ import { fmtNum, fmtDate } from "@/lib/format";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/admin/youtube")({
+export const Route = createFileRoute("/youtube")({
   head: () => ({ meta: [{ title: "YouTube Videos — Momentum Command Center" }] }),
   component: YouTubeVideosPage,
 });
