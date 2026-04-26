@@ -106,21 +106,35 @@ async function syncChannel(
   const uploadsPlaylistId = c.contentDetails?.relatedPlaylists?.uploads;
   if (!uploadsPlaylistId) throw new Error("No uploads playlist found");
 
-  // 2) Most recent 50 videos via uploads playlist
-  const playlistData = await ytFetch(
-    `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${uploadsPlaylistId}&maxResults=50&key=${apiKey}`
-  );
-  const videoIds: string[] = (playlistData.items ?? [])
-    .map((it: any) => it.contentDetails?.videoId)
-    .filter(Boolean);
-
-  // 3) Detailed stats for those video IDs (1 batch call up to 50 IDs)
-  let videosDetail: any[] = [];
-  if (videoIds.length) {
-    const detailData = await ytFetch(
-      `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${videoIds.join(",")}&key=${apiKey}`
+  // 2) Paginate the uploads playlist with nextPageToken until exhausted.
+  // Each page = 1 quota unit; a 500-video channel costs ~10 units here.
+  // Hard safety cap to avoid runaway quota burn (50 pages = 2,500 videos).
+  const allVideoIds: string[] = [];
+  let pageToken: string | undefined = undefined;
+  let pages = 0;
+  const MAX_PAGES = 50;
+  do {
+    const tokenParam = pageToken ? `&pageToken=${pageToken}` : "";
+    const playlistData = await ytFetch(
+      `https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId=${uploadsPlaylistId}&maxResults=50${tokenParam}&key=${apiKey}`
     );
-    videosDetail = detailData.items ?? [];
+    for (const it of playlistData.items ?? []) {
+      const id = it.contentDetails?.videoId;
+      if (id) allVideoIds.push(id);
+    }
+    pageToken = playlistData.nextPageToken;
+    pages++;
+    if (pages >= MAX_PAGES) break;
+  } while (pageToken);
+
+  // 3) Fetch detailed stats in batches of 50 (videos endpoint accepts up to 50 IDs).
+  const videosDetail: any[] = [];
+  for (let i = 0; i < allVideoIds.length; i += 50) {
+    const batch = allVideoIds.slice(i, i + 50);
+    const detailData = await ytFetch(
+      `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${batch.join(",")}&key=${apiKey}`
+    );
+    if (detailData.items) videosDetail.push(...detailData.items);
   }
 
   // 4) Sync the youtube_channels row with the real channel_id (overwrite placeholder)
@@ -139,14 +153,16 @@ async function syncChannel(
   let posts7d = 0;
   let upserted = 0;
 
-  // Pre-fetch existing rows in one query
-  const { data: existingRows } = await supabase
-    .from("content")
-    .select("id, youtube_video_id, topic, key_word, effect_rating, leads_attributed, notes")
-    .in("youtube_video_id", videoIds.length ? videoIds : ["__none__"]);
-  const existingById = new Map<string, any>(
-    (existingRows ?? []).map((r: any) => [r.youtube_video_id, r])
-  );
+  // Pre-fetch existing rows in chunks (Supabase .in() is fine up to a few hundred IDs)
+  const existingById = new Map<string, any>();
+  for (let i = 0; i < allVideoIds.length; i += 200) {
+    const batch = allVideoIds.slice(i, i + 200);
+    const { data: existingRows } = await supabase
+      .from("content")
+      .select("id, youtube_video_id, topic, key_word, effect_rating, leads_attributed, notes")
+      .in("youtube_video_id", batch);
+    for (const r of existingRows ?? []) existingById.set(r.youtube_video_id as string, r);
+  }
 
   for (const v of videosDetail) {
     const vid: string = v.id;
