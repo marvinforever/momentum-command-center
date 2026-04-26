@@ -187,47 +187,46 @@ async function syncPurchases() {
 
 async function syncFormSubmissions() {
   let synced = 0, errors = 0;
-  for await (const page of paginate("/form_submissions")) {
-    for (const row of page.data) {
-      try {
-        const a = row.attributes ?? {};
-        const r = row.relationships ?? {};
-        const submissionId = String(row.id ?? "");
-        if (!submissionId) continue;
+  const rows = await fetchAllPages("/form_submissions");
+  for (const row of rows) {
+    try {
+      const a = row.attributes ?? {};
+      const r = row.relationships ?? {};
+      const submissionId = String(row.id ?? "");
+      if (!submissionId) continue;
 
-        const email = a.email ?? a.contact_email ?? null;
-        const name = a.name ?? a.contact_name ?? null;
-        const formName = a.form_title ?? a.form_name ?? null;
-        const kajabiFormId = String(r?.form?.data?.id ?? "") || null;
-        const kajabiContactId = String(r?.contact?.data?.id ?? "") || null;
-        const submittedAt = a.submitted_at ?? a.created_at ?? new Date().toISOString();
+      const email = a.email ?? a.contact_email ?? null;
+      const name = a.name ?? a.contact_name ?? null;
+      const formName = a.form_title ?? a.form_name ?? null;
+      const kajabiFormId = String(r?.form?.data?.id ?? "") || null;
+      const kajabiContactId = String(r?.contact?.data?.id ?? "") || null;
+      const submittedAt = a.submitted_at ?? a.created_at ?? new Date().toISOString();
 
-        const leadId = await findOrCreateLead(email, name, kajabiContactId);
+      const leadId = await findOrCreateLead(email, name, kajabiContactId);
 
-        let leadMagnetId: string | null = null;
-        if (formName) {
-          const { data: magnet } = await supabaseAdmin
-            .from("lead_magnets").select("id")
-            .ilike("name", `%${String(formName).slice(0, 40)}%`).maybeSingle();
-          leadMagnetId = magnet?.id ?? null;
-        }
-
-        await supabaseAdmin.from("kajabi_form_submissions").upsert({
-          kajabi_submission_id: submissionId,
-          form_name: formName,
-          kajabi_form_id: kajabiFormId,
-          lead_magnet_id: leadMagnetId,
-          lead_id: leadId,
-          contact_email: email,
-          contact_name: name,
-          submitted_at: submittedAt,
-          raw: row,
-        }, { onConflict: "kajabi_submission_id" });
-        synced++;
-      } catch (e) {
-        console.error("form sync error", e);
-        errors++;
+      let leadMagnetId: string | null = null;
+      if (formName) {
+        const { data: magnet } = await supabaseAdmin
+          .from("lead_magnets").select("id")
+          .ilike("name", `%${String(formName).slice(0, 40)}%`).maybeSingle();
+        leadMagnetId = magnet?.id ?? null;
       }
+
+      await supabaseAdmin.from("kajabi_form_submissions").upsert({
+        kajabi_submission_id: submissionId,
+        form_name: formName,
+        kajabi_form_id: kajabiFormId,
+        lead_magnet_id: leadMagnetId,
+        lead_id: leadId,
+        contact_email: email,
+        contact_name: name,
+        submitted_at: submittedAt,
+        raw: row,
+      }, { onConflict: "kajabi_submission_id" });
+      synced++;
+    } catch (e) {
+      console.error("form sync error", e);
+      errors++;
     }
   }
   return { resource: "form_submissions" as const, synced, errors };
