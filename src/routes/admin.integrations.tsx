@@ -98,6 +98,8 @@ function IntegrationsPage() {
 
       <KajabiCard />
 
+      <ZapierCard />
+
       {lastResult && (
         <MCCard className="p-6">
           <div className="label-eyebrow mb-3">Last Sync Result</div>
