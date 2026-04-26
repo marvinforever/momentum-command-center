@@ -78,23 +78,23 @@ function YouTubeVideosPage() {
 
   return (
     <PageShell>
-      <PageHeader
-        title="YouTube Videos"
-        subtitle="All synced videos · Both channels"
-        breadcrumbs={[
-          { label: "Command Center", to: "/" },
-          { label: "Admin", to: "/admin" },
-          { label: "YouTube" },
-        ]}
-        actions={
-          <Link
-            to="/admin/integrations"
-            className="rounded-lg border border-line bg-cream px-4 py-2 text-[12px] font-medium text-ink-soft hover:bg-cream-deep transition-colors"
-          >
-            Run Sync →
-          </Link>
-        }
-      />
+      <div className="flex items-start justify-between">
+        <PageHeader
+          title="YouTube Videos"
+          subtitle="All synced videos · Both channels"
+          breadcrumbs={[
+            { label: "Command Center", to: "/" },
+            { label: "Admin", to: "/admin" },
+            { label: "YouTube" },
+          ]}
+        />
+        <Link
+          to="/admin/integrations"
+          className="mt-2 rounded-lg border border-line bg-cream px-4 py-2 text-[12px] font-medium text-ink-soft hover:bg-cream-deep transition-colors"
+        >
+          Run Sync →
+        </Link>
+      </div>
 
       {/* Summary tiles */}
       <div className="grid grid-cols-4 gap-4 mb-6">
