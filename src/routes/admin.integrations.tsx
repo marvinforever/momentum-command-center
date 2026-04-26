@@ -98,6 +98,8 @@ function IntegrationsPage() {
 
       <KajabiCard />
 
+      <KajabiApiSyncCard />
+
       <ZapierCard />
 
       {lastResult && (
