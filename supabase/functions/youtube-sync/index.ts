@@ -74,10 +74,11 @@ async function ytFetch(url: string): Promise<any> {
 }
 
 // ---------- per-channel sync ----------
+// deno-lint-ignore no-explicit-any
 async function syncChannel(
   ch: ChannelDef,
   apiKey: string,
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
 ): Promise<{
   channel: string;
   channel_id: string;
@@ -198,7 +199,7 @@ async function syncChannel(
     .order("snapshot_date", { ascending: false })
     .limit(1)
     .maybeSingle();
-  const netChange = prevSnap ? subscribers - (prevSnap.followers_subs ?? 0) : null;
+  const netChange = prevSnap ? subscribers - (Number(prevSnap.followers_subs) || 0) : null;
 
   const todayIso = today.toISOString().slice(0, 10);
   // Avoid duplicate snapshot for the same day
