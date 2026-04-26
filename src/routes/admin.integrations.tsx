@@ -404,3 +404,113 @@ function ZapierCard() {
     </MCCard>
   );
 }
+
+// ============================================================
+// Kajabi Direct API Sync (backfill + on-demand pull)
+// ============================================================
+type KajabiResource = "contacts" | "purchases" | "form_submissions" | "all";
+
+function KajabiApiSyncCard() {
+  const [busy, setBusy] = useState<KajabiResource | null>(null);
+  const [lastResult, setLastResult] = useState<any>(null);
+
+  async function runSync(resource: KajabiResource, label: string) {
+    setBusy(resource);
+    setLastResult(null);
+    try {
+      const res = await fetch(`/api/public/kajabi-sync?resource=${resource}`, { method: "POST" });
+      const data = await res.json();
+      setLastResult(data);
+      if (!res.ok || data.errors?.length) {
+        toast.error(`${label}: completed with ${data.errors?.length ?? 1} error(s)`);
+      } else {
+        const total = (data.results ?? []).reduce((s: number, r: any) => s + (r.synced ?? 0), 0);
+        toast.success(`${label} synced — ${total} record(s) processed`);
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Sync failed");
+      setLastResult({ ok: false, error: String(e?.message ?? e) });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <MCCard className="p-8 mb-6">
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h2 className="serif text-[26px] text-ink">Kajabi Direct API Sync</h2>
+          <p className="text-[13px] text-ink-soft mt-1">
+            Pulls historical contacts, purchases, and form submissions directly from Kajabi's API
+            (no webhook setup needed). Use this for the initial backfill, then let live webhooks handle ongoing events.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-4 gap-3 mb-5">
+        <SyncButton
+          label="Contacts"
+          sub="All contacts → leads"
+          disabled={!!busy}
+          loading={busy === "contacts"}
+          onClick={() => runSync("contacts", "Contacts")}
+        />
+        <SyncButton
+          label="Purchases"
+          sub="Order history"
+          disabled={!!busy}
+          loading={busy === "purchases"}
+          onClick={() => runSync("purchases", "Purchases")}
+        />
+        <SyncButton
+          label="Form Submissions"
+          sub="Lead-magnet opt-ins"
+          disabled={!!busy}
+          loading={busy === "form_submissions"}
+          onClick={() => runSync("form_submissions", "Form submissions")}
+        />
+        <SyncButton
+          label="Sync Everything"
+          sub="Full backfill"
+          primary
+          disabled={!!busy}
+          loading={busy === "all"}
+          onClick={() => runSync("all", "Full Kajabi backfill")}
+        />
+      </div>
+
+      {lastResult && (
+        <div className="border-t border-line-soft pt-4">
+          <div className="label-eyebrow mb-3">Last Sync Result</div>
+          {lastResult.results?.length > 0 && (
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              {lastResult.results.map((r: any) => (
+                <div key={r.resource} className="rounded-lg bg-cream border border-line-soft p-4">
+                  <div className="text-[13px] font-medium text-ink capitalize">{r.resource.replace("_", " ")}</div>
+                  <div className="grid grid-cols-2 gap-3 mt-2">
+                    <Stat label="Synced" value={r.synced ?? 0} />
+                    {"created" in r && <Stat label="New" value={r.created ?? 0} />}
+                    {r.errors > 0 && <Stat label="Errors" value={r.errors} />}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {lastResult.errors?.length > 0 && (
+            <div className="rounded-lg bg-burgundy/10 border border-burgundy/30 p-4 mb-3">
+              <div className="text-[12px] font-medium text-burgundy mb-2">Errors</div>
+              {lastResult.errors.map((e: any, i: number) => (
+                <div key={i} className="text-[12px] text-ink">
+                  <span className="font-medium">{e.resource}:</span> {e.error}
+                </div>
+              ))}
+            </div>
+          )}
+          <pre className="text-[11px] text-ink-muted bg-cream-deep rounded-lg p-3 overflow-auto max-h-[200px]">
+            {JSON.stringify(lastResult, null, 2)}
+          </pre>
+        </div>
+      )}
+    </MCCard>
+  );
+}
