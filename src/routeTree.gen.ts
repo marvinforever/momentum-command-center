@@ -14,6 +14,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CampaignsIndexRouteImport } from './routes/campaigns.index'
 import { Route as CampaignsIdRouteImport } from './routes/campaigns.$id'
+import { Route as AdminYoutubeRouteImport } from './routes/admin.youtube'
 import { Route as AdminIntegrationsRouteImport } from './routes/admin.integrations'
 
 const LoginRoute = LoginRouteImport.update({
@@ -41,6 +42,11 @@ const CampaignsIdRoute = CampaignsIdRouteImport.update({
   path: '/campaigns/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminYoutubeRoute = AdminYoutubeRouteImport.update({
+  id: '/youtube',
+  path: '/youtube',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminIntegrationsRoute = AdminIntegrationsRouteImport.update({
   id: '/integrations',
   path: '/integrations',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
+  '/admin/youtube': typeof AdminYoutubeRoute
   '/campaigns/$id': typeof CampaignsIdRoute
   '/campaigns/': typeof CampaignsIndexRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
+  '/admin/youtube': typeof AdminYoutubeRoute
   '/campaigns/$id': typeof CampaignsIdRoute
   '/campaigns': typeof CampaignsIndexRoute
 }
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
+  '/admin/youtube': typeof AdminYoutubeRoute
   '/campaigns/$id': typeof CampaignsIdRoute
   '/campaigns/': typeof CampaignsIndexRoute
 }
@@ -79,6 +88,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/admin/integrations'
+    | '/admin/youtube'
     | '/campaigns/$id'
     | '/campaigns/'
   fileRoutesByTo: FileRoutesByTo
@@ -87,6 +97,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/admin/integrations'
+    | '/admin/youtube'
     | '/campaigns/$id'
     | '/campaigns'
   id:
@@ -95,6 +106,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/admin/integrations'
+    | '/admin/youtube'
     | '/campaigns/$id'
     | '/campaigns/'
   fileRoutesById: FileRoutesById
@@ -144,6 +156,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CampaignsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/youtube': {
+      id: '/admin/youtube'
+      path: '/youtube'
+      fullPath: '/admin/youtube'
+      preLoaderRoute: typeof AdminYoutubeRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/integrations': {
       id: '/admin/integrations'
       path: '/integrations'
@@ -156,10 +175,12 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminIntegrationsRoute: typeof AdminIntegrationsRoute
+  AdminYoutubeRoute: typeof AdminYoutubeRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminIntegrationsRoute: AdminIntegrationsRoute,
+  AdminYoutubeRoute: AdminYoutubeRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
