@@ -52,6 +52,15 @@ function AdminPage() {
           ))}
           <div className="border-t border-line-soft my-2 mx-2" />
           <Link
+            to="/admin/youtube"
+            className="block w-full text-left rounded-lg px-4 py-3 text-[13px] text-ink-soft hover:bg-cream-deep/60 transition-colors"
+          >
+            <span className="flex items-center justify-between">
+              <span>YouTube Videos</span>
+              <span className="text-[10px] uppercase tracking-[0.14em] text-ink-muted">All</span>
+            </span>
+          </Link>
+          <Link
             to="/admin/integrations"
             className="block w-full text-left rounded-lg px-4 py-3 text-[13px] text-ink-soft hover:bg-cream-deep/60 transition-colors"
           >
