@@ -605,6 +605,152 @@ export type Database = {
           },
         ]
       }
+      meta_ads_daily: {
+        Row: {
+          clicks: number | null
+          cpc: number | null
+          cpl: number | null
+          cpm: number | null
+          created_at: string
+          ctr: number | null
+          frequency: number | null
+          id: string
+          impressions: number | null
+          leads: number | null
+          meta_campaign_id: string
+          raw: Json | null
+          reach: number | null
+          snapshot_date: string
+          spend: number | null
+          updated_at: string
+        }
+        Insert: {
+          clicks?: number | null
+          cpc?: number | null
+          cpl?: number | null
+          cpm?: number | null
+          created_at?: string
+          ctr?: number | null
+          frequency?: number | null
+          id?: string
+          impressions?: number | null
+          leads?: number | null
+          meta_campaign_id: string
+          raw?: Json | null
+          reach?: number | null
+          snapshot_date: string
+          spend?: number | null
+          updated_at?: string
+        }
+        Update: {
+          clicks?: number | null
+          cpc?: number | null
+          cpl?: number | null
+          cpm?: number | null
+          created_at?: string
+          ctr?: number | null
+          frequency?: number | null
+          id?: string
+          impressions?: number | null
+          leads?: number | null
+          meta_campaign_id?: string
+          raw?: Json | null
+          reach?: number | null
+          snapshot_date?: string
+          spend?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      meta_campaigns: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          daily_budget: number | null
+          id: string
+          lifetime_budget: number | null
+          meta_campaign_id: string
+          name: string
+          objective: string | null
+          raw: Json | null
+          start_time: string | null
+          status: string | null
+          stop_time: string | null
+          updated_at: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          daily_budget?: number | null
+          id?: string
+          lifetime_budget?: number | null
+          meta_campaign_id: string
+          name: string
+          objective?: string | null
+          raw?: Json | null
+          start_time?: string | null
+          status?: string | null
+          stop_time?: string | null
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          daily_budget?: number | null
+          id?: string
+          lifetime_budget?: number | null
+          meta_campaign_id?: string
+          name?: string
+          objective?: string | null
+          raw?: Json | null
+          start_time?: string | null
+          status?: string | null
+          stop_time?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_campaigns_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meta_sync_runs: {
+        Row: {
+          campaigns_synced: number | null
+          error: string | null
+          finished_at: string | null
+          id: string
+          insights_synced: number | null
+          started_at: string
+          success: boolean | null
+          triggered_by: string | null
+        }
+        Insert: {
+          campaigns_synced?: number | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          insights_synced?: number | null
+          started_at?: string
+          success?: boolean | null
+          triggered_by?: string | null
+        }
+        Update: {
+          campaigns_synced?: number | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          insights_synced?: number | null
+          started_at?: string
+          success?: boolean | null
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       offers: {
         Row: {
           cohort_size: number | null

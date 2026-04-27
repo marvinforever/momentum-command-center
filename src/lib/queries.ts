@@ -136,6 +136,51 @@ export function useYoutubeContent() {
   });
 }
 
+export function useMetaAdsDaily(days = 30) {
+  return useQuery({
+    queryKey: ["meta_ads_daily", days],
+    queryFn: async () => {
+      const from = isoDate(daysAgo(days));
+      const { data, error } = await supabase
+        .from("meta_ads_daily")
+        .select("*")
+        .gte("snapshot_date", from)
+        .order("snapshot_date", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useMetaCampaigns() {
+  return useQuery({
+    queryKey: ["meta_campaigns"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("meta_campaigns")
+        .select("*")
+        .order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useMetaSyncRuns() {
+  return useQuery({
+    queryKey: ["meta_sync_runs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("meta_sync_runs")
+        .select("*")
+        .order("started_at", { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
 export function monthFilter() {
   return { from: startOfMonth().toISOString().slice(0, 10), to: endOfMonth().toISOString().slice(0, 10) };
 }
