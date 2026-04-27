@@ -66,7 +66,7 @@ async function fetchAllPages<T>(initialUrl: string, token: string): Promise<T[]>
   let next: string | undefined = initialUrl;
   let safety = 0;
   while (next && safety < 50) {
-    const page = (await metaFetch<{ data: T[]; paging?: { next?: string } }>(next, token));
+    const page: { data: T[]; paging?: { next?: string } } = await metaFetch(next, token);
     if (page.data?.length) all.push(...page.data);
     next = page.paging?.next;
     safety++;

@@ -19,6 +19,7 @@ import { Route as CampaignsIdRouteImport } from './routes/campaigns.$id'
 import { Route as AdminIntegrationsRouteImport } from './routes/admin.integrations'
 import { Route as ApiPublicZapierLeadRouteImport } from './routes/api/public/zapier-lead'
 import { Route as ApiPublicKajabiSyncRouteImport } from './routes/api/public/kajabi-sync'
+import { Route as ApiPublicHooksMetaSyncRouteImport } from './routes/api/public/hooks/meta-sync'
 
 const YoutubeRoute = YoutubeRouteImport.update({
   id: '/youtube',
@@ -70,6 +71,11 @@ const ApiPublicKajabiSyncRoute = ApiPublicKajabiSyncRouteImport.update({
   path: '/api/public/kajabi-sync',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksMetaSyncRoute = ApiPublicHooksMetaSyncRouteImport.update({
+  id: '/api/public/hooks/meta-sync',
+  path: '/api/public/hooks/meta-sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/campaigns/': typeof CampaignsIndexRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
+  '/api/public/hooks/meta-sync': typeof ApiPublicHooksMetaSyncRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/campaigns': typeof CampaignsIndexRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
+  '/api/public/hooks/meta-sync': typeof ApiPublicHooksMetaSyncRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/campaigns/': typeof CampaignsIndexRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
+  '/api/public/hooks/meta-sync': typeof ApiPublicHooksMetaSyncRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/campaigns/'
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
+    | '/api/public/hooks/meta-sync'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/campaigns'
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
+    | '/api/public/hooks/meta-sync'
   id:
     | '__root__'
     | '/'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/campaigns/'
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
+    | '/api/public/hooks/meta-sync'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -157,6 +169,7 @@ export interface RootRouteChildren {
   CampaignsIndexRoute: typeof CampaignsIndexRoute
   ApiPublicKajabiSyncRoute: typeof ApiPublicKajabiSyncRoute
   ApiPublicZapierLeadRoute: typeof ApiPublicZapierLeadRoute
+  ApiPublicHooksMetaSyncRoute: typeof ApiPublicHooksMetaSyncRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -231,6 +244,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicKajabiSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/meta-sync': {
+      id: '/api/public/hooks/meta-sync'
+      path: '/api/public/hooks/meta-sync'
+      fullPath: '/api/public/hooks/meta-sync'
+      preLoaderRoute: typeof ApiPublicHooksMetaSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -254,6 +274,7 @@ const rootRouteChildren: RootRouteChildren = {
   CampaignsIndexRoute: CampaignsIndexRoute,
   ApiPublicKajabiSyncRoute: ApiPublicKajabiSyncRoute,
   ApiPublicZapierLeadRoute: ApiPublicZapierLeadRoute,
+  ApiPublicHooksMetaSyncRoute: ApiPublicHooksMetaSyncRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
