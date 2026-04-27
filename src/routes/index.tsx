@@ -242,47 +242,6 @@ function Dashboard() {
         </MCCard>
       </div>
 
-      {/* Top Performing Content */}
-      <MCCard className="mb-6 lg:mb-9 overflow-hidden">
-        <CardHeader title="Top Performing Content" meta="Last 30 days" />
-        <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px]">
-          <thead>
-            <tr className="text-left">
-              <Th>Content</Th>
-              <Th>Channel</Th>
-              <Th right>Reach</Th>
-              <Th right>Leads</Th>
-              <Th right>→ Calls</Th>
-              <Th right>Effect</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {topContent.map((c) => (
-              <tr key={c.id} className="border-t border-line-soft mc-row-hover">
-                <td className="px-6 py-4">
-                  <div className="text-[14px] text-ink font-medium">{c.title}</div>
-                  <div className="text-[11px] text-ink-muted mt-0.5">
-                    {c.publish_date ? fmtDate(c.publish_date) : "Evergreen"} · {c.format ?? "—"}
-                  </div>
-                </td>
-                <td className="px-6 py-4"><ChannelBadge channel={c.channel ?? "Other"} /></td>
-                <Td right>{fmtNum(c.reach)}</Td>
-                <Td right>{fmtNum(c.leads_attributed)}</Td>
-                <Td right>—</Td>
-                <td className="px-6 py-4 text-right">
-                  <EffectText effect={c.effect_rating ?? "Untracked"} />
-                </td>
-              </tr>
-            ))}
-            {topContent.length === 0 && (
-              <tr><td colSpan={6} className="text-center text-ink-muted py-12 text-[13px]">No content in the last 30 days.</td></tr>
-            )}
-          </tbody>
-        </table>
-        </div>
-      </MCCard>
-
       {/* Paid + YouTube row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6 lg:mb-9">
         <MetaAdsWidget />
