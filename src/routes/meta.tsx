@@ -35,9 +35,8 @@ function MetaPage() {
   return (
     <PageShell>
       <PageHeader
-        eyebrow="Paid Media"
         title="Meta Ads"
-        subtitle="Drill down from accounts → campaigns → ad sets → individual ads."
+        subtitle="Drill down from campaigns → ad sets → individual ads."
       />
       {search.ad ? (
         <AdDetailView adId={search.ad} backTo={{ campaign: search.campaign, adset: search.adset }} />
