@@ -59,18 +59,18 @@ function IntegrationsPage() {
         ]}
       />
 
-      <MCCard className="p-8 mb-6">
-        <div className="flex items-start justify-between mb-6">
+      <MCCard className="p-5 sm:p-7 lg:p-8 mb-6">
+        <div className="flex items-start justify-between mb-5 sm:mb-6">
           <div>
-            <h2 className="serif text-[26px] text-ink">YouTube Data Sync</h2>
-            <p className="text-[13px] text-ink-soft mt-1">
+            <h2 className="serif text-[22px] sm:text-[26px] text-ink">YouTube Data Sync</h2>
+            <p className="text-[12px] sm:text-[13px] text-ink-soft mt-1">
               Pull subscriber counts, 28-day reach, and the most recent 50 videos from each channel.
               Auto-runs daily at 6:30 AM UTC.
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           <SyncButton
             label="Christine Jewell"
             sub="Personal channel"
