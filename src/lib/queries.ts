@@ -166,6 +166,90 @@ export function useMetaCampaigns() {
   });
 }
 
+export function useMetaAdSets(campaignId?: string) {
+  return useQuery({
+    queryKey: ["meta_adsets", campaignId ?? "all"],
+    queryFn: async () => {
+      let q = supabase.from("meta_adsets").select("*").order("name");
+      if (campaignId) q = q.eq("meta_campaign_id", campaignId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useMetaAds(filters: { campaignId?: string; adsetId?: string } = {}) {
+  return useQuery({
+    queryKey: ["meta_ads", filters.campaignId ?? "", filters.adsetId ?? ""],
+    queryFn: async () => {
+      let q = supabase.from("meta_ads").select("*").order("name");
+      if (filters.adsetId) q = q.eq("meta_adset_id", filters.adsetId);
+      else if (filters.campaignId) q = q.eq("meta_campaign_id", filters.campaignId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useMetaAd(adId?: string) {
+  return useQuery({
+    queryKey: ["meta_ad", adId],
+    enabled: !!adId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("meta_ads")
+        .select("*")
+        .eq("meta_ad_id", adId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useMetaAdsetsDaily(filters: { campaignId?: string; adsetId?: string; days?: number } = {}) {
+  const days = filters.days ?? 30;
+  return useQuery({
+    queryKey: ["meta_adsets_daily", filters.campaignId ?? "", filters.adsetId ?? "", days],
+    queryFn: async () => {
+      const from = isoDate(daysAgo(days));
+      let q = supabase
+        .from("meta_adsets_daily")
+        .select("*")
+        .gte("snapshot_date", from)
+        .order("snapshot_date", { ascending: true });
+      if (filters.adsetId) q = q.eq("meta_adset_id", filters.adsetId);
+      else if (filters.campaignId) q = q.eq("meta_campaign_id", filters.campaignId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useMetaAdsInsightsDaily(filters: { campaignId?: string; adsetId?: string; adId?: string; days?: number } = {}) {
+  const days = filters.days ?? 30;
+  return useQuery({
+    queryKey: ["meta_ads_insights_daily", filters.campaignId ?? "", filters.adsetId ?? "", filters.adId ?? "", days],
+    queryFn: async () => {
+      const from = isoDate(daysAgo(days));
+      let q = supabase
+        .from("meta_ads_insights_daily")
+        .select("*")
+        .gte("snapshot_date", from)
+        .order("snapshot_date", { ascending: true });
+      if (filters.adId) q = q.eq("meta_ad_id", filters.adId);
+      else if (filters.adsetId) q = q.eq("meta_adset_id", filters.adsetId);
+      else if (filters.campaignId) q = q.eq("meta_campaign_id", filters.campaignId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
 export function useMetaSyncRuns() {
   return useQuery({
     queryKey: ["meta_sync_runs"],
