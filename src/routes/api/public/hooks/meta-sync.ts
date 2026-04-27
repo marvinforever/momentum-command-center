@@ -252,14 +252,12 @@ export const Route = createFileRoute("/api/public/hooks/meta-sync")({
           }
 
           // ============ 2. AD SETS ============
-          // Meta's /adsets and /ads endpoints reject DELETED/ARCHIVED in the effective_status filter
-          // ("Cannot Request for Deleted Objects"). Include only the live-ish statuses we want surfaced.
-          const allStatuses = encodeURIComponent(
-            JSON.stringify(["ACTIVE", "PAUSED", "PENDING_REVIEW", "DISAPPROVED", "PREAPPROVED", "PENDING_BILLING_INFO", "CAMPAIGN_PAUSED", "ADSET_PAUSED", "IN_PROCESS", "WITH_ISSUES"])
-          );
+          // Note: We don't pass an `effective_status` filter — Meta rejects DELETED/ARCHIVED
+          // values on /adsets and /ads ("Cannot Request for Deleted Objects"), and the default
+          // (live + paused objects) is exactly what we want surfaced in the dashboard anyway.
           const adsetFields = "id,name,campaign_id,status,optimization_goal,billing_event,bid_strategy,daily_budget,lifetime_budget,start_time,end_time,targeting";
           const adsets = await fetchAllPages<MetaAdSet>(
-            `https://graph.facebook.com/${META_API_VERSION}/${adAccountId}/adsets?fields=${adsetFields}&effective_status=${allStatuses}&limit=100`,
+            `https://graph.facebook.com/${META_API_VERSION}/${adAccountId}/adsets?fields=${adsetFields}&limit=100`,
             token
           );
           console.log(`[meta-sync] adsets fetched: ${adsets.length}`);
