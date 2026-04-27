@@ -605,6 +605,99 @@ export type Database = {
           },
         ]
       }
+      linkedin_posts: {
+        Row: {
+          account_label: string | null
+          created_at: string
+          followers_gained: number | null
+          id: string
+          impressions: number | null
+          key_word: string | null
+          link: string | null
+          post_date: string | null
+          post_type: string | null
+          profile_views: number | null
+          reach: number | null
+          reactions: number | null
+          topic: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_label?: string | null
+          created_at?: string
+          followers_gained?: number | null
+          id?: string
+          impressions?: number | null
+          key_word?: string | null
+          link?: string | null
+          post_date?: string | null
+          post_type?: string | null
+          profile_views?: number | null
+          reach?: number | null
+          reactions?: number | null
+          topic?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_label?: string | null
+          created_at?: string
+          followers_gained?: number | null
+          id?: string
+          impressions?: number | null
+          key_word?: string | null
+          link?: string | null
+          post_date?: string | null
+          post_type?: string | null
+          profile_views?: number | null
+          reach?: number | null
+          reactions?: number | null
+          topic?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      linkedin_weekly_metrics: {
+        Row: {
+          account_label: string | null
+          created_at: string
+          followers_gained: number | null
+          followers_total: number | null
+          id: string
+          impressions: number | null
+          profile_views: number | null
+          reach: number | null
+          reactions: number | null
+          updated_at: string
+          week_ending: string | null
+        }
+        Insert: {
+          account_label?: string | null
+          created_at?: string
+          followers_gained?: number | null
+          followers_total?: number | null
+          id?: string
+          impressions?: number | null
+          profile_views?: number | null
+          reach?: number | null
+          reactions?: number | null
+          updated_at?: string
+          week_ending?: string | null
+        }
+        Update: {
+          account_label?: string | null
+          created_at?: string
+          followers_gained?: number | null
+          followers_total?: number | null
+          id?: string
+          impressions?: number | null
+          profile_views?: number | null
+          reach?: number | null
+          reactions?: number | null
+          updated_at?: string
+          week_ending?: string | null
+        }
+        Relationships: []
+      }
       meta_ads: {
         Row: {
           body: string | null
