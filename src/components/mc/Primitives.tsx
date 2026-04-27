@@ -29,8 +29,8 @@ export function SectionTitle({
   className,
 }: { title: string; meta?: ReactNode; className?: string }) {
   return (
-    <div className={cn("flex items-end justify-between mb-4", className)}>
-      <h2 className="serif text-[24px] leading-tight text-ink">{title}</h2>
+    <div className={cn("flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between mb-3 sm:mb-4", className)}>
+      <h2 className="serif text-[20px] sm:text-[24px] leading-tight text-ink">{title}</h2>
       {meta && <div className="label-eyebrow">{meta}</div>}
     </div>
   );
@@ -41,8 +41,8 @@ export function CardHeader({
   meta,
 }: { title: string; meta?: ReactNode }) {
   return (
-    <div className="flex items-end justify-between border-b border-line-soft px-6 py-4">
-      <h3 className="serif text-[20px] leading-tight text-ink">{title}</h3>
+    <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between border-b border-line-soft px-4 py-3 sm:px-6 sm:py-4">
+      <h3 className="serif text-[17px] sm:text-[20px] leading-tight text-ink">{title}</h3>
       {meta && <div className="label-eyebrow">{meta}</div>}
     </div>
   );

@@ -15,9 +15,9 @@ export function PageHeader({ title, subtitle, rightStatus, rightDate, breadcrumb
   const navigate = useNavigate();
 
   return (
-    <header className="border-b border-line pb-6 mb-9">
+    <header className="border-b border-line pb-5 mb-6 lg:pb-6 lg:mb-9">
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <nav className="mb-4 flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-ink-muted">
+        <nav className="mb-3 flex flex-wrap items-center gap-2 text-[10px] sm:text-[11px] uppercase tracking-[0.16em] text-ink-muted">
           {breadcrumbs.map((b, i) => (
             <span key={i} className="flex items-center gap-2">
               {b.to ? (
@@ -30,13 +30,13 @@ export function PageHeader({ title, subtitle, rightStatus, rightDate, breadcrumb
           ))}
         </nav>
       )}
-      <div className="flex items-start justify-between gap-6">
-        <div>
-          <h1 className="serif text-[42px] leading-none text-ink">{title}</h1>
-          <p className="mt-2 text-[12px] uppercase tracking-[0.18em] text-ink-muted">{subtitle}</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+        <div className="min-w-0">
+          <h1 className="serif text-[28px] sm:text-[34px] lg:text-[42px] leading-tight lg:leading-none text-ink">{title}</h1>
+          <p className="mt-1.5 sm:mt-2 text-[11px] sm:text-[12px] uppercase tracking-[0.18em] text-ink-muted">{subtitle}</p>
         </div>
-        <div className="flex flex-col items-end gap-2">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-row items-center justify-between sm:flex-col sm:items-end gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {rightStatus && (
               <span className="mc-pill bg-sage-bg text-sage">
                 <span className="h-1.5 w-1.5 rounded-full bg-sage mc-pulse" />
@@ -44,7 +44,7 @@ export function PageHeader({ title, subtitle, rightStatus, rightDate, breadcrumb
               </span>
             )}
             {rightDate && (
-              <span className="mc-pill bg-cream-deep text-ink-soft">
+              <span className="mc-pill bg-cream-deep text-ink-soft hidden sm:inline-flex">
                 {rightDate}
               </span>
             )}
