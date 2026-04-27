@@ -305,7 +305,7 @@ function VideoEditPanel({
       {/* Backdrop */}
       <div className="fixed inset-0 bg-ink/30 z-40" onClick={onClose} />
       {/* Panel */}
-      <div className="fixed top-0 right-0 bottom-0 w-[460px] bg-cream z-50 shadow-2xl overflow-y-auto border-l border-line">
+      <div className="fixed top-0 right-0 bottom-0 w-full sm:w-[460px] bg-cream z-50 shadow-2xl overflow-y-auto border-l border-line">
         <div className="sticky top-0 bg-cream border-b border-line-soft px-6 py-4 flex items-center justify-between">
           <div>
             <div className="label-eyebrow text-[9px]">Edit Video</div>
