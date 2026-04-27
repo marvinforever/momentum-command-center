@@ -342,14 +342,14 @@ function FunnelStage({
   return (
     <div
       onClick={onClick}
-      className={`px-6 py-4 ${highlighted ? "bg-cream-deep" : ""} ${onClick ? "cursor-pointer hover:bg-cream-deep transition-colors" : ""}`}
+      className={`px-3 py-3 sm:px-6 sm:py-4 ${highlighted ? "bg-cream-deep" : ""} ${onClick ? "cursor-pointer hover:bg-cream-deep transition-colors" : ""}`}
     >
       <div className="label-eyebrow flex items-center gap-2">
         <span className="h-1.5 w-1.5 rounded-full" style={{ background: colors[tone] }} />
         {label}
       </div>
-      <div className="num-serif text-[38px] mt-2 leading-none text-ink">{value}</div>
-      <div className="text-[11px] text-ink-muted mt-2">{trend}</div>
+      <div className="num-serif text-[26px] sm:text-[32px] lg:text-[38px] mt-1.5 sm:mt-2 leading-none text-ink">{value}</div>
+      <div className="text-[10px] sm:text-[11px] text-ink-muted mt-1.5 sm:mt-2">{trend}</div>
     </div>
   );
 }
