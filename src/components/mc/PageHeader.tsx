@@ -1,7 +1,7 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useAuth } from "@/lib/auth";
-import { LogOut } from "lucide-react";
+import { LogOut, Home } from "lucide-react";
 
 interface PageHeaderProps {
   title: string;
@@ -15,9 +15,22 @@ interface PageHeaderProps {
 export function PageHeader({ title, subtitle, rightStatus, rightDate, breadcrumbs, rightSlot }: PageHeaderProps) {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isHome = pathname === "/";
 
   return (
     <header className="border-b border-line pb-5 mb-6 lg:pb-6 lg:mb-9">
+      {!isHome && (
+        <div className="mb-4">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.16em] text-ink-muted hover:text-gold transition-colors"
+          >
+            <Home className="h-3 w-3" />
+            ← Back to Command Center
+          </Link>
+        </div>
+      )}
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav className="mb-3 flex flex-wrap items-center gap-2 text-[10px] sm:text-[11px] uppercase tracking-[0.16em] text-ink-muted">
           {breadcrumbs.map((b, i) => (
