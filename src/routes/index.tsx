@@ -96,6 +96,15 @@ function Dashboard() {
         subtitle="Marketing Operations · April 2026"
         rightStatus="All channels reporting"
         rightDate={`${new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })} · Last sync 6 min ago`}
+        rightSlot={
+          <Link
+            to="/admin"
+            className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.16em] text-ink-muted hover:text-gold transition-colors"
+          >
+            <Settings className="h-3 w-3" />
+            Admin
+          </Link>
+        }
       />
 
       {/* The Funnel */}
