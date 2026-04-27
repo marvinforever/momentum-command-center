@@ -4,8 +4,9 @@ import { fmtNum, fmtUSD, timeAgo } from "@/lib/format";
 import { ResponsiveContainer, LineChart, Line, Tooltip, XAxis } from "recharts";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, ArrowUpRight } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 
 export function MetaAdsWidget() {
   const dailyQ = useMetaAdsDaily(30);
@@ -92,14 +93,22 @@ export function MetaAdsWidget() {
       <CardHeader
         title="Meta Ads"
         meta={
-          <button
-            onClick={runSync}
-            disabled={syncing}
-            className="flex items-center gap-1 text-[11px] uppercase tracking-[0.14em] text-gold hover:underline disabled:opacity-50"
-          >
-            <RefreshCw className={`h-3 w-3 ${syncing ? "animate-spin" : ""}`} />
-            {syncing ? "Syncing…" : "Sync now"}
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/meta"
+              className="flex items-center gap-1 text-[11px] uppercase tracking-[0.14em] text-ink-muted hover:text-gold"
+            >
+              Drill down <ArrowUpRight className="h-3 w-3" />
+            </Link>
+            <button
+              onClick={runSync}
+              disabled={syncing}
+              className="flex items-center gap-1 text-[11px] uppercase tracking-[0.14em] text-gold hover:underline disabled:opacity-50"
+            >
+              <RefreshCw className={`h-3 w-3 ${syncing ? "animate-spin" : ""}`} />
+              {syncing ? "Syncing…" : "Sync now"}
+            </button>
+          </div>
         }
       />
       <div className="p-6">

@@ -605,6 +605,96 @@ export type Database = {
           },
         ]
       }
+      meta_ads: {
+        Row: {
+          body: string | null
+          conversion_rate_ranking: string | null
+          created_at: string
+          creative_id: string | null
+          creative_name: string | null
+          creative_raw: Json | null
+          cta_type: string | null
+          display_url: string | null
+          effective_status: string | null
+          engagement_rate_ranking: string | null
+          id: string
+          image_url: string | null
+          instagram_permalink_url: string | null
+          link_url: string | null
+          meta_ad_id: string
+          meta_adset_id: string
+          meta_campaign_id: string
+          name: string
+          object_type: string | null
+          permalink_url: string | null
+          quality_ranking: string | null
+          raw: Json | null
+          status: string | null
+          thumbnail_url: string | null
+          title: string | null
+          updated_at: string
+          video_id: string | null
+        }
+        Insert: {
+          body?: string | null
+          conversion_rate_ranking?: string | null
+          created_at?: string
+          creative_id?: string | null
+          creative_name?: string | null
+          creative_raw?: Json | null
+          cta_type?: string | null
+          display_url?: string | null
+          effective_status?: string | null
+          engagement_rate_ranking?: string | null
+          id?: string
+          image_url?: string | null
+          instagram_permalink_url?: string | null
+          link_url?: string | null
+          meta_ad_id: string
+          meta_adset_id: string
+          meta_campaign_id: string
+          name: string
+          object_type?: string | null
+          permalink_url?: string | null
+          quality_ranking?: string | null
+          raw?: Json | null
+          status?: string | null
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          video_id?: string | null
+        }
+        Update: {
+          body?: string | null
+          conversion_rate_ranking?: string | null
+          created_at?: string
+          creative_id?: string | null
+          creative_name?: string | null
+          creative_raw?: Json | null
+          cta_type?: string | null
+          display_url?: string | null
+          effective_status?: string | null
+          engagement_rate_ranking?: string | null
+          id?: string
+          image_url?: string | null
+          instagram_permalink_url?: string | null
+          link_url?: string | null
+          meta_ad_id?: string
+          meta_adset_id?: string
+          meta_campaign_id?: string
+          name?: string
+          object_type?: string | null
+          permalink_url?: string | null
+          quality_ranking?: string | null
+          raw?: Json | null
+          status?: string | null
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          video_id?: string | null
+        }
+        Relationships: []
+      }
       meta_ads_daily: {
         Row: {
           clicks: number | null
@@ -659,6 +749,219 @@ export type Database = {
           snapshot_date?: string
           spend?: number | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      meta_ads_insights_daily: {
+        Row: {
+          clicks: number | null
+          conversion_rate_ranking: string | null
+          cpc: number | null
+          cpl: number | null
+          cpm: number | null
+          created_at: string
+          ctr: number | null
+          engagement_rate_ranking: string | null
+          frequency: number | null
+          id: string
+          impressions: number | null
+          leads: number | null
+          meta_ad_id: string
+          meta_adset_id: string
+          meta_campaign_id: string
+          post_comments: number | null
+          post_reactions: number | null
+          post_shares: number | null
+          quality_ranking: string | null
+          raw: Json | null
+          reach: number | null
+          snapshot_date: string
+          spend: number | null
+          updated_at: string
+          video_views: number | null
+        }
+        Insert: {
+          clicks?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpl?: number | null
+          cpm?: number | null
+          created_at?: string
+          ctr?: number | null
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          id?: string
+          impressions?: number | null
+          leads?: number | null
+          meta_ad_id: string
+          meta_adset_id: string
+          meta_campaign_id: string
+          post_comments?: number | null
+          post_reactions?: number | null
+          post_shares?: number | null
+          quality_ranking?: string | null
+          raw?: Json | null
+          reach?: number | null
+          snapshot_date: string
+          spend?: number | null
+          updated_at?: string
+          video_views?: number | null
+        }
+        Update: {
+          clicks?: number | null
+          conversion_rate_ranking?: string | null
+          cpc?: number | null
+          cpl?: number | null
+          cpm?: number | null
+          created_at?: string
+          ctr?: number | null
+          engagement_rate_ranking?: string | null
+          frequency?: number | null
+          id?: string
+          impressions?: number | null
+          leads?: number | null
+          meta_ad_id?: string
+          meta_adset_id?: string
+          meta_campaign_id?: string
+          post_comments?: number | null
+          post_reactions?: number | null
+          post_shares?: number | null
+          quality_ranking?: string | null
+          raw?: Json | null
+          reach?: number | null
+          snapshot_date?: string
+          spend?: number | null
+          updated_at?: string
+          video_views?: number | null
+        }
+        Relationships: []
+      }
+      meta_adsets: {
+        Row: {
+          bid_strategy: string | null
+          billing_event: string | null
+          created_at: string
+          daily_budget: number | null
+          end_time: string | null
+          id: string
+          lifetime_budget: number | null
+          meta_adset_id: string
+          meta_campaign_id: string
+          name: string
+          optimization_goal: string | null
+          raw: Json | null
+          start_time: string | null
+          status: string | null
+          targeting: Json | null
+          updated_at: string
+        }
+        Insert: {
+          bid_strategy?: string | null
+          billing_event?: string | null
+          created_at?: string
+          daily_budget?: number | null
+          end_time?: string | null
+          id?: string
+          lifetime_budget?: number | null
+          meta_adset_id: string
+          meta_campaign_id: string
+          name: string
+          optimization_goal?: string | null
+          raw?: Json | null
+          start_time?: string | null
+          status?: string | null
+          targeting?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          bid_strategy?: string | null
+          billing_event?: string | null
+          created_at?: string
+          daily_budget?: number | null
+          end_time?: string | null
+          id?: string
+          lifetime_budget?: number | null
+          meta_adset_id?: string
+          meta_campaign_id?: string
+          name?: string
+          optimization_goal?: string | null
+          raw?: Json | null
+          start_time?: string | null
+          status?: string | null
+          targeting?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      meta_adsets_daily: {
+        Row: {
+          clicks: number | null
+          cpc: number | null
+          cpl: number | null
+          cpm: number | null
+          created_at: string
+          ctr: number | null
+          frequency: number | null
+          id: string
+          impressions: number | null
+          leads: number | null
+          meta_adset_id: string
+          meta_campaign_id: string
+          post_comments: number | null
+          post_reactions: number | null
+          post_shares: number | null
+          raw: Json | null
+          reach: number | null
+          snapshot_date: string
+          spend: number | null
+          updated_at: string
+          video_views: number | null
+        }
+        Insert: {
+          clicks?: number | null
+          cpc?: number | null
+          cpl?: number | null
+          cpm?: number | null
+          created_at?: string
+          ctr?: number | null
+          frequency?: number | null
+          id?: string
+          impressions?: number | null
+          leads?: number | null
+          meta_adset_id: string
+          meta_campaign_id: string
+          post_comments?: number | null
+          post_reactions?: number | null
+          post_shares?: number | null
+          raw?: Json | null
+          reach?: number | null
+          snapshot_date: string
+          spend?: number | null
+          updated_at?: string
+          video_views?: number | null
+        }
+        Update: {
+          clicks?: number | null
+          cpc?: number | null
+          cpl?: number | null
+          cpm?: number | null
+          created_at?: string
+          ctr?: number | null
+          frequency?: number | null
+          id?: string
+          impressions?: number | null
+          leads?: number | null
+          meta_adset_id?: string
+          meta_campaign_id?: string
+          post_comments?: number | null
+          post_reactions?: number | null
+          post_shares?: number | null
+          raw?: Json | null
+          reach?: number | null
+          snapshot_date?: string
+          spend?: number | null
+          updated_at?: string
+          video_views?: number | null
         }
         Relationships: []
       }
@@ -720,6 +1023,10 @@ export type Database = {
       }
       meta_sync_runs: {
         Row: {
+          ad_insights_synced: number | null
+          ads_synced: number | null
+          adset_insights_synced: number | null
+          adsets_synced: number | null
           campaigns_synced: number | null
           error: string | null
           finished_at: string | null
@@ -730,6 +1037,10 @@ export type Database = {
           triggered_by: string | null
         }
         Insert: {
+          ad_insights_synced?: number | null
+          ads_synced?: number | null
+          adset_insights_synced?: number | null
+          adsets_synced?: number | null
           campaigns_synced?: number | null
           error?: string | null
           finished_at?: string | null
@@ -740,6 +1051,10 @@ export type Database = {
           triggered_by?: string | null
         }
         Update: {
+          ad_insights_synced?: number | null
+          ads_synced?: number | null
+          adset_insights_synced?: number | null
+          adsets_synced?: number | null
           campaigns_synced?: number | null
           error?: string | null
           finished_at?: string | null
