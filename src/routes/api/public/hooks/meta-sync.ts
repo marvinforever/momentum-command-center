@@ -288,7 +288,7 @@ export const Route = createFileRoute("/api/public/hooks/meta-sync")({
             "id,name,title,body,call_to_action_type,link_url,thumbnail_url,image_url,video_id,object_type,object_story_spec,effective_object_story_id";
           const adFields = `id,name,adset_id,campaign_id,status,effective_status,preview_shareable_link,creative{${creativeSubfields}}`;
           const ads = await fetchAllPages<MetaAd>(
-            `https://graph.facebook.com/${META_API_VERSION}/${adAccountId}/ads?fields=${adFields}&effective_status=${allStatuses}&limit=100`,
+            `https://graph.facebook.com/${META_API_VERSION}/${adAccountId}/ads?fields=${adFields}&limit=100`,
             token
           );
           console.log(`[meta-sync] ads fetched: ${ads.length}`);
