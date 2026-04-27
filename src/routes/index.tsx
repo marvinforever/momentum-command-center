@@ -7,6 +7,7 @@ import { fmtNum, fmtUSD, fmtPct, fmtDate, timeAgo, isoDate, daysAgo } from "@/li
 import { ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Tooltip } from "recharts";
 import { useMemo } from "react";
 import { YouTubeWidget } from "@/components/mc/YouTubeWidget";
+import { Settings } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "Dashboard — Momentum Command Center" }] }),
@@ -96,6 +97,15 @@ function Dashboard() {
         subtitle="Marketing Operations · April 2026"
         rightStatus="All channels reporting"
         rightDate={`${new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })} · Last sync 6 min ago`}
+        rightSlot={
+          <Link
+            to="/admin"
+            className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.16em] text-ink-muted hover:text-gold transition-colors"
+          >
+            <Settings className="h-3 w-3" />
+            Admin
+          </Link>
+        }
       />
 
       {/* The Funnel */}

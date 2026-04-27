@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { useAuth } from "@/lib/auth";
 import { LogOut } from "lucide-react";
 
@@ -8,9 +9,10 @@ interface PageHeaderProps {
   rightStatus?: string;
   rightDate?: string;
   breadcrumbs?: { label: string; to?: string }[];
+  rightSlot?: ReactNode;
 }
 
-export function PageHeader({ title, subtitle, rightStatus, rightDate, breadcrumbs }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, rightStatus, rightDate, breadcrumbs, rightSlot }: PageHeaderProps) {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
 
@@ -49,14 +51,19 @@ export function PageHeader({ title, subtitle, rightStatus, rightDate, breadcrumb
               </span>
             )}
           </div>
-          {user && (
-            <button
-              onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
-              className="flex items-center gap-1.5 text-[11px] text-ink-muted hover:text-gold transition-colors"
-            >
-              <LogOut className="h-3 w-3" />
-              Sign out
-            </button>
+          {(user || rightSlot) && (
+            <div className="flex items-center gap-3">
+              {rightSlot}
+              {user && (
+                <button
+                  onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
+                  className="flex items-center gap-1.5 text-[11px] text-ink-muted hover:text-gold transition-colors"
+                >
+                  <LogOut className="h-3 w-3" />
+                  Sign out
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
