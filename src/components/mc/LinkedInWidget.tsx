@@ -61,10 +61,12 @@ export function LinkedInWidget({ account = "Christine" }: LinkedInWidgetProps) {
       .sort((a: any, b: any) => (b.impressions ?? 0) - (a.impressions ?? 0))[0];
   }, [posts]);
 
+  const accent = ACCENT[account];
+
   if (posts.length === 0) {
     return (
       <MCCard className="border-dashed">
-        <CardHeader title="LinkedIn — Christine" meta="No data yet" />
+        <CardHeader title={`LinkedIn — ${account}`} meta="No data yet" />
         <div className="p-8 text-center">
           <p className="text-[13px] text-ink-muted">Import LinkedIn metrics to populate this widget.</p>
         </div>
@@ -75,7 +77,7 @@ export function LinkedInWidget({ account = "Christine" }: LinkedInWidgetProps) {
   return (
     <MCCard>
       <CardHeader
-        title="LinkedIn — Christine"
+        title={`LinkedIn — ${account}`}
         meta={
           <Link to="/linkedin" className="text-gold hover:underline">
             Drill down →
@@ -113,7 +115,7 @@ export function LinkedInWidget({ account = "Christine" }: LinkedInWidgetProps) {
             <LineChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
               <XAxis dataKey="day" hide />
               <YAxis hide domain={["auto", "auto"]} />
-              <Line type="monotone" dataKey="followers" stroke="#C4924A" strokeWidth={2} dot={false} isAnimationActive={false} />
+              <Line type="monotone" dataKey="followers" stroke={accent} strokeWidth={2} dot={false} isAnimationActive={false} />
               <Tooltip
                 contentStyle={{ background: "#1F2937", border: "none", borderRadius: 8, color: "#F7F3EC", fontSize: 11 }}
                 labelFormatter={(d: any) => fmtDate(d)}
