@@ -1,9 +1,11 @@
-// Kajabi Direct API Sync
+// Kajabi Public API Sync
 // Pulls contacts, purchases, and form submissions from Kajabi's REST API and
 // upserts them into our DB — same downstream behavior as the webhook handler,
 // but pull-based so we can backfill historical data.
 //
-// Auth: HTTP Basic with KAJABI_API_KEY:KAJABI_API_SECRET.
+// Auth: OAuth2 client_credentials flow against /v1/oauth/token, using
+// KAJABI_API_KEY (client_id) + KAJABI_API_SECRET (client_secret). The
+// resulting bearer token is cached in-memory until ~60s before expiry.
 // Triggered from Admin → Integrations.
 
 import { createFileRoute } from "@tanstack/react-router";
@@ -13,22 +15,72 @@ const KAJABI_BASE = "https://api.kajabi.com/v1";
 
 type SyncResource = "contacts" | "purchases" | "form_submissions";
 
-function authHeader(): string {
-  const key = process.env.KAJABI_API_KEY;
-  const secret = process.env.KAJABI_API_SECRET;
-  if (!key || !secret) throw new Error("Missing KAJABI_API_KEY / KAJABI_API_SECRET");
-  return "Basic " + Buffer.from(`${key}:${secret}`).toString("base64");
+// In-memory token cache (per worker instance). Acceptable because tokens are
+// cheap to mint and Kajabi's typical TTL is ~1h.
+let cachedToken: { token: string; expiresAt: number } | null = null;
+
+async function getAccessToken(): Promise<string> {
+  const clientId = process.env.KAJABI_API_KEY;
+  const clientSecret = process.env.KAJABI_API_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error("Missing KAJABI_API_KEY / KAJABI_API_SECRET");
+  }
+
+  if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) {
+    return cachedToken.token;
+  }
+
+  const body = new URLSearchParams({
+    grant_type: "client_credentials",
+    client_id: clientId,
+    client_secret: clientSecret,
+  });
+
+  const res = await fetch(`${KAJABI_BASE}/oauth/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: body.toString(),
+  });
+
+  if (!res.ok) {
+    const errBody = await res.text();
+    throw new Error(`Kajabi /oauth/token → ${res.status}: ${errBody.slice(0, 400)}`);
+  }
+
+  const json = (await res.json()) as { access_token: string; expires_in?: number };
+  if (!json.access_token) {
+    throw new Error(`Kajabi /oauth/token returned no access_token: ${JSON.stringify(json).slice(0, 300)}`);
+  }
+
+  const ttlMs = (json.expires_in ?? 3600) * 1000;
+  cachedToken = { token: json.access_token, expiresAt: Date.now() + ttlMs };
+  return json.access_token;
 }
 
 async function kajabiFetch(path: string, params: Record<string, string> = {}) {
   const url = new URL(`${KAJABI_BASE}${path}`);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-  const res = await fetch(url.toString(), {
+
+  let token = await getAccessToken();
+  let res = await fetch(url.toString(), {
     headers: {
-      Authorization: authHeader(),
+      Authorization: `Bearer ${token}`,
       Accept: "application/vnd.api+json",
     },
   });
+
+  // Token might have expired between cache check and request — retry once.
+  if (res.status === 401) {
+    cachedToken = null;
+    token = await getAccessToken();
+    res = await fetch(url.toString(), {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.api+json",
+      },
+    });
+  }
+
   if (!res.ok) {
     const body = await res.text();
     throw new Error(`Kajabi ${path} → ${res.status}: ${body.slice(0, 300)}`);
@@ -132,6 +184,48 @@ async function syncContacts() {
   return { resource: "contacts" as const, synced, created, errors };
 }
 
+// Cache so we don't refetch the same customer/offer for every purchase row.
+const customerCache = new Map<string, { email: string | null; name: string | null }>();
+const offerCache = new Map<string, { name: string | null }>();
+
+async function getCustomer(id: string): Promise<{ email: string | null; name: string | null }> {
+  if (!id) return { email: null, name: null };
+  if (customerCache.has(id)) return customerCache.get(id)!;
+  try {
+    const json = await kajabiFetch(`/customers/${id}`);
+    const a = json?.data?.attributes ?? {};
+    const email = a.email ?? null;
+    const name =
+      a.name ??
+      [a.first_name, a.last_name].filter(Boolean).join(" ") ??
+      null;
+    const result = { email, name: name || null };
+    customerCache.set(id, result);
+    return result;
+  } catch (e) {
+    console.error(`getCustomer(${id}) failed`, e);
+    customerCache.set(id, { email: null, name: null });
+    return { email: null, name: null };
+  }
+}
+
+async function getOffer(id: string): Promise<{ name: string | null }> {
+  if (!id) return { name: null };
+  if (offerCache.has(id)) return offerCache.get(id)!;
+  try {
+    const json = await kajabiFetch(`/offers/${id}`);
+    const a = json?.data?.attributes ?? {};
+    const name = a.title ?? a.name ?? null;
+    const result = { name };
+    offerCache.set(id, result);
+    return result;
+  } catch (e) {
+    console.error(`getOffer(${id}) failed`, e);
+    offerCache.set(id, { name: null });
+    return { name: null };
+  }
+}
+
 async function syncPurchases() {
   let synced = 0, errors = 0;
   const rows = await fetchAllPages("/purchases");
@@ -142,17 +236,24 @@ async function syncPurchases() {
       const purchaseId = String(row.id ?? "");
       if (!purchaseId) continue;
 
-      const kajabiContactId = (String(r?.member?.data?.id ?? r?.contact?.data?.id ?? "")) || null;
-      const kajabiOfferId = (String(r?.offer?.data?.id ?? "")) || null;
-      const email = a.member_email ?? a.buyer_email ?? a.email ?? null;
-      const name = a.member_name ?? a.buyer_name ?? null;
-      const offerName = a.offer_title ?? a.offer_name ?? null;
-      const amount = Number(a.amount_cents ?? a.total_cents ?? a.price_cents ?? 0);
-      const currency = a.currency ?? "USD";
-      const purchasedAt = a.purchased_at ?? a.created_at ?? new Date().toISOString();
-      const refunded = String(a.status ?? "").toLowerCase().includes("refund");
+      const kajabiCustomerId = String(r?.customer?.data?.id ?? r?.member?.data?.id ?? r?.contact?.data?.id ?? "") || null;
+      const kajabiOfferId = String(r?.offer?.data?.id ?? "") || null;
 
-      const leadId = await findOrCreateLead(email, name, kajabiContactId);
+      // Enrich from related resources (cached) so we get email/name/offer-name.
+      const customer = kajabiCustomerId ? await getCustomer(kajabiCustomerId) : { email: null, name: null };
+      const offerInfo = kajabiOfferId ? await getOffer(kajabiOfferId) : { name: null };
+
+      const email = a.member_email ?? a.buyer_email ?? a.email ?? customer.email ?? null;
+      const name = a.member_name ?? a.buyer_name ?? a.cardholder_name ?? customer.name ?? null;
+      const offerName = a.offer_title ?? a.offer_name ?? offerInfo.name ?? null;
+
+      // Kajabi's real field is `amount_in_cents`. Keep legacy fallbacks in case.
+      const amount = Number(a.amount_in_cents ?? a.amount_cents ?? a.total_cents ?? a.price_cents ?? 0);
+      const currency = a.currency ?? "USD";
+      const purchasedAt = a.effective_start_at ?? a.purchased_at ?? a.created_at ?? new Date().toISOString();
+      const refunded = !!a.deactivated_at || String(a.status ?? "").toLowerCase().includes("refund");
+
+      const leadId = await findOrCreateLead(email, name, kajabiCustomerId);
 
       let offerUuid: string | null = null;
       if (kajabiOfferId) {
@@ -173,7 +274,7 @@ async function syncPurchases() {
         currency,
         status: refunded ? "refunded" : "completed",
         purchased_at: purchasedAt,
-        refunded_at: refunded ? (a.refunded_at ?? new Date().toISOString()) : null,
+        refunded_at: refunded ? (a.deactivated_at ?? a.refunded_at ?? new Date().toISOString()) : null,
         raw: row,
       }, { onConflict: "kajabi_purchase_id" });
       synced++;
