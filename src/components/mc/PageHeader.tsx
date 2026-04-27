@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { useAuth } from "@/lib/auth";
 import { LogOut } from "lucide-react";
 
@@ -8,9 +9,10 @@ interface PageHeaderProps {
   rightStatus?: string;
   rightDate?: string;
   breadcrumbs?: { label: string; to?: string }[];
+  rightSlot?: ReactNode;
 }
 
-export function PageHeader({ title, subtitle, rightStatus, rightDate, breadcrumbs }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, rightStatus, rightDate, breadcrumbs, rightSlot }: PageHeaderProps) {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
 
