@@ -95,15 +95,15 @@ function renderForm(key: FormKey) {
 function FormCard({ title, children, onSubmit }: { title: string; children: React.ReactNode; onSubmit: (e: React.FormEvent) => Promise<unknown> | unknown }) {
   const [busy, setBusy] = useState(false);
   return (
-    <MCCard className="p-8">
-      <h2 className="serif text-[26px] text-ink mb-6">{title}</h2>
+    <MCCard className="p-5 sm:p-7 lg:p-8">
+      <h2 className="serif text-[22px] sm:text-[26px] text-ink mb-5 sm:mb-6">{title}</h2>
       <form
         onSubmit={async (e) => {
           e.preventDefault();
           setBusy(true);
           try { await onSubmit(e); } finally { setBusy(false); }
         }}
-        className="space-y-5"
+        className="space-y-5 mc-admin-form"
       >
         {children}
         <div className="flex justify-end pt-2">
