@@ -7,6 +7,7 @@ import { fmtNum, fmtUSD, fmtPct, fmtDate, timeAgo, isoDate, daysAgo } from "@/li
 import { ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Tooltip } from "recharts";
 import { useMemo } from "react";
 import { YouTubeWidget } from "@/components/mc/YouTubeWidget";
+import { MetaAdsWidget } from "@/components/mc/MetaAdsWidget";
 import { Settings } from "lucide-react";
 
 export const Route = createFileRoute("/")({
