@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as YoutubeRouteImport } from './routes/youtube'
+import { Route as MetaRouteImport } from './routes/meta'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -24,6 +25,11 @@ import { Route as ApiPublicHooksMetaSyncRouteImport } from './routes/api/public/
 const YoutubeRoute = YoutubeRouteImport.update({
   id: '/youtube',
   path: '/youtube',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MetaRoute = MetaRouteImport.update({
+  id: '/meta',
+  path: '/meta',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
+  '/meta': typeof MetaRoute
   '/youtube': typeof YoutubeRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/campaigns/$id': typeof CampaignsIdRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteWithChildren
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
+  '/meta': typeof MetaRoute
   '/youtube': typeof YoutubeRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/campaigns/$id': typeof CampaignsIdRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
+  '/meta': typeof MetaRoute
   '/youtube': typeof YoutubeRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/campaigns/$id': typeof CampaignsIdRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/leads'
     | '/login'
+    | '/meta'
     | '/youtube'
     | '/admin/integrations'
     | '/campaigns/$id'
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/leads'
     | '/login'
+    | '/meta'
     | '/youtube'
     | '/admin/integrations'
     | '/campaigns/$id'
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/leads'
     | '/login'
+    | '/meta'
     | '/youtube'
     | '/admin/integrations'
     | '/campaigns/$id'
@@ -164,6 +176,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   LeadsRoute: typeof LeadsRoute
   LoginRoute: typeof LoginRoute
+  MetaRoute: typeof MetaRoute
   YoutubeRoute: typeof YoutubeRoute
   CampaignsIdRoute: typeof CampaignsIdRoute
   CampaignsIndexRoute: typeof CampaignsIndexRoute
@@ -179,6 +192,13 @@ declare module '@tanstack/react-router' {
       path: '/youtube'
       fullPath: '/youtube'
       preLoaderRoute: typeof YoutubeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/meta': {
+      id: '/meta'
+      path: '/meta'
+      fullPath: '/meta'
+      preLoaderRoute: typeof MetaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -269,6 +289,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   LeadsRoute: LeadsRoute,
   LoginRoute: LoginRoute,
+  MetaRoute: MetaRoute,
   YoutubeRoute: YoutubeRoute,
   CampaignsIdRoute: CampaignsIdRoute,
   CampaignsIndexRoute: CampaignsIndexRoute,
