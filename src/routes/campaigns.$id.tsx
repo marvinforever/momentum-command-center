@@ -70,19 +70,19 @@ function CampaignDetail() {
         ]}
       />
 
-      <MCCard className="mb-7">
+      <MCCard className="mb-6 lg:mb-7">
         <div className="h-[5px]" style={{ background: "linear-gradient(90deg, var(--gold), var(--sage), var(--burgundy))" }} />
-        <div className="p-7">
-          <h2 className="serif text-[36px] text-ink leading-tight">{campaign.name}</h2>
-          <div className="mt-3 flex items-center gap-3 text-[12px] text-ink-muted flex-wrap">
-            <span>{shortId}</span><span>·</span>
+        <div className="p-4 sm:p-6 lg:p-7">
+          <h2 className="serif text-[24px] sm:text-[30px] lg:text-[36px] text-ink leading-tight">{campaign.name}</h2>
+          <div className="mt-3 flex items-center gap-2 sm:gap-3 text-[12px] text-ink-muted flex-wrap">
+            <span>{shortId}</span><span className="hidden sm:inline">·</span>
             <StatusBadge status={campaign.status ?? "Live"} />
-            <span>·</span>
+            <span className="hidden sm:inline">·</span>
             <ChannelBadge channel={campaign.primary_channel ?? "Other"} />
-            <span>·</span>
+            <span className="hidden sm:inline">·</span>
             <span>{campaign.start_date ? fmtDate(campaign.start_date) : "—"} → {campaign.end_date ? fmtDate(campaign.end_date) : "ongoing"}</span>
           </div>
-          <div className="border-t border-line-soft mt-5 pt-5 text-[14px] text-ink-soft leading-relaxed">
+          <div className="border-t border-line-soft mt-5 pt-5 text-[13px] sm:text-[14px] text-ink-soft leading-relaxed">
             {campaign.goal ?? `Driving ${campaign.lead_goal ?? "—"} qualified opt-ins toward ${(campaign as any).offers?.name ?? "the offer"} via ${campaign.primary_channel?.toLowerCase() ?? "multi-channel"} efforts.`}
           </div>
         </div>
