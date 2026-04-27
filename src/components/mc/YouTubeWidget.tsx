@@ -32,22 +32,32 @@ export function YouTubeWidget() {
     return Array.from(map.values());
   }, [ytSnapshots]);
 
-  // 30-day subscriber growth chart, two series
+  // Subscriber trend across all snapshots we have. Builds a real history
+  // forward from today as daily syncs accumulate. YouTube's API does not
+  // expose historical subscriber counts, so we can't backfill the past.
   const chartData = useMemo(() => {
+    const labels = Array.from(
+      new Set(ytSnapshots.map((s: any) => s.account_label).filter(Boolean))
+    ) as string[];
+
+    // Bucket one row per snapshot_date with a column per channel
     const days: Record<string, any> = {};
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date(Date.now() - i * 86400_000).toISOString().slice(0, 10);
-      days[d] = { day: d };
-    }
     for (const s of ytSnapshots) {
       if (!s.snapshot_date || !s.account_label) continue;
-      if (!days[s.snapshot_date]) continue;
-      days[s.snapshot_date][s.account_label] = s.followers_subs;
+      if (!days[s.snapshot_date]) days[s.snapshot_date] = { day: s.snapshot_date };
+      // Keep the highest sub count seen that day (handles multiple syncs/day)
+      const prev = days[s.snapshot_date][s.account_label];
+      const next = Number(s.followers_subs ?? 0);
+      days[s.snapshot_date][s.account_label] =
+        prev == null ? next : Math.max(prev, next);
     }
-    // Forward-fill so lines connect through gap days
-    const labels = Array.from(new Set(ytSnapshots.map((s: any) => s.account_label)));
-    const sorted = Object.values(days).sort((a: any, b: any) => a.day.localeCompare(b.day));
-    let last: Record<string, number> = {};
+
+    const sorted = Object.values(days).sort((a: any, b: any) =>
+      a.day.localeCompare(b.day)
+    );
+
+    // Forward-fill so lines stay continuous across gap days
+    const last: Record<string, number> = {};
     for (const row of sorted as any[]) {
       for (const label of labels) {
         if (row[label] != null) last[label] = row[label];
