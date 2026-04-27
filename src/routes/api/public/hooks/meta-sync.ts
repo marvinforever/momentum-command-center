@@ -252,11 +252,16 @@ export const Route = createFileRoute("/api/public/hooks/meta-sync")({
           }
 
           // ============ 2. AD SETS ============
+          // Meta defaults to filtering by effective_status, so explicitly include all states we care about.
+          const allStatuses = encodeURIComponent(
+            JSON.stringify(["ACTIVE", "PAUSED", "DELETED", "ARCHIVED", "PENDING_REVIEW", "DISAPPROVED", "PREAPPROVED", "PENDING_BILLING_INFO", "CAMPAIGN_PAUSED", "ADSET_PAUSED", "IN_PROCESS", "WITH_ISSUES"])
+          );
           const adsetFields = "id,name,campaign_id,status,optimization_goal,billing_event,bid_strategy,daily_budget,lifetime_budget,start_time,end_time,targeting";
           const adsets = await fetchAllPages<MetaAdSet>(
-            `https://graph.facebook.com/${META_API_VERSION}/${adAccountId}/adsets?fields=${adsetFields}&limit=100`,
+            `https://graph.facebook.com/${META_API_VERSION}/${adAccountId}/adsets?fields=${adsetFields}&effective_status=${allStatuses}&limit=100`,
             token
           );
+          console.log(`[meta-sync] adsets fetched: ${adsets.length}`);
 
           let adsetsSynced = 0;
           if (adsets.length) {
