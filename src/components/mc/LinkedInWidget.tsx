@@ -5,12 +5,29 @@ import { Link } from "@tanstack/react-router";
 import { ResponsiveContainer, LineChart, Line, Tooltip, XAxis, YAxis } from "recharts";
 import { useMemo } from "react";
 
-export function LinkedInWidget() {
+type LinkedInAccount = "Christine" | "Mark";
+
+interface LinkedInWidgetProps {
+  account?: LinkedInAccount;
+}
+
+const ACCENT: Record<LinkedInAccount, string> = {
+  Christine: "#C4924A", // gold
+  Mark: "#6B8E7F",      // sage
+};
+
+export function LinkedInWidget({ account = "Christine" }: LinkedInWidgetProps) {
   const postsQ = useLinkedinPosts();
   const weeklyQ = useLinkedinWeekly();
 
-  const posts = postsQ.data ?? [];
-  const weekly = weeklyQ.data ?? [];
+  const posts = useMemo(
+    () => (postsQ.data ?? []).filter((p: any) => (p.account_label ?? "Christine") === account),
+    [postsQ.data, account]
+  );
+  const weekly = useMemo(
+    () => (weeklyQ.data ?? []).filter((w: any) => (w.account_label ?? "Christine") === account),
+    [weeklyQ.data, account]
+  );
 
   const latestFollowers = useMemo(() => {
     const first = weekly.find((w: any) => w.followers_total != null);
