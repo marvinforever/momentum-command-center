@@ -20,7 +20,7 @@ export function MetaAdsWidget() {
   const campaigns = campaignsQ.data ?? [];
   const lastRun = runsQ.data?.[0];
 
-  // Aggregate last 7 days vs prev 7 days
+  // Aggregate last 30 days vs prev 30 days (matches drill-down totals)
   const totals = useMemo(() => {
     const byDay = new Map<string, { spend: number; leads: number; clicks: number; impressions: number }>();
     for (const r of daily) {
@@ -40,6 +40,8 @@ export function MetaAdsWidget() {
     const sum = (arr: typeof sorted, k: "spend" | "leads" | "clicks" | "impressions") =>
       arr.reduce((s, r) => s + (r[k] as number), 0);
 
+    const spend30 = sum(sorted, "spend");
+    const leads30 = sum(sorted, "leads");
     const spend7 = sum(last7, "spend");
     const leads7 = sum(last7, "leads");
     const spendPrev = sum(prev7, "spend");
@@ -47,11 +49,11 @@ export function MetaAdsWidget() {
 
     return {
       sorted,
-      spend7,
-      leads7,
-      cpl7: leads7 ? spend7 / leads7 : 0,
-      clicks7: sum(last7, "clicks"),
-      impressions7: sum(last7, "impressions"),
+      spend30,
+      leads30,
+      cpl30: leads30 ? spend30 / leads30 : 0,
+      clicks30: sum(sorted, "clicks"),
+      impressions30: sum(sorted, "impressions"),
       deltaSpend: spendPrev ? ((spend7 - spendPrev) / spendPrev) * 100 : 0,
       deltaLeads: leadsPrev ? ((leads7 - leadsPrev) / leadsPrev) * 100 : 0,
     };
@@ -123,25 +125,25 @@ export function MetaAdsWidget() {
           <>
             <div className="grid grid-cols-2 gap-3">
               <Tile
-                label="Spend (7d)"
-                value={fmtUSD(totals.spend7)}
-                delta={`${totals.deltaSpend >= 0 ? "+" : ""}${totals.deltaSpend.toFixed(0)}% vs prev 7d`}
+                label="Spend (30d)"
+                value={fmtUSD(totals.spend30)}
+                delta={`${totals.deltaSpend >= 0 ? "+" : ""}${totals.deltaSpend.toFixed(0)}% (last 7d vs prev 7d)`}
               />
               <Tile
-                label="Leads (7d)"
-                value={fmtNum(totals.leads7)}
-                delta={`${totals.deltaLeads >= 0 ? "+" : ""}${totals.deltaLeads.toFixed(0)}% vs prev 7d`}
+                label="Leads (30d)"
+                value={fmtNum(totals.leads30)}
+                delta={`${totals.deltaLeads >= 0 ? "+" : ""}${totals.deltaLeads.toFixed(0)}% (last 7d vs prev 7d)`}
                 tone={totals.deltaLeads >= 0 ? "sage" : undefined}
               />
               <Tile
-                label="Cost / Lead"
-                value={totals.leads7 ? `$${totals.cpl7.toFixed(2)}` : "—"}
+                label="Cost / Lead (30d)"
+                value={totals.leads30 ? `$${totals.cpl30.toFixed(2)}` : "—"}
                 delta={`${activeCampaigns} active campaign${activeCampaigns === 1 ? "" : "s"}`}
               />
               <Tile
-                label="Clicks (7d)"
-                value={fmtNum(totals.clicks7)}
-                delta={`${fmtNum(totals.impressions7)} impressions`}
+                label="Clicks (30d)"
+                value={fmtNum(totals.clicks30)}
+                delta={`${fmtNum(totals.impressions30)} impressions`}
               />
             </div>
 
