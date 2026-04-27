@@ -38,17 +38,21 @@ function num(v: string | undefined | null): number {
 
 function extractLeads(insight: MetaInsight): number {
   if (!insight.actions) return 0;
-  // Sum of common lead-ish actions
-  const leadTypes = new Set([
-    "lead",
+  // Meta's `lead` action_type is the de-duplicated total across pixel/onsite/offline.
+  // Prefer it when present; fall back to summing the specific lead types.
+  const byType = new Map<string, number>();
+  for (const a of insight.actions) {
+    byType.set(a.action_type, num(a.value));
+  }
+  if (byType.has("lead")) return byType.get("lead") ?? 0;
+  const fallbackTypes = [
     "leadgen.other",
     "offsite_conversion.fb_pixel_lead",
     "onsite_conversion.lead_grouped",
     "onsite_conversion.lead",
-  ]);
-  return insight.actions
-    .filter((a) => leadTypes.has(a.action_type))
-    .reduce((sum, a) => sum + num(a.value), 0);
+    "onsite_web_lead",
+  ];
+  return fallbackTypes.reduce((sum, t) => sum + (byType.get(t) ?? 0), 0);
 }
 
 async function metaFetch<T>(url: string, token: string): Promise<T> {
