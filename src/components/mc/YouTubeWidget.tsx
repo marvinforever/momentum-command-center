@@ -130,31 +130,40 @@ export function YouTubeWidget() {
         </div>
 
         <div className="h-[100px] mb-4">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-              <XAxis dataKey="day" hide />
-              <YAxis hide domain={["auto", "auto"]} />
-              {latestByChannel.map((s) => (
-                <Line
-                  key={s.account_label}
-                  type="monotone"
-                  dataKey={s.account_label}
-                  stroke={CHANNEL_COLORS[s.account_label] ?? "#C4924A"}
-                  strokeWidth={2}
-                  dot={false}
-                  isAnimationActive={false}
+          {chartData.length < 2 ? (
+            <div className="h-full flex items-center justify-center rounded-lg bg-cream/40 border border-dashed border-line-soft">
+              <span className="text-[11px] text-ink-muted">
+                Subscriber trend builds as daily syncs accumulate · {chartData.length} day{chartData.length === 1 ? "" : "s"} so far
+              </span>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                <XAxis dataKey="day" hide />
+                <YAxis hide domain={["dataMin - 1", "dataMax + 1"]} />
+                {latestByChannel.map((s) => (
+                  <Line
+                    key={s.account_label}
+                    type="monotone"
+                    dataKey={s.account_label}
+                    stroke={CHANNEL_COLORS[s.account_label] ?? "#C4924A"}
+                    strokeWidth={2}
+                    dot={chartData.length < 6 ? { r: 2.5 } : false}
+                    isAnimationActive={false}
+                    connectNulls
+                  />
+                ))}
+                <Tooltip
+                  contentStyle={{
+                    background: "#1F2937", border: "none", borderRadius: 8,
+                    color: "#F7F3EC", fontSize: 11,
+                  }}
+                  labelFormatter={(d: any) => fmtDate(d)}
+                  formatter={(v: any) => fmtNum(v)}
                 />
-              ))}
-              <Tooltip
-                contentStyle={{
-                  background: "#1F2937", border: "none", borderRadius: 8,
-                  color: "#F7F3EC", fontSize: 11,
-                }}
-                labelFormatter={(d: any) => fmtDate(d)}
-                formatter={(v: any) => fmtNum(v)}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         {mostRecentVideo && (
