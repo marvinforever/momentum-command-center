@@ -1,9 +1,11 @@
-// Kajabi Direct API Sync
+// Kajabi Public API Sync
 // Pulls contacts, purchases, and form submissions from Kajabi's REST API and
 // upserts them into our DB — same downstream behavior as the webhook handler,
 // but pull-based so we can backfill historical data.
 //
-// Auth: HTTP Basic with KAJABI_API_KEY:KAJABI_API_SECRET.
+// Auth: OAuth2 client_credentials flow against /v1/oauth/token, using
+// KAJABI_API_KEY (client_id) + KAJABI_API_SECRET (client_secret). The
+// resulting bearer token is cached in-memory until ~60s before expiry.
 // Triggered from Admin → Integrations.
 
 import { createFileRoute } from "@tanstack/react-router";
@@ -13,22 +15,72 @@ const KAJABI_BASE = "https://api.kajabi.com/v1";
 
 type SyncResource = "contacts" | "purchases" | "form_submissions";
 
-function authHeader(): string {
-  const key = process.env.KAJABI_API_KEY;
-  const secret = process.env.KAJABI_API_SECRET;
-  if (!key || !secret) throw new Error("Missing KAJABI_API_KEY / KAJABI_API_SECRET");
-  return "Basic " + Buffer.from(`${key}:${secret}`).toString("base64");
+// In-memory token cache (per worker instance). Acceptable because tokens are
+// cheap to mint and Kajabi's typical TTL is ~1h.
+let cachedToken: { token: string; expiresAt: number } | null = null;
+
+async function getAccessToken(): Promise<string> {
+  const clientId = process.env.KAJABI_API_KEY;
+  const clientSecret = process.env.KAJABI_API_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error("Missing KAJABI_API_KEY / KAJABI_API_SECRET");
+  }
+
+  if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) {
+    return cachedToken.token;
+  }
+
+  const body = new URLSearchParams({
+    grant_type: "client_credentials",
+    client_id: clientId,
+    client_secret: clientSecret,
+  });
+
+  const res = await fetch(`${KAJABI_BASE}/oauth/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: body.toString(),
+  });
+
+  if (!res.ok) {
+    const errBody = await res.text();
+    throw new Error(`Kajabi /oauth/token → ${res.status}: ${errBody.slice(0, 400)}`);
+  }
+
+  const json = (await res.json()) as { access_token: string; expires_in?: number };
+  if (!json.access_token) {
+    throw new Error(`Kajabi /oauth/token returned no access_token: ${JSON.stringify(json).slice(0, 300)}`);
+  }
+
+  const ttlMs = (json.expires_in ?? 3600) * 1000;
+  cachedToken = { token: json.access_token, expiresAt: Date.now() + ttlMs };
+  return json.access_token;
 }
 
 async function kajabiFetch(path: string, params: Record<string, string> = {}) {
   const url = new URL(`${KAJABI_BASE}${path}`);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-  const res = await fetch(url.toString(), {
+
+  let token = await getAccessToken();
+  let res = await fetch(url.toString(), {
     headers: {
-      Authorization: authHeader(),
+      Authorization: `Bearer ${token}`,
       Accept: "application/vnd.api+json",
     },
   });
+
+  // Token might have expired between cache check and request — retry once.
+  if (res.status === 401) {
+    cachedToken = null;
+    token = await getAccessToken();
+    res = await fetch(url.toString(), {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.api+json",
+      },
+    });
+  }
+
   if (!res.ok) {
     const body = await res.text();
     throw new Error(`Kajabi ${path} → ${res.status}: ${body.slice(0, 300)}`);
