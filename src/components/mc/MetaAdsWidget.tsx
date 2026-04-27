@@ -4,8 +4,9 @@ import { fmtNum, fmtUSD, timeAgo } from "@/lib/format";
 import { ResponsiveContainer, LineChart, Line, Tooltip, XAxis } from "recharts";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, ArrowUpRight } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 
 export function MetaAdsWidget() {
   const dailyQ = useMetaAdsDaily(30);
