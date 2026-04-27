@@ -20,7 +20,7 @@ export function MetaAdsWidget() {
   const campaigns = campaignsQ.data ?? [];
   const lastRun = runsQ.data?.[0];
 
-  // Aggregate last 7 days vs prev 7 days
+  // Aggregate last 30 days vs prev 30 days (matches drill-down totals)
   const totals = useMemo(() => {
     const byDay = new Map<string, { spend: number; leads: number; clicks: number; impressions: number }>();
     for (const r of daily) {
@@ -40,6 +40,8 @@ export function MetaAdsWidget() {
     const sum = (arr: typeof sorted, k: "spend" | "leads" | "clicks" | "impressions") =>
       arr.reduce((s, r) => s + (r[k] as number), 0);
 
+    const spend30 = sum(sorted, "spend");
+    const leads30 = sum(sorted, "leads");
     const spend7 = sum(last7, "spend");
     const leads7 = sum(last7, "leads");
     const spendPrev = sum(prev7, "spend");
@@ -47,11 +49,11 @@ export function MetaAdsWidget() {
 
     return {
       sorted,
-      spend7,
-      leads7,
-      cpl7: leads7 ? spend7 / leads7 : 0,
-      clicks7: sum(last7, "clicks"),
-      impressions7: sum(last7, "impressions"),
+      spend30,
+      leads30,
+      cpl30: leads30 ? spend30 / leads30 : 0,
+      clicks30: sum(sorted, "clicks"),
+      impressions30: sum(sorted, "impressions"),
       deltaSpend: spendPrev ? ((spend7 - spendPrev) / spendPrev) * 100 : 0,
       deltaLeads: leadsPrev ? ((leads7 - leadsPrev) / leadsPrev) * 100 : 0,
     };
