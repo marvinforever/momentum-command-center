@@ -9,6 +9,7 @@ import { useMemo } from "react";
 import { YouTubeWidget } from "@/components/mc/YouTubeWidget";
 import { MetaAdsWidget } from "@/components/mc/MetaAdsWidget";
 import { LinkedInWidget } from "@/components/mc/LinkedInWidget";
+import { KajabiWidget } from "@/components/mc/KajabiWidget";
 import { Settings } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -242,15 +243,13 @@ function Dashboard() {
         </MCCard>
       </div>
 
-      {/* Paid + YouTube row */}
+      {/* Channels — YouTube, Meta, LinkedIn, Kajabi */}
+      <SectionTitle title="Channels" meta="Click any widget to drill down" />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6 lg:mb-9">
-        <MetaAdsWidget />
         <YouTubeWidget />
-      </div>
-
-      {/* LinkedIn row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6 lg:mb-9">
+        <MetaAdsWidget />
         <LinkedInWidget />
+        <KajabiWidget />
       </div>
 
       {/* Recent activity row */}

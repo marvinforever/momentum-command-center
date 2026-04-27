@@ -278,6 +278,34 @@ export function useLinkedinWeekly() {
   });
 }
 
+export function useKajabiPurchases() {
+  return useQuery({
+    queryKey: ["kajabi_purchases"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("kajabi_purchases")
+        .select("*")
+        .order("purchased_at", { ascending: false, nullsFirst: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useKajabiFormSubmissions() {
+  return useQuery({
+    queryKey: ["kajabi_form_submissions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("kajabi_form_submissions")
+        .select("*")
+        .order("submitted_at", { ascending: false, nullsFirst: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
 export function useMetaSyncRuns() {
   return useQuery({
     queryKey: ["meta_sync_runs"],
