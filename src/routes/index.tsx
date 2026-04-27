@@ -8,6 +8,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Tooltip } fr
 import { useMemo } from "react";
 import { YouTubeWidget } from "@/components/mc/YouTubeWidget";
 import { MetaAdsWidget } from "@/components/mc/MetaAdsWidget";
+import { LinkedInWidget } from "@/components/mc/LinkedInWidget";
 import { Settings } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -286,6 +287,11 @@ function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6 lg:mb-9">
         <MetaAdsWidget />
         <YouTubeWidget />
+      </div>
+
+      {/* LinkedIn row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6 lg:mb-9">
+        <LinkedInWidget />
       </div>
 
       {/* Recent activity row */}

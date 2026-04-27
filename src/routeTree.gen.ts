@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as YoutubeRouteImport } from './routes/youtube'
 import { Route as MetaRouteImport } from './routes/meta'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LinkedinRouteImport } from './routes/linkedin'
 import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -35,6 +36,11 @@ const MetaRoute = MetaRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LinkedinRoute = LinkedinRouteImport.update({
+  id: '/linkedin',
+  path: '/linkedin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LeadsRoute = LeadsRouteImport.update({
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/leads': typeof LeadsRoute
+  '/linkedin': typeof LinkedinRoute
   '/login': typeof LoginRoute
   '/meta': typeof MetaRoute
   '/youtube': typeof YoutubeRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/leads': typeof LeadsRoute
+  '/linkedin': typeof LinkedinRoute
   '/login': typeof LoginRoute
   '/meta': typeof MetaRoute
   '/youtube': typeof YoutubeRoute
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/leads': typeof LeadsRoute
+  '/linkedin': typeof LinkedinRoute
   '/login': typeof LoginRoute
   '/meta': typeof MetaRoute
   '/youtube': typeof YoutubeRoute
@@ -132,6 +141,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/leads'
+    | '/linkedin'
     | '/login'
     | '/meta'
     | '/youtube'
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/leads'
+    | '/linkedin'
     | '/login'
     | '/meta'
     | '/youtube'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/leads'
+    | '/linkedin'
     | '/login'
     | '/meta'
     | '/youtube'
@@ -175,6 +187,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   LeadsRoute: typeof LeadsRoute
+  LinkedinRoute: typeof LinkedinRoute
   LoginRoute: typeof LoginRoute
   MetaRoute: typeof MetaRoute
   YoutubeRoute: typeof YoutubeRoute
@@ -206,6 +219,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/linkedin': {
+      id: '/linkedin'
+      path: '/linkedin'
+      fullPath: '/linkedin'
+      preLoaderRoute: typeof LinkedinRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/leads': {
@@ -288,6 +308,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   LeadsRoute: LeadsRoute,
+  LinkedinRoute: LinkedinRoute,
   LoginRoute: LoginRoute,
   MetaRoute: MetaRoute,
   YoutubeRoute: YoutubeRoute,
