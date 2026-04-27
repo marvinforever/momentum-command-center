@@ -282,9 +282,14 @@ function Dashboard() {
         </div>
       </MCCard>
 
-      {/* YouTube + Recent activity row */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr_1fr] gap-4 lg:gap-6 mb-6 lg:mb-9">
+      {/* Paid + YouTube row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6 lg:mb-9">
+        <MetaAdsWidget />
         <YouTubeWidget />
+      </div>
+
+      {/* Recent activity row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6 lg:mb-9">
         <MCCard>
           <CardHeader
             title="Recent Leads"
