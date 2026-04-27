@@ -214,4 +214,10 @@
     background-color: var(--cream-deep);
     cursor: pointer;
   }
+  /* On mobile, force admin form's inner grids to stack into a single column */
+  @media (max-width: 639px) {
+    .mc-admin-form .grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
 }
