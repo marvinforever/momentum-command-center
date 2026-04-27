@@ -250,6 +250,34 @@ export function useMetaAdsInsightsDaily(filters: { campaignId?: string; adsetId?
   });
 }
 
+export function useLinkedinPosts() {
+  return useQuery({
+    queryKey: ["linkedin_posts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("linkedin_posts")
+        .select("*")
+        .order("post_date", { ascending: false, nullsFirst: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useLinkedinWeekly() {
+  return useQuery({
+    queryKey: ["linkedin_weekly_metrics"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("linkedin_weekly_metrics")
+        .select("*")
+        .order("week_ending", { ascending: false, nullsFirst: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
 export function useMetaSyncRuns() {
   return useQuery({
     queryKey: ["meta_sync_runs"],
