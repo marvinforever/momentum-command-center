@@ -127,9 +127,10 @@ function CampaignDetail() {
         </MCCard>
       </div>
 
-      <MCCard className="mb-9">
+      <MCCard className="mb-6 lg:mb-9 overflow-hidden">
         <CardHeader title="Content Driving This Campaign" meta="Attribution by piece" />
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px]">
           <thead>
             <tr className="bg-cream/60">
               <th className="label-eyebrow px-6 py-3 text-left">Content</th>
@@ -155,11 +156,13 @@ function CampaignDetail() {
             {cContent.length === 0 && <tr><td colSpan={5} className="text-center text-ink-muted py-12 text-[13px]">No content attributed yet.</td></tr>}
           </tbody>
         </table>
+        </div>
       </MCCard>
 
-      <MCCard className="mb-9">
+      <MCCard className="mb-6 lg:mb-9 overflow-hidden">
         <CardHeader title="Booked Calls from This Campaign" meta={`${cCalls.length} call${cCalls.length === 1 ? "" : "s"}`} />
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px]">
           <thead>
             <tr className="bg-cream/60">
               <th className="label-eyebrow px-6 py-3 text-left">Lead</th>
@@ -182,9 +185,10 @@ function CampaignDetail() {
             {cCalls.length === 0 && <tr><td colSpan={5} className="text-center text-ink-muted py-12 text-[13px]">No calls booked through this campaign yet.</td></tr>}
           </tbody>
         </table>
+        </div>
       </MCCard>
 
-      <MCCard className="border-l-4 border-l-gold p-7">
+      <MCCard className="border-l-4 border-l-gold p-5 sm:p-7">
         <div className="flex items-end justify-between">
           <h3 className="serif text-[22px] text-ink">Campaign Notes</h3>
           <span className="label-eyebrow">Updated {fmtDate(campaign.created_at)}</span>
