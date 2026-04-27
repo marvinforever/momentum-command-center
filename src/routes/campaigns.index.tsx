@@ -147,7 +147,7 @@ function CampaignsPage() {
         </table>
       </MCCard>
 
-      <MCCard className="border-l-4 border-l-gold p-7">
+      <MCCard className="border-l-4 border-l-gold p-5 sm:p-7">
         <h3 className="serif text-[22px] text-ink">Notes &amp; Next Steps</h3>
         <p className="label-eyebrow mt-1">Christine + Mark · Tuesday review</p>
         <p className="text-[14px] text-ink-soft mt-4 leading-relaxed">
