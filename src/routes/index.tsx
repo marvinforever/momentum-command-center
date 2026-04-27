@@ -268,10 +268,11 @@ function Dashboard() {
             )}
           </tbody>
         </table>
+        </div>
       </MCCard>
 
       {/* YouTube + Recent activity row */}
-      <div className="grid grid-cols-[1.1fr_1fr_1fr] gap-6 mb-9">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr_1fr] gap-4 lg:gap-6 mb-6 lg:mb-9">
         <YouTubeWidget />
         <MCCard>
           <CardHeader
