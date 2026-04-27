@@ -88,7 +88,7 @@ function CampaignDetail() {
         </div>
       </MCCard>
 
-      <div className="grid grid-cols-7 gap-3 mb-9">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 mb-6 lg:mb-9">
         <KpiTile label="Opt-Ins" value={fmtNum(optIns)} trend={campaign.lead_goal ? `vs goal of ${campaign.lead_goal}` : ""} tone="gold" />
         <KpiTile label="Click Rate" value="3.4%" trend="—" tone="gold" />
         <KpiTile label="Calls Booked" value={fmtNum(booked)} trend={campaign.booking_goal ? `vs goal of ${campaign.booking_goal}` : ""} tone="sage" />
@@ -98,7 +98,7 @@ function CampaignDetail() {
         <KpiTile label="Close Rate" value={fmtPct(closeRate, 0)} trend="—" tone="burgundy" />
       </div>
 
-      <div className="grid grid-cols-[2fr_1fr] gap-6 mb-9">
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 lg:gap-6 mb-6 lg:mb-9">
         <MCCard>
           <CardHeader title="Daily Lead Acquisition" meta="Opt-Ins by day · campaign to date" />
           <div className="p-6 h-[280px]">
