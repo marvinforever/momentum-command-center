@@ -125,25 +125,25 @@ export function MetaAdsWidget() {
           <>
             <div className="grid grid-cols-2 gap-3">
               <Tile
-                label="Spend (7d)"
-                value={fmtUSD(totals.spend7)}
-                delta={`${totals.deltaSpend >= 0 ? "+" : ""}${totals.deltaSpend.toFixed(0)}% vs prev 7d`}
+                label="Spend (30d)"
+                value={fmtUSD(totals.spend30)}
+                delta={`${totals.deltaSpend >= 0 ? "+" : ""}${totals.deltaSpend.toFixed(0)}% (last 7d vs prev 7d)`}
               />
               <Tile
-                label="Leads (7d)"
-                value={fmtNum(totals.leads7)}
-                delta={`${totals.deltaLeads >= 0 ? "+" : ""}${totals.deltaLeads.toFixed(0)}% vs prev 7d`}
+                label="Leads (30d)"
+                value={fmtNum(totals.leads30)}
+                delta={`${totals.deltaLeads >= 0 ? "+" : ""}${totals.deltaLeads.toFixed(0)}% (last 7d vs prev 7d)`}
                 tone={totals.deltaLeads >= 0 ? "sage" : undefined}
               />
               <Tile
-                label="Cost / Lead"
-                value={totals.leads7 ? `$${totals.cpl7.toFixed(2)}` : "—"}
+                label="Cost / Lead (30d)"
+                value={totals.leads30 ? `$${totals.cpl30.toFixed(2)}` : "—"}
                 delta={`${activeCampaigns} active campaign${activeCampaigns === 1 ? "" : "s"}`}
               />
               <Tile
-                label="Clicks (7d)"
-                value={fmtNum(totals.clicks7)}
-                delta={`${fmtNum(totals.impressions7)} impressions`}
+                label="Clicks (30d)"
+                value={fmtNum(totals.clicks30)}
+                delta={`${fmtNum(totals.impressions30)} impressions`}
               />
             </div>
 
