@@ -51,14 +51,19 @@ export function PageHeader({ title, subtitle, rightStatus, rightDate, breadcrumb
               </span>
             )}
           </div>
-          {user && (
-            <button
-              onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
-              className="flex items-center gap-1.5 text-[11px] text-ink-muted hover:text-gold transition-colors"
-            >
-              <LogOut className="h-3 w-3" />
-              Sign out
-            </button>
+          {(user || rightSlot) && (
+            <div className="flex items-center gap-3">
+              {rightSlot}
+              {user && (
+                <button
+                  onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
+                  className="flex items-center gap-1.5 text-[11px] text-ink-muted hover:text-gold transition-colors"
+                >
+                  <LogOut className="h-3 w-3" />
+                  Sign out
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
