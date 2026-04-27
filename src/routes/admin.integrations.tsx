@@ -106,11 +106,11 @@ function IntegrationsPage() {
         <MCCard className="p-6">
           <div className="label-eyebrow mb-3">Last Sync Result</div>
           {lastResult.channels?.length > 0 && (
-            <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               {lastResult.channels.map((c: any) => (
                 <div key={c.channel} className="rounded-lg bg-cream border border-line-soft p-4">
                   <div className="text-[14px] font-medium text-ink">{c.channel}</div>
-                  <div className="grid grid-cols-3 gap-3 mt-3">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-3">
                     <Stat label="Subscribers" value={c.subscribers?.toLocaleString() ?? "—"} />
                     <Stat label="Videos Synced" value={c.videos_upserted ?? 0} />
                     <Stat label="28d Views" value={(c.reach_28d ?? 0).toLocaleString()} />
@@ -212,7 +212,7 @@ function KajabiCard() {
   }
 
   return (
-    <MCCard className="p-8 mb-6">
+    <MCCard className="p-5 sm:p-7 lg:p-8 mb-6">
       <div className="flex items-start justify-between mb-6">
         <div>
           <h2 className="serif text-[26px] text-ink">Kajabi (Live Webhooks)</h2>
@@ -241,7 +241,7 @@ function KajabiCard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 mb-5">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5">
         <Stat label="Kajabi Leads" value={counts.data?.leadsCount.toLocaleString() ?? "—"} />
         <Stat label="Purchases Logged" value={counts.data?.purchasesCount.toLocaleString() ?? "—"} />
         <Stat label="Form Submissions" value={counts.data?.formsCount.toLocaleString() ?? "—"} />
@@ -323,7 +323,7 @@ function ZapierCard() {
   }
 
   return (
-    <MCCard className="p-8 mb-6">
+    <MCCard className="p-5 sm:p-7 lg:p-8 mb-6">
       <div className="flex items-start justify-between mb-6">
         <div>
           <h2 className="serif text-[26px] text-ink">Zapier (Form Submissions)</h2>
@@ -436,7 +436,7 @@ function KajabiApiSyncCard() {
   }
 
   return (
-    <MCCard className="p-8 mb-6">
+    <MCCard className="p-5 sm:p-7 lg:p-8 mb-6">
       <div className="flex items-start justify-between mb-6">
         <div>
           <h2 className="serif text-[26px] text-ink">Kajabi Direct API Sync</h2>
@@ -483,7 +483,7 @@ function KajabiApiSyncCard() {
         <div className="border-t border-line-soft pt-4">
           <div className="label-eyebrow mb-3">Last Sync Result</div>
           {lastResult.results?.length > 0 && (
-            <div className="grid grid-cols-3 gap-3 mb-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3">
               {lastResult.results.map((r: any) => (
                 <div key={r.resource} className="rounded-lg bg-cream border border-line-soft p-4">
                   <div className="text-[13px] font-medium text-ink capitalize">{r.resource.replace("_", " ")}</div>
