@@ -90,7 +90,7 @@ function LeadsPage() {
 
   return (
     <PageShell>
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <PageHeader
           title="Leads"
           subtitle="Every lead · Source attribution required"
@@ -98,14 +98,14 @@ function LeadsPage() {
         />
         <Link
           to="/admin"
-          className="mt-2 rounded-lg bg-gold px-4 py-2 text-[12px] font-medium text-white hover:bg-gold/90 transition-colors"
+          className="self-start sm:mt-2 rounded-lg bg-gold px-4 py-2 text-[12px] font-medium text-white hover:bg-gold/90 transition-colors whitespace-nowrap"
         >
           + Add Lead
         </Link>
       </div>
 
       {/* Summary tiles */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-5 sm:mb-6">
         <SummaryTile label="Total Leads" value={String(leads.length)} />
         <SummaryTile
           label="Missing Source"
@@ -124,7 +124,7 @@ function LeadsPage() {
 
       {/* Filters */}
       <MCCard className="p-4 mb-4">
-        <div className="grid grid-cols-[1fr_180px_180px_auto] gap-3 items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_180px_180px_auto] gap-3 sm:items-center">
           <input
             placeholder="Search name, email, how-did-you-hear…"
             value={search}

@@ -100,8 +100,8 @@ function Dashboard() {
 
       {/* The Funnel */}
       <SectionTitle title="The Funnel" meta="Month to date · Click any stage" />
-      <MCCard className="p-6 mb-9">
-        <div className="grid grid-cols-5 divide-x divide-line-soft">
+      <MCCard className="p-3 sm:p-6 mb-6 lg:mb-9 overflow-hidden">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-y divide-line-soft sm:divide-y-0 sm:divide-x">
           <FunnelStage label="Visitors" value="12,418" trend="+18.2% vs last month" tone="gold" />
           <FunnelStage label="Leads Captured" value={fmtNum(leadsMTD)} trend="+22.6% vs last month" tone="gold" />
           <FunnelStage
@@ -118,7 +118,7 @@ function Dashboard() {
       </MCCard>
 
       {/* Three column row */}
-      <div className="grid grid-cols-[1.1fr_1fr_1.1fr] gap-6 mb-9">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr_1.1fr] gap-4 lg:gap-6 mb-6 lg:mb-9">
         {/* Channel Mix */}
         <MCCard>
           <CardHeader title="Channel Mix" meta="Where leads came from" />
@@ -231,9 +231,10 @@ function Dashboard() {
       </div>
 
       {/* Top Performing Content */}
-      <MCCard className="mb-9">
+      <MCCard className="mb-6 lg:mb-9 overflow-hidden">
         <CardHeader title="Top Performing Content" meta="Last 30 days" />
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px]">
           <thead>
             <tr className="text-left">
               <Th>Content</Th>
@@ -267,10 +268,11 @@ function Dashboard() {
             )}
           </tbody>
         </table>
+        </div>
       </MCCard>
 
       {/* YouTube + Recent activity row */}
-      <div className="grid grid-cols-[1.1fr_1fr_1fr] gap-6 mb-9">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr_1fr] gap-4 lg:gap-6 mb-6 lg:mb-9">
         <YouTubeWidget />
         <MCCard>
           <CardHeader
@@ -340,14 +342,14 @@ function FunnelStage({
   return (
     <div
       onClick={onClick}
-      className={`px-6 py-4 ${highlighted ? "bg-cream-deep" : ""} ${onClick ? "cursor-pointer hover:bg-cream-deep transition-colors" : ""}`}
+      className={`px-3 py-3 sm:px-6 sm:py-4 ${highlighted ? "bg-cream-deep" : ""} ${onClick ? "cursor-pointer hover:bg-cream-deep transition-colors" : ""}`}
     >
       <div className="label-eyebrow flex items-center gap-2">
         <span className="h-1.5 w-1.5 rounded-full" style={{ background: colors[tone] }} />
         {label}
       </div>
-      <div className="num-serif text-[38px] mt-2 leading-none text-ink">{value}</div>
-      <div className="text-[11px] text-ink-muted mt-2">{trend}</div>
+      <div className="num-serif text-[26px] sm:text-[32px] lg:text-[38px] mt-1.5 sm:mt-2 leading-none text-ink">{value}</div>
+      <div className="text-[10px] sm:text-[11px] text-ink-muted mt-1.5 sm:mt-2">{trend}</div>
     </div>
   );
 }

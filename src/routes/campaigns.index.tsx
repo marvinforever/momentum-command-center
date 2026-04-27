@@ -86,7 +86,7 @@ function CampaignsPage() {
         breadcrumbs={[{ label: "Command Center", to: "/" }, { label: "Campaign Performance" }]}
       />
 
-      <div className="grid grid-cols-7 gap-4 mb-9">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 sm:gap-4 mb-6 lg:mb-9">
         <KpiTile label="Total Opt-Ins" value={fmtNum(leadsMTD)} trend="+22.6% vs March" tone="gold" />
         <KpiTile label="Total Clicks" value="2,142" trend="+15.4% vs March" tone="gold" />
         <KpiTile label="Calls Booked" value={fmtNum(bookedMTD)} trend="+10.7% vs March" tone="sage" />
@@ -147,7 +147,7 @@ function CampaignsPage() {
         </table>
       </MCCard>
 
-      <MCCard className="border-l-4 border-l-gold p-7">
+      <MCCard className="border-l-4 border-l-gold p-5 sm:p-7">
         <h3 className="serif text-[22px] text-ink">Notes &amp; Next Steps</h3>
         <p className="label-eyebrow mt-1">Christine + Mark · Tuesday review</p>
         <p className="text-[14px] text-ink-soft mt-4 leading-relaxed">

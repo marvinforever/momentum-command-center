@@ -70,25 +70,25 @@ function CampaignDetail() {
         ]}
       />
 
-      <MCCard className="mb-7">
+      <MCCard className="mb-6 lg:mb-7">
         <div className="h-[5px]" style={{ background: "linear-gradient(90deg, var(--gold), var(--sage), var(--burgundy))" }} />
-        <div className="p-7">
-          <h2 className="serif text-[36px] text-ink leading-tight">{campaign.name}</h2>
-          <div className="mt-3 flex items-center gap-3 text-[12px] text-ink-muted flex-wrap">
-            <span>{shortId}</span><span>·</span>
+        <div className="p-4 sm:p-6 lg:p-7">
+          <h2 className="serif text-[24px] sm:text-[30px] lg:text-[36px] text-ink leading-tight">{campaign.name}</h2>
+          <div className="mt-3 flex items-center gap-2 sm:gap-3 text-[12px] text-ink-muted flex-wrap">
+            <span>{shortId}</span><span className="hidden sm:inline">·</span>
             <StatusBadge status={campaign.status ?? "Live"} />
-            <span>·</span>
+            <span className="hidden sm:inline">·</span>
             <ChannelBadge channel={campaign.primary_channel ?? "Other"} />
-            <span>·</span>
+            <span className="hidden sm:inline">·</span>
             <span>{campaign.start_date ? fmtDate(campaign.start_date) : "—"} → {campaign.end_date ? fmtDate(campaign.end_date) : "ongoing"}</span>
           </div>
-          <div className="border-t border-line-soft mt-5 pt-5 text-[14px] text-ink-soft leading-relaxed">
+          <div className="border-t border-line-soft mt-5 pt-5 text-[13px] sm:text-[14px] text-ink-soft leading-relaxed">
             {campaign.goal ?? `Driving ${campaign.lead_goal ?? "—"} qualified opt-ins toward ${(campaign as any).offers?.name ?? "the offer"} via ${campaign.primary_channel?.toLowerCase() ?? "multi-channel"} efforts.`}
           </div>
         </div>
       </MCCard>
 
-      <div className="grid grid-cols-7 gap-3 mb-9">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 mb-6 lg:mb-9">
         <KpiTile label="Opt-Ins" value={fmtNum(optIns)} trend={campaign.lead_goal ? `vs goal of ${campaign.lead_goal}` : ""} tone="gold" />
         <KpiTile label="Click Rate" value="3.4%" trend="—" tone="gold" />
         <KpiTile label="Calls Booked" value={fmtNum(booked)} trend={campaign.booking_goal ? `vs goal of ${campaign.booking_goal}` : ""} tone="sage" />
@@ -98,7 +98,7 @@ function CampaignDetail() {
         <KpiTile label="Close Rate" value={fmtPct(closeRate, 0)} trend="—" tone="burgundy" />
       </div>
 
-      <div className="grid grid-cols-[2fr_1fr] gap-6 mb-9">
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 lg:gap-6 mb-6 lg:mb-9">
         <MCCard>
           <CardHeader title="Daily Lead Acquisition" meta="Opt-Ins by day · campaign to date" />
           <div className="p-6 h-[280px]">
@@ -127,9 +127,10 @@ function CampaignDetail() {
         </MCCard>
       </div>
 
-      <MCCard className="mb-9">
+      <MCCard className="mb-6 lg:mb-9 overflow-hidden">
         <CardHeader title="Content Driving This Campaign" meta="Attribution by piece" />
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px]">
           <thead>
             <tr className="bg-cream/60">
               <th className="label-eyebrow px-6 py-3 text-left">Content</th>
@@ -155,11 +156,13 @@ function CampaignDetail() {
             {cContent.length === 0 && <tr><td colSpan={5} className="text-center text-ink-muted py-12 text-[13px]">No content attributed yet.</td></tr>}
           </tbody>
         </table>
+        </div>
       </MCCard>
 
-      <MCCard className="mb-9">
+      <MCCard className="mb-6 lg:mb-9 overflow-hidden">
         <CardHeader title="Booked Calls from This Campaign" meta={`${cCalls.length} call${cCalls.length === 1 ? "" : "s"}`} />
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px]">
           <thead>
             <tr className="bg-cream/60">
               <th className="label-eyebrow px-6 py-3 text-left">Lead</th>
@@ -182,9 +185,10 @@ function CampaignDetail() {
             {cCalls.length === 0 && <tr><td colSpan={5} className="text-center text-ink-muted py-12 text-[13px]">No calls booked through this campaign yet.</td></tr>}
           </tbody>
         </table>
+        </div>
       </MCCard>
 
-      <MCCard className="border-l-4 border-l-gold p-7">
+      <MCCard className="border-l-4 border-l-gold p-5 sm:p-7">
         <div className="flex items-end justify-between">
           <h3 className="serif text-[22px] text-ink">Campaign Notes</h3>
           <span className="label-eyebrow">Updated {fmtDate(campaign.created_at)}</span>

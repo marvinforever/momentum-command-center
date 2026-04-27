@@ -36,39 +36,41 @@ function AdminPage() {
         subtitle="Data Entry · Internal Operations"
         breadcrumbs={[{ label: "Command Center", to: "/" }, { label: "Admin" }]}
       />
-      <div className="grid grid-cols-[260px_1fr] gap-6">
-        <MCCard className="p-3 h-fit">
+      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4 lg:gap-6">
+        <MCCard className="p-2 sm:p-3 h-fit">
+          <div className="flex lg:block gap-1 overflow-x-auto lg:overflow-visible -mx-1 px-1 lg:mx-0 lg:px-0">
           {FORMS.map((f) => (
             <button
               key={f.key}
               onClick={() => setActive(f.key)}
               className={cn(
-                "w-full text-left rounded-lg px-4 py-3 text-[13px] transition-colors",
+                "lg:w-full text-left rounded-lg px-3 py-2 lg:px-4 lg:py-3 text-[12px] sm:text-[13px] transition-colors whitespace-nowrap shrink-0",
                 active === f.key ? "bg-cream-deep text-ink font-medium" : "text-ink-soft hover:bg-cream-deep/60",
               )}
             >
               {f.label}
             </button>
           ))}
-          <div className="border-t border-line-soft my-2 mx-2" />
+          <div className="hidden lg:block border-t border-line-soft my-2 mx-2" />
           <Link
             to="/youtube"
-            className="block w-full text-left rounded-lg px-4 py-3 text-[13px] text-ink-soft hover:bg-cream-deep/60 transition-colors"
+            className="block lg:w-full text-left rounded-lg px-3 py-2 lg:px-4 lg:py-3 text-[12px] sm:text-[13px] text-ink-soft hover:bg-cream-deep/60 transition-colors whitespace-nowrap shrink-0"
           >
-            <span className="flex items-center justify-between">
+            <span className="flex items-center justify-between gap-2">
               <span>YouTube Videos</span>
-              <span className="text-[10px] uppercase tracking-[0.14em] text-ink-muted">All</span>
+              <span className="hidden lg:inline text-[10px] uppercase tracking-[0.14em] text-ink-muted">All</span>
             </span>
           </Link>
           <Link
             to="/admin/integrations"
-            className="block w-full text-left rounded-lg px-4 py-3 text-[13px] text-ink-soft hover:bg-cream-deep/60 transition-colors"
+            className="block lg:w-full text-left rounded-lg px-3 py-2 lg:px-4 lg:py-3 text-[12px] sm:text-[13px] text-ink-soft hover:bg-cream-deep/60 transition-colors whitespace-nowrap shrink-0"
           >
-            <span className="flex items-center justify-between">
+            <span className="flex items-center justify-between gap-2">
               <span>Integrations</span>
-              <span className="text-[10px] uppercase tracking-[0.14em] text-gold">YouTube</span>
+              <span className="hidden lg:inline text-[10px] uppercase tracking-[0.14em] text-gold">YouTube</span>
             </span>
           </Link>
+          </div>
         </MCCard>
         <div>{renderForm(active)}</div>
       </div>
@@ -93,15 +95,15 @@ function renderForm(key: FormKey) {
 function FormCard({ title, children, onSubmit }: { title: string; children: React.ReactNode; onSubmit: (e: React.FormEvent) => Promise<unknown> | unknown }) {
   const [busy, setBusy] = useState(false);
   return (
-    <MCCard className="p-8">
-      <h2 className="serif text-[26px] text-ink mb-6">{title}</h2>
+    <MCCard className="p-5 sm:p-7 lg:p-8">
+      <h2 className="serif text-[22px] sm:text-[26px] text-ink mb-5 sm:mb-6">{title}</h2>
       <form
         onSubmit={async (e) => {
           e.preventDefault();
           setBusy(true);
           try { await onSubmit(e); } finally { setBusy(false); }
         }}
-        className="space-y-5"
+        className="space-y-5 mc-admin-form"
       >
         {children}
         <div className="flex justify-end pt-2">
