@@ -32,22 +32,32 @@ export function YouTubeWidget() {
     return Array.from(map.values());
   }, [ytSnapshots]);
 
-  // 30-day subscriber growth chart, two series
+  // Subscriber trend across all snapshots we have. Builds a real history
+  // forward from today as daily syncs accumulate. YouTube's API does not
+  // expose historical subscriber counts, so we can't backfill the past.
   const chartData = useMemo(() => {
+    const labels = Array.from(
+      new Set(ytSnapshots.map((s: any) => s.account_label).filter(Boolean))
+    ) as string[];
+
+    // Bucket one row per snapshot_date with a column per channel
     const days: Record<string, any> = {};
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date(Date.now() - i * 86400_000).toISOString().slice(0, 10);
-      days[d] = { day: d };
-    }
     for (const s of ytSnapshots) {
       if (!s.snapshot_date || !s.account_label) continue;
-      if (!days[s.snapshot_date]) continue;
-      days[s.snapshot_date][s.account_label] = s.followers_subs;
+      if (!days[s.snapshot_date]) days[s.snapshot_date] = { day: s.snapshot_date };
+      // Keep the highest sub count seen that day (handles multiple syncs/day)
+      const prev = days[s.snapshot_date][s.account_label];
+      const next = Number(s.followers_subs ?? 0);
+      days[s.snapshot_date][s.account_label] =
+        prev == null ? next : Math.max(prev, next);
     }
-    // Forward-fill so lines connect through gap days
-    const labels = Array.from(new Set(ytSnapshots.map((s: any) => s.account_label)));
-    const sorted = Object.values(days).sort((a: any, b: any) => a.day.localeCompare(b.day));
-    let last: Record<string, number> = {};
+
+    const sorted = Object.values(days).sort((a: any, b: any) =>
+      a.day.localeCompare(b.day)
+    );
+
+    // Forward-fill so lines stay continuous across gap days
+    const last: Record<string, number> = {};
     for (const row of sorted as any[]) {
       for (const label of labels) {
         if (row[label] != null) last[label] = row[label];
@@ -120,31 +130,40 @@ export function YouTubeWidget() {
         </div>
 
         <div className="h-[100px] mb-4">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-              <XAxis dataKey="day" hide />
-              <YAxis hide domain={["auto", "auto"]} />
-              {latestByChannel.map((s) => (
-                <Line
-                  key={s.account_label}
-                  type="monotone"
-                  dataKey={s.account_label}
-                  stroke={CHANNEL_COLORS[s.account_label] ?? "#C4924A"}
-                  strokeWidth={2}
-                  dot={false}
-                  isAnimationActive={false}
+          {chartData.length < 2 ? (
+            <div className="h-full flex items-center justify-center rounded-lg bg-cream/40 border border-dashed border-line-soft">
+              <span className="text-[11px] text-ink-muted">
+                Subscriber trend builds as daily syncs accumulate · {chartData.length} day{chartData.length === 1 ? "" : "s"} so far
+              </span>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                <XAxis dataKey="day" hide />
+                <YAxis hide domain={["dataMin - 1", "dataMax + 1"]} />
+                {latestByChannel.map((s) => (
+                  <Line
+                    key={s.account_label}
+                    type="monotone"
+                    dataKey={s.account_label}
+                    stroke={CHANNEL_COLORS[s.account_label] ?? "#C4924A"}
+                    strokeWidth={2}
+                    dot={chartData.length < 6 ? { r: 2.5 } : false}
+                    isAnimationActive={false}
+                    connectNulls
+                  />
+                ))}
+                <Tooltip
+                  contentStyle={{
+                    background: "#1F2937", border: "none", borderRadius: 8,
+                    color: "#F7F3EC", fontSize: 11,
+                  }}
+                  labelFormatter={(d: any) => fmtDate(d)}
+                  formatter={(v: any) => fmtNum(v)}
                 />
-              ))}
-              <Tooltip
-                contentStyle={{
-                  background: "#1F2937", border: "none", borderRadius: 8,
-                  color: "#F7F3EC", fontSize: 11,
-                }}
-                labelFormatter={(d: any) => fmtDate(d)}
-                formatter={(v: any) => fmtNum(v)}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         {mostRecentVideo && (
