@@ -5,12 +5,29 @@ import { Link } from "@tanstack/react-router";
 import { ResponsiveContainer, LineChart, Line, Tooltip, XAxis, YAxis } from "recharts";
 import { useMemo } from "react";
 
-export function LinkedInWidget() {
+type LinkedInAccount = "Christine" | "Mark";
+
+interface LinkedInWidgetProps {
+  account?: LinkedInAccount;
+}
+
+const ACCENT: Record<LinkedInAccount, string> = {
+  Christine: "#C4924A", // gold
+  Mark: "#6B8E7F",      // sage
+};
+
+export function LinkedInWidget({ account = "Christine" }: LinkedInWidgetProps) {
   const postsQ = useLinkedinPosts();
   const weeklyQ = useLinkedinWeekly();
 
-  const posts = postsQ.data ?? [];
-  const weekly = weeklyQ.data ?? [];
+  const posts = useMemo(
+    () => (postsQ.data ?? []).filter((p: any) => (p.account_label ?? "Christine") === account),
+    [postsQ.data, account]
+  );
+  const weekly = useMemo(
+    () => (weeklyQ.data ?? []).filter((w: any) => (w.account_label ?? "Christine") === account),
+    [weeklyQ.data, account]
+  );
 
   const latestFollowers = useMemo(() => {
     const first = weekly.find((w: any) => w.followers_total != null);
@@ -44,10 +61,12 @@ export function LinkedInWidget() {
       .sort((a: any, b: any) => (b.impressions ?? 0) - (a.impressions ?? 0))[0];
   }, [posts]);
 
+  const accent = ACCENT[account];
+
   if (posts.length === 0) {
     return (
       <MCCard className="border-dashed">
-        <CardHeader title="LinkedIn — Christine" meta="No data yet" />
+        <CardHeader title={`LinkedIn — ${account}`} meta="No data yet" />
         <div className="p-8 text-center">
           <p className="text-[13px] text-ink-muted">Import LinkedIn metrics to populate this widget.</p>
         </div>
@@ -58,7 +77,7 @@ export function LinkedInWidget() {
   return (
     <MCCard>
       <CardHeader
-        title="LinkedIn — Christine"
+        title={`LinkedIn — ${account}`}
         meta={
           <Link to="/linkedin" className="text-gold hover:underline">
             Drill down →
@@ -96,7 +115,7 @@ export function LinkedInWidget() {
             <LineChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
               <XAxis dataKey="day" hide />
               <YAxis hide domain={["auto", "auto"]} />
-              <Line type="monotone" dataKey="followers" stroke="#C4924A" strokeWidth={2} dot={false} isAnimationActive={false} />
+              <Line type="monotone" dataKey="followers" stroke={accent} strokeWidth={2} dot={false} isAnimationActive={false} />
               <Tooltip
                 contentStyle={{ background: "#1F2937", border: "none", borderRadius: 8, color: "#F7F3EC", fontSize: 11 }}
                 labelFormatter={(d: any) => fmtDate(d)}
