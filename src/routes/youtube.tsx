@@ -88,7 +88,7 @@ function YouTubeVideosPage() {
 
   return (
     <PageShell>
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <PageHeader
           title="YouTube Videos"
           subtitle="All synced videos · Both channels"
@@ -99,14 +99,14 @@ function YouTubeVideosPage() {
         />
         <Link
           to="/admin/integrations"
-          className="mt-2 rounded-lg border border-line bg-cream px-4 py-2 text-[12px] font-medium text-ink-soft hover:bg-cream-deep transition-colors"
+          className="self-start sm:mt-2 rounded-lg border border-line bg-cream px-4 py-2 text-[12px] font-medium text-ink-soft hover:bg-cream-deep transition-colors whitespace-nowrap"
         >
           Run Sync →
         </Link>
       </div>
 
       {/* Summary tiles */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-5 sm:mb-6">
         <SummaryTile label="Videos" value={fmtNum(totals.count)} />
         <SummaryTile label="Total Views" value={fmtNum(totals.views)} />
         <SummaryTile label="Total Engagement" value={fmtNum(totals.engagement)} />
@@ -115,12 +115,12 @@ function YouTubeVideosPage() {
 
       {/* Filters */}
       <MCCard className="p-4 mb-4">
-        <div className="grid grid-cols-[1fr_200px_200px] gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <input
             placeholder="Search title, topic, keyword…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="rounded-lg border border-line bg-cream px-3 py-2 text-[13px] text-ink focus:outline-none focus:border-gold-soft focus:ring-2 focus:ring-gold-soft/30"
+            className="rounded-lg border border-line bg-cream px-3 py-2 text-[13px] text-ink focus:outline-none focus:border-gold-soft focus:ring-2 focus:ring-gold-soft/30 sm:col-span-3 lg:col-span-1"
           />
           <select
             value={channelFilter}
