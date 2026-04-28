@@ -34,14 +34,17 @@ export function PodcastWidget() {
   const shows = showsQ.data ?? [];
   const episodes = episodesQ.data ?? [];
 
-  const totalSubs = useMemo(
-    () => shows.reduce((s: number, sh: any) => s + (Number(sh.total_subscribers) || 0), 0),
-    [shows]
-  );
   const totalDownloads = useMemo(
     () => episodes.reduce((s: number, e: any) => s + (Number(e.total_downloads) || 0), 0),
     [episodes]
   );
+  const avgDownloads = useMemo(() => {
+    const withDl = episodes.filter((e: any) => Number(e.total_downloads) > 0);
+    if (!withDl.length) return 0;
+    return Math.round(
+      withDl.reduce((s: number, e: any) => s + Number(e.total_downloads), 0) / withDl.length
+    );
+  }, [episodes]);
   const mostRecent = episodes[0];
 
   if (!showsQ.isLoading && shows.length === 0) {
