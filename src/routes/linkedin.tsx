@@ -29,7 +29,8 @@ type SortKey = "post_date" | "impressions" | "reach" | "reactions" | "profile_vi
 type SortDir = "asc" | "desc";
 
 function LinkedInPage() {
-  const { account } = Route.useSearch();
+  const search = Route.useSearch() as { account: Account };
+  const account: Account = search.account ?? "christine";
   const navigate = useNavigate({ from: "/linkedin" });
   const accountLabel = ACCOUNT_LABEL[account];
   const accent = ACCENT[account];
