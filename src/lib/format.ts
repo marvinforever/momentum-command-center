@@ -17,16 +17,24 @@ export function fmtPct(n: number | null | undefined, digits = 1) {
   return `${n.toFixed(digits)}%`;
 }
 
+// Parse a date value safely. Date-only strings like "2026-04-28" are
+// interpreted in the LOCAL timezone (not UTC) so they don't shift to the
+// previous day for users west of UTC.
+function toLocalDate(d: string | Date): Date {
+  if (d instanceof Date) return d;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return new Date(d);
+}
+
 export function fmtDate(d: string | Date | null | undefined) {
   if (!d) return "—";
-  const date = typeof d === "string" ? new Date(d) : d;
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return toLocalDate(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 export function fmtDateShort(d: string | Date | null | undefined) {
   if (!d) return "—";
-  const date = typeof d === "string" ? new Date(d) : d;
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return toLocalDate(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 export function timeAgo(d: string | Date | null | undefined) {
