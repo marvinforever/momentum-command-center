@@ -12,6 +12,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const KAJABI_BASE = "https://api.kajabi.com/v1";
+// Kajabi /contacts and /forms endpoints require a site_id filter. We discovered
+// the site ID by inspecting form_submission relationships (relationships.site.data.id).
+// Override via env if you ever connect a different Kajabi site.
+const KAJABI_SITE_ID = process.env.KAJABI_SITE_ID ?? "11016";
 
 type SyncResource = "contacts" | "purchases" | "form_submissions";
 
@@ -90,9 +94,19 @@ async function kajabiFetch(path: string, params: Record<string, string> = {}) {
 
 // Walk paginated JSON:API responses. Stop at maxPages to avoid runaway loops.
 async function fetchAllPages(path: string, pageSize = 100, maxPages = 50): Promise<any[]> {
+  return fetchAllPagesWithParams(path, {}, pageSize, maxPages);
+}
+
+async function fetchAllPagesWithParams(
+  path: string,
+  extraParams: Record<string, string>,
+  pageSize = 100,
+  maxPages = 50,
+): Promise<any[]> {
   const all: any[] = [];
   for (let page = 1; page <= maxPages; page++) {
     const json = await kajabiFetch(path, {
+      ...extraParams,
       "page[size]": String(pageSize),
       "page[number]": String(page),
     });
@@ -108,19 +122,25 @@ async function findOrCreateLead(
   email: string | null,
   name: string | null,
   kajabiContactId: string | null,
+  firstTouch: string | null = null,
 ): Promise<string | null> {
   if (!email && !kajabiContactId) return null;
+
+  const firstTouchDate = firstTouch ? firstTouch.slice(0, 10) : null;
 
   if (kajabiContactId) {
     const { data: byKajabi } = await supabaseAdmin
       .from("leads")
-      .select("id")
+      .select("id, first_touch_date")
       .eq("kajabi_contact_id", kajabiContactId)
       .maybeSingle();
     if (byKajabi?.id) {
-      await supabaseAdmin.from("leads")
-        .update({ kajabi_synced_at: new Date().toISOString() })
-        .eq("id", byKajabi.id);
+      const patch: { kajabi_synced_at: string; first_touch_date?: string } = { kajabi_synced_at: new Date().toISOString() };
+      // Only overwrite first_touch_date if we have a better (earlier) one.
+      if (firstTouchDate && (!byKajabi.first_touch_date || firstTouchDate < byKajabi.first_touch_date)) {
+        patch.first_touch_date = firstTouchDate;
+      }
+      await supabaseAdmin.from("leads").update(patch).eq("id", byKajabi.id);
       return byKajabi.id;
     }
   }
@@ -128,15 +148,20 @@ async function findOrCreateLead(
   if (email) {
     const { data: byEmail } = await supabaseAdmin
       .from("leads")
-      .select("id, kajabi_contact_id")
+      .select("id, kajabi_contact_id, first_touch_date")
       .ilike("email", email)
       .maybeSingle();
     if (byEmail?.id) {
+      const patch: { kajabi_contact_id?: string; kajabi_synced_at?: string; first_touch_date?: string } = {};
       if (kajabiContactId && !byEmail.kajabi_contact_id) {
-        await supabaseAdmin.from("leads").update({
-          kajabi_contact_id: kajabiContactId,
-          kajabi_synced_at: new Date().toISOString(),
-        }).eq("id", byEmail.id);
+        patch.kajabi_contact_id = kajabiContactId;
+        patch.kajabi_synced_at = new Date().toISOString();
+      }
+      if (firstTouchDate && (!byEmail.first_touch_date || firstTouchDate < byEmail.first_touch_date)) {
+        patch.first_touch_date = firstTouchDate;
+      }
+      if (Object.keys(patch).length > 0) {
+        await supabaseAdmin.from("leads").update(patch).eq("id", byEmail.id);
       }
       return byEmail.id;
     }
@@ -151,7 +176,7 @@ async function findOrCreateLead(
       status: "New",
       kajabi_contact_id: kajabiContactId,
       kajabi_synced_at: new Date().toISOString(),
-      first_touch_date: new Date().toISOString().slice(0, 10),
+      first_touch_date: firstTouchDate ?? new Date().toISOString().slice(0, 10),
     })
     .select("id")
     .single();
@@ -165,15 +190,17 @@ async function findOrCreateLead(
 // ---------- per-resource sync ----------
 async function syncContacts() {
   let synced = 0, created = 0, errors = 0;
-  const rows = await fetchAllPages("/contacts");
+  // /contacts requires filter[site_id].
+  const rows = await fetchAllPagesWithParams("/contacts", { "filter[site_id]": KAJABI_SITE_ID });
   for (const row of rows) {
     try {
       const a = row.attributes ?? {};
       const email = a.email ?? null;
       const name = a.name ?? ([a.first_name, a.last_name].filter(Boolean).join(" ") || null);
       const id = String(row.id ?? "");
+      const createdAt = a.created_at ?? a.first_seen_at ?? null;
       const before = await supabaseAdmin.from("leads").select("id").eq("kajabi_contact_id", id).maybeSingle();
-      const leadId = await findOrCreateLead(email, name, id);
+      const leadId = await findOrCreateLead(email, name, id, createdAt);
       if (leadId && !before.data?.id) created++;
       synced++;
     } catch (e) {
@@ -184,9 +211,48 @@ async function syncContacts() {
   return { resource: "contacts" as const, synced, created, errors };
 }
 
-// Cache so we don't refetch the same customer/offer for every purchase row.
+// Cache so we don't refetch the same customer/offer/form/contact for every row.
 const customerCache = new Map<string, { email: string | null; name: string | null }>();
 const offerCache = new Map<string, { name: string | null }>();
+const formCache = new Map<string, { name: string | null }>();
+const contactCache = new Map<string, { created_at: string | null; email: string | null; name: string | null }>();
+
+async function getForm(id: string): Promise<{ name: string | null }> {
+  if (!id) return { name: null };
+  if (formCache.has(id)) return formCache.get(id)!;
+  try {
+    const json = await kajabiFetch(`/forms/${id}`);
+    const a = json?.data?.attributes ?? {};
+    const name = a.title ?? a.name ?? null;
+    const result = { name };
+    formCache.set(id, result);
+    return result;
+  } catch (e) {
+    console.error(`getForm(${id}) failed`, e);
+    formCache.set(id, { name: null });
+    return { name: null };
+  }
+}
+
+async function getContact(id: string): Promise<{ created_at: string | null; email: string | null; name: string | null }> {
+  if (!id) return { created_at: null, email: null, name: null };
+  if (contactCache.has(id)) return contactCache.get(id)!;
+  try {
+    const json = await kajabiFetch(`/contacts/${id}`);
+    const a = json?.data?.attributes ?? {};
+    const result = {
+      created_at: a.created_at ?? a.first_seen_at ?? null,
+      email: a.email ?? null,
+      name: a.name ?? [a.first_name, a.last_name].filter(Boolean).join(" ") ?? null,
+    };
+    contactCache.set(id, result);
+    return result;
+  } catch (e) {
+    console.error(`getContact(${id}) failed`, e);
+    contactCache.set(id, { created_at: null, email: null, name: null });
+    return { created_at: null, email: null, name: null };
+  }
+}
 
 async function getCustomer(id: string): Promise<{ email: string | null; name: string | null }> {
   if (!id) return { email: null, name: null };
@@ -296,12 +362,22 @@ async function syncFormSubmissions() {
       const submissionId = String(row.id ?? "");
       if (!submissionId) continue;
 
-      const email = a.email ?? a.contact_email ?? null;
-      const name = a.name ?? a.contact_name ?? null;
-      const formName = a.form_title ?? a.form_name ?? null;
       const kajabiFormId = (String(r?.form?.data?.id ?? "")) || null;
       const kajabiContactId = (String(r?.contact?.data?.id ?? "")) || null;
-      const submittedAt = a.submitted_at ?? a.created_at ?? new Date().toISOString();
+
+      // Kajabi's form_submissions API does NOT return a submission timestamp
+      // or form title — we have to enrich from /forms/{id} and /contacts/{id}.
+      // The contact's created_at is the closest proxy for when they submitted.
+      const formInfo = kajabiFormId ? await getForm(kajabiFormId) : { name: null };
+      const contactInfo = kajabiContactId
+        ? await getContact(kajabiContactId)
+        : { created_at: null, email: null, name: null };
+
+      const email = a.email ?? a.contact_email ?? contactInfo.email ?? null;
+      const name = a.name ?? a.contact_name ?? contactInfo.name ?? null;
+      const formName = a.form_title ?? a.form_name ?? formInfo.name ?? null;
+      const submittedAt =
+        a.submitted_at ?? a.created_at ?? contactInfo.created_at ?? null;
 
       const leadId = await findOrCreateLead(email, name, kajabiContactId);
 

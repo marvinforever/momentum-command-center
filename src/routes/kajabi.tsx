@@ -248,21 +248,49 @@ function KajabiPage() {
                   <Th>Date</Th>
                   <Th>Form</Th>
                   <Th>Contact</Th>
+                  <Th>Submitted Details</Th>
                 </tr>
               </thead>
               <tbody>
-                {formsFiltered.map((f) => (
-                  <tr key={f.id} className="border-t border-line-soft">
-                    <td className="px-4 py-3 text-[12px] text-ink-soft whitespace-nowrap">{fmtDate(f.submitted_at)}</td>
-                    <td className="px-4 py-3 text-[13px] text-ink">{f.form_name ?? "—"}</td>
-                    <td className="px-4 py-3 text-[12px]">
-                      <div className="text-ink">{f.contact_name ?? "—"}</div>
-                      <div className="text-ink-muted text-[11px]">{f.contact_email ?? ""}</div>
-                    </td>
-                  </tr>
-                ))}
+                {formsFiltered.map((f) => {
+                  const attrs = (f.raw?.attributes ?? {}) as Record<string, any>;
+                  // Fields worth showing: anything non-null besides name/email
+                  // (already rendered in Contact column).
+                  const fields = Object.entries(attrs).filter(
+                    ([k, v]) =>
+                      v != null &&
+                      v !== "" &&
+                      !["name", "email", "first_name", "last_name"].includes(k),
+                  );
+                  return (
+                    <tr key={f.id} className="border-t border-line-soft align-top">
+                      <td className="px-4 py-3 text-[12px] text-ink-soft whitespace-nowrap">{fmtDate(f.submitted_at)}</td>
+                      <td className="px-4 py-3 text-[13px] text-ink">{f.form_name ?? "—"}</td>
+                      <td className="px-4 py-3 text-[12px]">
+                        <div className="text-ink">{f.contact_name ?? "—"}</div>
+                        <div className="text-ink-muted text-[11px]">{f.contact_email ?? ""}</div>
+                      </td>
+                      <td className="px-4 py-3 text-[11px]">
+                        {fields.length === 0 ? (
+                          <span className="text-ink-muted">—</span>
+                        ) : (
+                          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+                            {fields.map(([k, v]) => (
+                              <div key={k} className="contents">
+                                <dt className="text-ink-muted uppercase tracking-[0.08em] text-[10px]">
+                                  {k.replace(/_/g, " ")}
+                                </dt>
+                                <dd className="text-ink break-words">{String(v)}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
                 {formsFiltered.length === 0 && (
-                  <tr><td colSpan={3} className="text-center text-ink-muted py-12 text-[13px]">No form submissions match these filters.</td></tr>
+                  <tr><td colSpan={4} className="text-center text-ink-muted py-12 text-[13px]">No form submissions match these filters.</td></tr>
                 )}
               </tbody>
             </table>
