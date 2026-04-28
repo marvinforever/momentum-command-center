@@ -18,6 +18,7 @@ import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as KajabiRouteImport } from './routes/kajabi'
 import { Route as IntegrationsRouteImport } from './routes/integrations'
 import { Route as CrmRouteImport } from './routes/crm'
+import { Route as ContactsRouteImport } from './routes/contacts'
 import { Route as CaptivateRouteImport } from './routes/captivate'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -75,6 +76,11 @@ const IntegrationsRoute = IntegrationsRouteImport.update({
 const CrmRoute = CrmRouteImport.update({
   id: '/crm',
   path: '/crm',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactsRoute = ContactsRouteImport.update({
+  id: '/contacts',
+  path: '/contacts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CaptivateRoute = CaptivateRouteImport.update({
@@ -147,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/captivate': typeof CaptivateRoute
+  '/contacts': typeof ContactsRoute
   '/crm': typeof CrmRouteWithChildren
   '/integrations': typeof IntegrationsRoute
   '/kajabi': typeof KajabiRoute
@@ -171,6 +178,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/captivate': typeof CaptivateRoute
+  '/contacts': typeof ContactsRoute
   '/crm': typeof CrmRouteWithChildren
   '/integrations': typeof IntegrationsRoute
   '/kajabi': typeof KajabiRoute
@@ -196,6 +204,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/captivate': typeof CaptivateRoute
+  '/contacts': typeof ContactsRoute
   '/crm': typeof CrmRouteWithChildren
   '/integrations': typeof IntegrationsRoute
   '/kajabi': typeof KajabiRoute
@@ -222,6 +231,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/captivate'
+    | '/contacts'
     | '/crm'
     | '/integrations'
     | '/kajabi'
@@ -246,6 +256,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/captivate'
+    | '/contacts'
     | '/crm'
     | '/integrations'
     | '/kajabi'
@@ -270,6 +281,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/captivate'
+    | '/contacts'
     | '/crm'
     | '/integrations'
     | '/kajabi'
@@ -295,6 +307,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   CaptivateRoute: typeof CaptivateRoute
+  ContactsRoute: typeof ContactsRoute
   CrmRoute: typeof CrmRouteWithChildren
   IntegrationsRoute: typeof IntegrationsRoute
   KajabiRoute: typeof KajabiRoute
@@ -376,6 +389,13 @@ declare module '@tanstack/react-router' {
       path: '/crm'
       fullPath: '/crm'
       preLoaderRoute: typeof CrmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contacts': {
+      id: '/contacts'
+      path: '/contacts'
+      fullPath: '/contacts'
+      preLoaderRoute: typeof ContactsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/captivate': {
@@ -498,6 +518,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   CaptivateRoute: CaptivateRoute,
+  ContactsRoute: ContactsRoute,
   CrmRoute: CrmRouteWithChildren,
   IntegrationsRoute: IntegrationsRoute,
   KajabiRoute: KajabiRoute,
