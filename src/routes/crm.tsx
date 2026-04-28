@@ -93,6 +93,7 @@ function CrmBoard() {
 
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const [editCampaign, setEditCampaign] = useState<Campaign | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
