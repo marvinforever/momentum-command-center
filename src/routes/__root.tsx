@@ -125,5 +125,10 @@ function AuthGate({ children }: { children: ReactNode }) {
   }
 
   if (!user && !isLogin) return null;
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      {user && !isLogin && <AnalystChat />}
+    </>
+  );
 }
