@@ -22,6 +22,16 @@ const searchSchema = z.object({
   ad: z.string().optional(),
 });
 
+const emptyMetaTotals = {
+  spend: 0,
+  leads: 0,
+  clicks: 0,
+  impressions: 0,
+  reach: 0,
+  cpl: null,
+  ctr: null,
+};
+
 export const Route = createFileRoute("/meta")({
   validateSearch: searchSchema,
   head: () => ({ meta: [{ title: "Meta Ads — Momentum" }] }),
