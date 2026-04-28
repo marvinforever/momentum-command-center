@@ -395,3 +395,108 @@ function KajabiApiSyncCard() {
     </MCCard>
   );
 }
+
+// ============================================================
+// Captivate (podcast) sync
+// ============================================================
+function CaptivateSyncCard() {
+  const [busy, setBusy] = useState(false);
+  const [lastResult, setLastResult] = useState<any>(null);
+  const qc = useQueryClient();
+
+  const counts = useQuery({
+    queryKey: ["captivate_counts"],
+    queryFn: async () => {
+      const [{ count: showsCount }, { count: epsCount }] = await Promise.all([
+        supabase.from("captivate_shows").select("id", { count: "exact", head: true }),
+        supabase.from("captivate_episodes").select("id", { count: "exact", head: true }),
+      ]);
+      return { shows: showsCount ?? 0, episodes: epsCount ?? 0 };
+    },
+    refetchInterval: 15000,
+  });
+
+  async function runSync() {
+    setBusy(true);
+    setLastResult(null);
+    try {
+      const res = await fetch(`/api/public/captivate-sync?mode=full&days=90`, { method: "POST" });
+      const data = await res.json();
+      setLastResult(data);
+      if (!res.ok || data.errors?.length) {
+        toast.error(`Captivate: completed with ${data.errors?.length ?? 1} error(s)`);
+      } else {
+        toast.success(
+          `Captivate synced — ${data.shows_synced} show(s), ${data.episodes_synced} episode(s)`,
+        );
+      }
+      qc.invalidateQueries({ queryKey: ["captivate_counts"] });
+      qc.invalidateQueries({ queryKey: ["captivate_shows"] });
+      qc.invalidateQueries({ queryKey: ["captivate_episodes"] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Captivate sync failed");
+      setLastResult({ ok: false, error: String(e?.message ?? e) });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <MCCard className="p-5 sm:p-7 lg:p-8 mb-6">
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h2 className="serif text-[26px] text-ink">Captivate (Podcast)</h2>
+          <p className="text-[13px] text-ink-soft mt-1">
+            Pulls shows, episodes, total downloads, daily download trends, and listener
+            geography/sources from the Captivate API.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5">
+        <Stat label="Shows" value={counts.data?.shows.toLocaleString() ?? "—"} />
+        <Stat label="Episodes" value={counts.data?.episodes.toLocaleString() ?? "—"} />
+        <Stat label="Status" value={busy ? "Syncing…" : "Ready"} />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <SyncButton
+          label="Sync Captivate"
+          sub="Shows + episodes + 90d analytics"
+          primary
+          disabled={busy}
+          loading={busy}
+          onClick={runSync}
+        />
+        <a
+          href="/captivate"
+          className="rounded-xl border bg-cream border-line text-ink hover:border-gold-soft hover:bg-cream-deep p-5 text-left transition-all block"
+        >
+          <div className="text-[14px] font-medium text-ink">View Podcast Dashboard →</div>
+          <div className="text-[11px] mt-1 text-ink-muted">Browse synced shows and episodes</div>
+        </a>
+      </div>
+
+      {lastResult && (
+        <div className="border-t border-line-soft pt-4 mt-5">
+          <div className="label-eyebrow mb-3">Last Sync Result</div>
+          {lastResult.errors?.length > 0 && (
+            <div className="rounded-lg bg-burgundy/10 border border-burgundy/30 p-4 mb-3">
+              <div className="text-[12px] font-medium text-burgundy mb-2">Errors</div>
+              {lastResult.errors.map((e: any, i: number) => (
+                <div key={i} className="text-[12px] text-ink">
+                  {e.show && <span className="font-medium">Show {e.show}: </span>}
+                  {e.error}
+                </div>
+              ))}
+            </div>
+          )}
+          <pre className="text-[11px] text-ink-muted bg-cream-deep rounded-lg p-3 overflow-auto max-h-[240px]">
+            {JSON.stringify(lastResult, null, 2)}
+          </pre>
+        </div>
+      )}
+    </MCCard>
+  );
+}
+
