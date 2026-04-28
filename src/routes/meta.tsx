@@ -235,18 +235,11 @@ function AdSetView({ adsetId, campaignId }: { adsetId: string; campaignId?: stri
   const adset = adsets.find((a) => a.meta_adset_id === adsetId);
 
   const adRows = useMemo(() => {
-    const grouped = new Map<string, typeof adInsights>();
-    for (const r of adInsights) {
-      const arr = grouped.get(r.meta_ad_id) ?? [];
-      arr.push(r);
-      grouped.set(r.meta_ad_id, arr);
-    }
-    const tot = new Map<string, ReturnType<typeof aggregate>>();
-    grouped.forEach((arr, k) => tot.set(k, aggregate(arr)));
+    const tot = groupMetaMetricsBy(adInsights, "meta_ad_id");
     return ads
       .map((a) => ({
         ...a,
-        ...(tot.get(a.meta_ad_id) ?? { spend: 0, leads: 0, clicks: 0, impressions: 0, reach: 0, cpl: null, ctr: null }),
+        ...(tot.get(a.meta_ad_id) ?? emptyMetaTotals),
       }))
       .sort((a, b) => (b.spend ?? 0) - (a.spend ?? 0));
   }, [ads, adInsights]);
@@ -315,7 +308,7 @@ function AdDetailView({ adId, backTo }: { adId: string; backTo: { campaign?: str
   const { data: ad, isLoading } = useMetaAd(adId);
   const { data: insights = [] } = useMetaAdsInsightsDaily({ adId, days: 30 });
 
-  const totals = useMemo(() => aggregate(insights), [insights]);
+  const totals = useMemo(() => aggregateMetaMetrics(insights), [insights]);
 
   if (isLoading) return <div className="mt-6 text-[12px] text-ink-muted">Loading ad…</div>;
   if (!ad) return <div className="mt-6 text-[12px] text-ink-muted">Ad not found.</div>;
