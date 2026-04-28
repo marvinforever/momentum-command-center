@@ -6,10 +6,11 @@ import {
   useCampaigns, useCreateCampaign, DEFAULT_CAMPAIGN_STAGES,
   type Contact, type Campaign,
 } from "@/lib/queries-v2";
-import { Plus, Search, List as ListIcon, Megaphone } from "lucide-react";
+import { Plus, Search, List as ListIcon, Megaphone, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { fmtDateShort } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { EditCampaignDrawer } from "@/components/mc/EditCampaignDrawer";
 
 export const Route = createFileRoute("/crm")({
   head: () => ({ meta: [{ title: "CRM — Momentum" }] }),
