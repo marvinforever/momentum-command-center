@@ -10,6 +10,7 @@ import { YouTubeWidget } from "@/components/mc/YouTubeWidget";
 import { MetaAdsWidget } from "@/components/mc/MetaAdsWidget";
 import { LinkedInWidget } from "@/components/mc/LinkedInWidget";
 import { KajabiWidget } from "@/components/mc/KajabiWidget";
+import { PodcastWidget } from "@/components/mc/PodcastWidget";
 import { Settings } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -312,6 +313,7 @@ function Dashboard() {
         <LinkedInWidget account="Christine" />
         <LinkedInWidget account="Mark" />
         <KajabiWidget />
+        <PodcastWidget />
       </div>
 
       {/* Recent activity row */}
