@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { PageShell } from "@/components/mc/PageShell";
 import { PageHeader } from "@/components/mc/PageHeader";
 import { MCCard } from "@/components/mc/Primitives";
@@ -31,6 +31,12 @@ type FormKey = (typeof FORMS)[number]["key"];
 
 function AdminPage() {
   const [active, setActive] = useState<FormKey>("linkedin");
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+
+  if (pathname !== "/admin") {
+    return <Outlet />;
+  }
+
   return (
     <PageShell>
       <PageHeader
