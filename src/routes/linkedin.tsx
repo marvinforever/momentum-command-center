@@ -117,12 +117,28 @@ function LinkedInPage() {
   return (
     <PageShell>
       <PageHeader
-        title="LinkedIn — Christine"
-        subtitle={`${(posts as any[]).length} posts · ${(weekly as any[]).length} weekly snapshots`}
+        title={`LinkedIn — ${accountLabel}`}
+        subtitle={`${posts.length} posts · ${weekly.length} weekly snapshots`}
         rightSlot={
-          <Link to="/" className="text-[11px] uppercase tracking-[0.16em] text-ink-muted hover:text-gold transition-colors">
-            ← Dashboard
-          </Link>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 rounded-lg bg-cream p-1 border border-line-soft">
+              {ACCOUNTS.map((a) => (
+                <button
+                  key={a}
+                  onClick={() => navigate({ search: (prev) => ({ ...prev, account: a }) })}
+                  className={cn(
+                    "px-3 py-1.5 rounded text-[11px] uppercase tracking-[0.14em] transition-colors",
+                    account === a ? "bg-white text-ink shadow-sm" : "text-ink-muted hover:text-ink",
+                  )}
+                >
+                  {ACCOUNT_LABEL[a]}
+                </button>
+              ))}
+            </div>
+            <Link to="/" className="text-[11px] uppercase tracking-[0.16em] text-ink-muted hover:text-gold transition-colors">
+              ← Dashboard
+            </Link>
+          </div>
         }
       />
 
