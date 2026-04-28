@@ -1,0 +1,401 @@
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { MCCard } from "@/components/mc/Primitives";
+import { cn } from "@/lib/utils";
+import {
+  buildNotionAuthUrl,
+  getNotionStatus,
+  listNotionDatabases,
+  fetchNotionDatabaseSchema,
+  saveNotionConfig,
+  disconnectNotion,
+  backfillCallsToNotion,
+  getRecentNotionSyncLog,
+} from "@/server/notion.functions";
+
+// Lovable fields available for mapping. The admin picks which Notion property each maps to.
+const CALL_FIELDS = [
+  { key: "name", label: "Name" },
+  { key: "call_date", label: "Call Date" },
+  { key: "fu_date", label: "Follow-up Date" },
+  { key: "call_type", label: "Call Type" },
+  { key: "status", label: "Status" },
+  { key: "fit_rating", label: "Fit Rating" },
+  { key: "lead_source", label: "Lead Source" },
+  { key: "location", label: "Location" },
+  { key: "role_position", label: "Role / Position" },
+  { key: "follow_up_actions", label: "Follow-up Actions (multi)" },
+  { key: "notes", label: "Notes" },
+  { key: "offer", label: "Offer name" },
+  { key: "lead", label: "Lead name" },
+  { key: "lead_email", label: "Lead email" },
+  { key: "lovable_id", label: "Lovable ID (sync key)" },
+] as const;
+
+const LEAD_FIELDS = [
+  { key: "name", label: "Name" },
+  { key: "email", label: "Email" },
+  { key: "phone", label: "Phone" },
+  { key: "first_touch_date", label: "First Touch Date" },
+  { key: "lead_source", label: "Lead Source" },
+  { key: "status", label: "Status" },
+  { key: "utm_source", label: "UTM Source" },
+  { key: "utm_medium", label: "UTM Medium" },
+  { key: "utm_campaign", label: "UTM Campaign" },
+  { key: "how_did_you_hear", label: "How they heard" },
+  { key: "notes", label: "Notes" },
+  { key: "lovable_id", label: "Lovable ID (sync key)" },
+] as const;
+
+type PropMap = Record<string, { name: string; type: string }>;
+
+export function NotionCard() {
+  const qc = useQueryClient();
+  const buildAuth = useServerFn(buildNotionAuthUrl);
+
+  const status = useQuery({
+    queryKey: ["notion_status"],
+    queryFn: () => getNotionStatus(),
+    refetchInterval: 30000,
+  });
+
+  // Show "connected" toast if redirected back from OAuth
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("notion") === "connected") {
+      toast.success("Notion connected");
+      params.delete("notion");
+      const qs = params.toString();
+      window.history.replaceState({}, "", window.location.pathname + (qs ? `?${qs}` : ""));
+      qc.invalidateQueries({ queryKey: ["notion_status"] });
+    }
+  }, [qc]);
+
+  async function startConnect() {
+    try {
+      const { url } = await buildAuth({ data: { origin: window.location.origin } });
+      window.location.href = url;
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to start Notion auth");
+    }
+  }
+
+  return (
+    <MCCard className="p-5 sm:p-7 lg:p-8 mb-6">
+      <div className="flex items-start justify-between mb-5 sm:mb-6">
+        <div>
+          <h2 className="serif text-[22px] sm:text-[26px] text-ink">Notion (Sales Board Sync)</h2>
+          <p className="text-[12px] sm:text-[13px] text-ink-soft mt-1">
+            Mirror discovery calls and leads from this dashboard into your Momentum Sales board so the Notion view stays current.
+          </p>
+        </div>
+        {status.data?.connected ? (
+          <DisconnectButton />
+        ) : (
+          <button
+            onClick={startConnect}
+            className="rounded-lg bg-gold px-4 py-2 text-[12px] font-medium text-white hover:bg-gold/90 transition-colors whitespace-nowrap"
+          >
+            Connect Notion
+          </button>
+        )}
+      </div>
+
+      {!status.data?.connected ? (
+        <div className="text-[12px] text-ink-muted py-6 text-center bg-cream-deep rounded-lg">
+          Click <strong>Connect Notion</strong> to authorize the integration. You'll pick which Notion workspace and pages to grant access to.
+        </div>
+      ) : (
+        <ConnectedPanel
+          workspaceName={status.data.workspace_name ?? "(unnamed workspace)"}
+          workspaceIcon={status.data.workspace_icon}
+          callsDbId={status.data.calls_database_id}
+          leadsDbId={status.data.leads_database_id}
+          callsMap={(status.data.calls_property_map ?? {}) as PropMap}
+          leadsMap={(status.data.leads_property_map ?? {}) as PropMap}
+        />
+      )}
+    </MCCard>
+  );
+}
+
+function DisconnectButton() {
+  const qc = useQueryClient();
+  const disconnect = useServerFn(disconnectNotion);
+  const m = useMutation({
+    mutationFn: async () => disconnect(),
+    onSuccess: () => {
+      toast.success("Notion disconnected");
+      qc.invalidateQueries({ queryKey: ["notion_status"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Disconnect failed"),
+  });
+  return (
+    <button
+      onClick={() => { if (confirm("Disconnect Notion? Mirroring will stop.")) m.mutate(); }}
+      className="rounded-lg border border-line text-ink px-3 py-1.5 text-[11px] hover:bg-cream-deep"
+    >
+      {m.isPending ? "…" : "Disconnect"}
+    </button>
+  );
+}
+
+function ConnectedPanel(props: {
+  workspaceName: string;
+  workspaceIcon: string | null;
+  callsDbId: string | null;
+  leadsDbId: string | null;
+  callsMap: PropMap;
+  leadsMap: PropMap;
+}) {
+  const qc = useQueryClient();
+  const listDbs = useServerFn(listNotionDatabases);
+  const fetchSchema = useServerFn(fetchNotionDatabaseSchema);
+  const saveCfg = useServerFn(saveNotionConfig);
+  const backfill = useServerFn(backfillCallsToNotion);
+
+  const dbs = useQuery({
+    queryKey: ["notion_databases"],
+    queryFn: () => listDbs(),
+  });
+
+  const [callsDb, setCallsDb] = useState<string>(props.callsDbId ?? "");
+  const [leadsDb, setLeadsDb] = useState<string>(props.leadsDbId ?? "");
+  const [callsMap, setCallsMap] = useState<PropMap>(props.callsMap);
+  const [leadsMap, setLeadsMap] = useState<PropMap>(props.leadsMap);
+
+  // Cache fetched schemas (id -> properties)
+  const [schemas, setSchemas] = useState<Record<string, Record<string, { name: string; type: string }>>>({});
+
+  async function loadSchema(id: string) {
+    if (!id || schemas[id]) return;
+    try {
+      const s = await fetchSchema({ data: { databaseId: id } });
+      setSchemas((prev) => ({ ...prev, [id]: s.properties }));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to load schema");
+    }
+  }
+
+  useEffect(() => { if (callsDb) loadSchema(callsDb); /* eslint-disable-next-line */ }, [callsDb]);
+  useEffect(() => { if (leadsDb) loadSchema(leadsDb); /* eslint-disable-next-line */ }, [leadsDb]);
+
+  const callsSchema = callsDb ? schemas[callsDb] : undefined;
+  const leadsSchema = leadsDb ? schemas[leadsDb] : undefined;
+
+  const save = useMutation({
+    mutationFn: async () =>
+      saveCfg({
+        data: {
+          calls_database_id: callsDb || null,
+          leads_database_id: leadsDb || null,
+          calls_property_map: callsMap,
+          leads_property_map: leadsMap,
+        },
+      }),
+    onSuccess: () => {
+      toast.success("Notion configuration saved");
+      qc.invalidateQueries({ queryKey: ["notion_status"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Save failed"),
+  });
+
+  const backfillM = useMutation({
+    mutationFn: async () => backfill(),
+    onSuccess: (r) => {
+      if (!r.ok) toast.error(r.error ?? "Backfill failed");
+      else toast.success(`Backfill complete: ${r.synced} synced, ${r.failed} failed`);
+      qc.invalidateQueries({ queryKey: ["notion_sync_log"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Backfill failed"),
+  });
+
+  const databases = dbs.data?.databases ?? [];
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-lg bg-cream border border-line-soft p-4">
+        <div className="flex items-center gap-2 text-[13px]">
+          {props.workspaceIcon && <span className="text-[18px]">{props.workspaceIcon}</span>}
+          <div>
+            <div className="font-medium text-ink">Connected to {props.workspaceName}</div>
+            <div className="text-[11px] text-ink-muted">{databases.length} database(s) shared with this integration</div>
+          </div>
+        </div>
+      </div>
+
+      <DbMappingSection
+        title="Calls database"
+        subtitle="Maps each new discovery call from Lovable into a Notion page in this database."
+        databases={databases}
+        selectedDbId={callsDb}
+        onSelectDb={setCallsDb}
+        schema={callsSchema}
+        fields={CALL_FIELDS as readonly { key: string; label: string }[]}
+        map={callsMap}
+        onMapChange={setCallsMap}
+      />
+
+      <DbMappingSection
+        title="Leads database"
+        subtitle="Maps new leads from Lovable into a Notion page in this database. (Optional — leave unset to skip lead mirroring.)"
+        databases={databases}
+        selectedDbId={leadsDb}
+        onSelectDb={setLeadsDb}
+        schema={leadsSchema}
+        fields={LEAD_FIELDS as readonly { key: string; label: string }[]}
+        map={leadsMap}
+        onMapChange={setLeadsMap}
+      />
+
+      <div className="flex items-center gap-3 pt-2 border-t border-line-soft">
+        <button
+          onClick={() => save.mutate()}
+          disabled={save.isPending}
+          className="rounded-lg bg-gold px-4 py-2 text-[12px] font-medium text-white hover:bg-gold/90 transition-colors disabled:opacity-50"
+        >
+          {save.isPending ? "Saving…" : "Save mapping"}
+        </button>
+        <button
+          onClick={() => backfillM.mutate()}
+          disabled={backfillM.isPending || !callsDb}
+          className="rounded-lg border border-line text-ink px-4 py-2 text-[12px] hover:bg-cream-deep disabled:opacity-50"
+        >
+          {backfillM.isPending ? "Syncing…" : "Sync unsynced calls now"}
+        </button>
+      </div>
+
+      <SyncLogSection />
+    </div>
+  );
+}
+
+function DbMappingSection(props: {
+  title: string;
+  subtitle: string;
+  databases: { id: string; title: string; icon: string | null }[];
+  selectedDbId: string;
+  onSelectDb: (id: string) => void;
+  schema: Record<string, { name: string; type: string }> | undefined;
+  fields: readonly { key: string; label: string }[];
+  map: PropMap;
+  onMapChange: (m: PropMap) => void;
+}) {
+  const propEntries = useMemo(() => {
+    if (!props.schema) return [] as { name: string; type: string }[];
+    return Object.values(props.schema).sort((a, b) => a.name.localeCompare(b.name));
+  }, [props.schema]);
+
+  function setField(fieldKey: string, propName: string) {
+    const next = { ...props.map };
+    if (!propName) {
+      delete next[fieldKey];
+    } else {
+      const meta = props.schema?.[propName];
+      if (!meta) return;
+      next[fieldKey] = { name: meta.name, type: meta.type };
+    }
+    props.onMapChange(next);
+  }
+
+  return (
+    <div className="rounded-lg border border-line-soft p-4">
+      <div className="mb-3">
+        <div className="text-[14px] font-medium text-ink">{props.title}</div>
+        <div className="text-[11px] text-ink-muted">{props.subtitle}</div>
+      </div>
+
+      <select
+        value={props.selectedDbId}
+        onChange={(e) => props.onSelectDb(e.target.value)}
+        className="w-full text-[12px] bg-cream-deep rounded px-3 py-2 border border-line-soft focus:border-gold outline-none mb-3"
+      >
+        <option value="">— select a Notion database —</option>
+        {props.databases.map((d) => (
+          <option key={d.id} value={d.id}>{d.icon ? `${d.icon} ` : ""}{d.title}</option>
+        ))}
+      </select>
+
+      {props.selectedDbId && !props.schema && (
+        <div className="text-[11px] text-ink-muted py-3 text-center bg-cream-deep rounded">Loading schema…</div>
+      )}
+
+      {props.schema && (
+        <div className="space-y-1.5">
+          <div className="grid grid-cols-[180px_1fr] gap-2 text-[10px] uppercase tracking-wide text-ink-muted px-2">
+            <div>Lovable field</div>
+            <div>→ Notion property (type)</div>
+          </div>
+          {props.fields.map((f) => {
+            const current = props.map[f.key];
+            return (
+              <div key={f.key} className="grid grid-cols-[180px_1fr] gap-2 items-center">
+                <div className="text-[12px] text-ink">{f.label}</div>
+                <select
+                  value={current?.name ?? ""}
+                  onChange={(e) => setField(f.key, e.target.value)}
+                  className={cn(
+                    "text-[12px] rounded px-2 py-1.5 border outline-none",
+                    current ? "bg-cream border-gold-soft" : "bg-cream-deep border-line-soft",
+                  )}
+                >
+                  <option value="">— skip —</option>
+                  {propEntries.map((p) => (
+                    <option key={p.name} value={p.name}>{p.name} ({p.type})</option>
+                  ))}
+                </select>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SyncLogSection() {
+  const getLog = useServerFn(getRecentNotionSyncLog);
+  const log = useQuery({
+    queryKey: ["notion_sync_log"],
+    queryFn: () => getLog(),
+    refetchInterval: 15000,
+  });
+  const entries = log.data?.entries ?? [];
+
+  return (
+    <div className="border-t border-line-soft pt-4">
+      <div className="flex items-center justify-between mb-3">
+        <div className="label-eyebrow">Recent sync activity</div>
+        <div className="text-[10px] text-ink-muted">Auto-refreshing every 15s</div>
+      </div>
+      {entries.length === 0 ? (
+        <div className="text-[12px] text-ink-muted py-6 text-center bg-cream-deep rounded-lg">
+          No sync activity yet.
+        </div>
+      ) : (
+        <div className="space-y-1.5 max-h-[280px] overflow-auto">
+          {entries.map((e: {
+            id: string; resource_type: string; action: string; success: boolean;
+            error: string | null; created_at: string; notion_page_id: string | null;
+          }) => (
+            <div key={e.id} className="flex items-center gap-3 text-[12px] py-2 px-3 rounded-lg bg-cream border border-line-soft">
+              <span className={cn(
+                "inline-block w-2 h-2 rounded-full shrink-0",
+                e.success ? "bg-green-600" : "bg-burgundy",
+              )} />
+              <span className="font-mono text-ink min-w-[140px]">{e.resource_type}</span>
+              <span className="text-ink-soft min-w-[60px]">{e.action}</span>
+              <span className="text-ink-muted text-[11px] flex-1">
+                {new Date(e.created_at).toLocaleString()}
+              </span>
+              {e.error && <span className="text-burgundy text-[11px] truncate max-w-[280px]" title={e.error}>{e.error}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
