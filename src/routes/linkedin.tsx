@@ -164,7 +164,7 @@ function LinkedInPage() {
                 <CartesianGrid stroke="#E8E2D2" strokeDasharray="3 3" />
                 <XAxis dataKey="day" tick={{ fontSize: 10 }} tickFormatter={(d: any) => fmtDate(d)} />
                 <YAxis tick={{ fontSize: 10 }} domain={["auto", "auto"]} />
-                <Line type="monotone" dataKey="followers" stroke="#C4924A" strokeWidth={2} dot={false} isAnimationActive={false} />
+                <Line type="monotone" dataKey="followers" stroke={accent} strokeWidth={2} dot={false} isAnimationActive={false} />
                 <Tooltip
                   contentStyle={{ background: "#1F2937", border: "none", borderRadius: 8, color: "#F7F3EC", fontSize: 11 }}
                   labelFormatter={(d: any) => fmtDate(d)}
