@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { PageShell } from "@/components/mc/PageShell";
 import { PageHeader } from "@/components/mc/PageHeader";
 import { MCCard, CardHeader } from "@/components/mc/Primitives";
@@ -7,9 +7,21 @@ import { fmtNum, fmtDate } from "@/lib/format";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ResponsiveContainer, LineChart, Line, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { z } from "zod";
+
+const ACCOUNTS = ["christine", "mark"] as const;
+type Account = (typeof ACCOUNTS)[number];
+const ACCOUNT_LABEL: Record<Account, "Christine" | "Mark"> = { christine: "Christine", mark: "Mark" };
+const ACCENT: Record<Account, string> = { christine: "#C4924A", mark: "#6B8E7F" };
+
+const searchSchema = z.object({
+  account: fallback(z.enum(ACCOUNTS), "christine").default("christine"),
+});
 
 export const Route = createFileRoute("/linkedin")({
-  head: () => ({ meta: [{ title: "LinkedIn — Christine — Momentum Command Center" }] }),
+  validateSearch: zodValidator(searchSchema),
+  head: () => ({ meta: [{ title: "LinkedIn — Momentum Command Center" }] }),
   component: LinkedInPage,
 });
 
@@ -17,8 +29,21 @@ type SortKey = "post_date" | "impressions" | "reach" | "reactions" | "profile_vi
 type SortDir = "asc" | "desc";
 
 function LinkedInPage() {
-  const { data: posts = [] } = useLinkedinPosts();
-  const { data: weekly = [] } = useLinkedinWeekly();
+  const sp = Route.useSearch() as { account: Account };
+  const account: Account = sp.account ?? "christine";
+  const navigate = useNavigate({ from: "/linkedin" });
+  const accountLabel = ACCOUNT_LABEL[account];
+  const accent = ACCENT[account];
+  const { data: postsAll = [] } = useLinkedinPosts();
+  const { data: weeklyAll = [] } = useLinkedinWeekly();
+  const posts = useMemo(
+    () => (postsAll as any[]).filter((p) => (p.account_label ?? "Christine") === accountLabel),
+    [postsAll, accountLabel],
+  );
+  const weekly = useMemo(
+    () => (weeklyAll as any[]).filter((w) => (w.account_label ?? "Christine") === accountLabel),
+    [weeklyAll, accountLabel],
+  );
 
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -93,12 +118,28 @@ function LinkedInPage() {
   return (
     <PageShell>
       <PageHeader
-        title="LinkedIn — Christine"
-        subtitle={`${(posts as any[]).length} posts · ${(weekly as any[]).length} weekly snapshots`}
+        title={`LinkedIn — ${accountLabel}`}
+        subtitle={`${posts.length} posts · ${weekly.length} weekly snapshots`}
         rightSlot={
-          <Link to="/" className="text-[11px] uppercase tracking-[0.16em] text-ink-muted hover:text-gold transition-colors">
-            ← Dashboard
-          </Link>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 rounded-lg bg-cream p-1 border border-line-soft">
+              {ACCOUNTS.map((a) => (
+                <button
+                  key={a}
+                  onClick={() => navigate({ search: (prev) => ({ ...prev, account: a }) })}
+                  className={cn(
+                    "px-3 py-1.5 rounded text-[11px] uppercase tracking-[0.14em] transition-colors",
+                    account === a ? "bg-white text-ink shadow-sm" : "text-ink-muted hover:text-ink",
+                  )}
+                >
+                  {ACCOUNT_LABEL[a]}
+                </button>
+              ))}
+            </div>
+            <Link to="/" className="text-[11px] uppercase tracking-[0.16em] text-ink-muted hover:text-gold transition-colors">
+              ← Dashboard
+            </Link>
+          </div>
         }
       />
 
@@ -123,7 +164,7 @@ function LinkedInPage() {
                 <CartesianGrid stroke="#E8E2D2" strokeDasharray="3 3" />
                 <XAxis dataKey="day" tick={{ fontSize: 10 }} tickFormatter={(d: any) => fmtDate(d)} />
                 <YAxis tick={{ fontSize: 10 }} domain={["auto", "auto"]} />
-                <Line type="monotone" dataKey="followers" stroke="#C4924A" strokeWidth={2} dot={false} isAnimationActive={false} />
+                <Line type="monotone" dataKey="followers" stroke={accent} strokeWidth={2} dot={false} isAnimationActive={false} />
                 <Tooltip
                   contentStyle={{ background: "#1F2937", border: "none", borderRadius: 8, color: "#F7F3EC", fontSize: 11 }}
                   labelFormatter={(d: any) => fmtDate(d)}
