@@ -141,6 +141,17 @@ function ContactDetail() {
                 options={["", ...SOURCES]}
                 onSave={(v) => updateContact.mutate({ id: c.id, source: v || null })}
               />
+              <SelectField
+                label="Campaign"
+                value={(c as any).campaign_id ?? ""}
+                options={["", ...(campaignsQ.data ?? []).map((cmp: any) => cmp.id)]}
+                renderOption={(v) => {
+                  if (!v) return "— None —";
+                  const cmp = (campaignsQ.data ?? []).find((x: any) => x.id === v);
+                  return cmp?.name ?? v;
+                }}
+                onSave={(v) => updateContact.mutate({ id: c.id, campaign_id: (v || null) as any })}
+              />
               <Field label="Owner" value={c.owner} onSave={(v) => updateContact.mutate({ id: c.id, owner: v || null })} />
             </div>
 
