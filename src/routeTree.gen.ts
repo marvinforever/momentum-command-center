@@ -22,6 +22,7 @@ import { Route as CampaignsIdRouteImport } from './routes/campaigns.$id'
 import { Route as AdminIntegrationsRouteImport } from './routes/admin.integrations'
 import { Route as ApiPublicZapierLeadRouteImport } from './routes/api/public/zapier-lead'
 import { Route as ApiPublicKajabiSyncRouteImport } from './routes/api/public/kajabi-sync'
+import { Route as ApiPublicNotionCallbackRouteImport } from './routes/api/public/notion.callback'
 import { Route as ApiPublicHooksMetaSyncRouteImport } from './routes/api/public/hooks/meta-sync'
 
 const YoutubeRoute = YoutubeRouteImport.update({
@@ -89,6 +90,11 @@ const ApiPublicKajabiSyncRoute = ApiPublicKajabiSyncRouteImport.update({
   path: '/api/public/kajabi-sync',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicNotionCallbackRoute = ApiPublicNotionCallbackRouteImport.update({
+  id: '/api/public/notion/callback',
+  path: '/api/public/notion/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksMetaSyncRoute = ApiPublicHooksMetaSyncRouteImport.update({
   id: '/api/public/hooks/meta-sync',
   path: '/api/public/hooks/meta-sync',
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
   '/api/public/hooks/meta-sync': typeof ApiPublicHooksMetaSyncRoute
+  '/api/public/notion/callback': typeof ApiPublicNotionCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
   '/api/public/hooks/meta-sync': typeof ApiPublicHooksMetaSyncRoute
+  '/api/public/notion/callback': typeof ApiPublicNotionCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
   '/api/public/hooks/meta-sync': typeof ApiPublicHooksMetaSyncRoute
+  '/api/public/notion/callback': typeof ApiPublicNotionCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
     | '/api/public/hooks/meta-sync'
+    | '/api/public/notion/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
     | '/api/public/hooks/meta-sync'
+    | '/api/public/notion/callback'
   id:
     | '__root__'
     | '/'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
     | '/api/public/hooks/meta-sync'
+    | '/api/public/notion/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -209,6 +221,7 @@ export interface RootRouteChildren {
   ApiPublicKajabiSyncRoute: typeof ApiPublicKajabiSyncRoute
   ApiPublicZapierLeadRoute: typeof ApiPublicZapierLeadRoute
   ApiPublicHooksMetaSyncRoute: typeof ApiPublicHooksMetaSyncRoute
+  ApiPublicNotionCallbackRoute: typeof ApiPublicNotionCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -304,6 +317,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicKajabiSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/notion/callback': {
+      id: '/api/public/notion/callback'
+      path: '/api/public/notion/callback'
+      fullPath: '/api/public/notion/callback'
+      preLoaderRoute: typeof ApiPublicNotionCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/meta-sync': {
       id: '/api/public/hooks/meta-sync'
       path: '/api/public/hooks/meta-sync'
@@ -338,6 +358,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicKajabiSyncRoute: ApiPublicKajabiSyncRoute,
   ApiPublicZapierLeadRoute: ApiPublicZapierLeadRoute,
   ApiPublicHooksMetaSyncRoute: ApiPublicHooksMetaSyncRoute,
+  ApiPublicNotionCallbackRoute: ApiPublicNotionCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
