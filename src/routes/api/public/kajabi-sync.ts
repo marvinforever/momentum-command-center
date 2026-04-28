@@ -12,6 +12,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const KAJABI_BASE = "https://api.kajabi.com/v1";
+// Kajabi /contacts and /forms endpoints require a site_id filter. We discovered
+// the site ID by inspecting form_submission relationships (relationships.site.data.id).
+// Override via env if you ever connect a different Kajabi site.
+const KAJABI_SITE_ID = process.env.KAJABI_SITE_ID ?? "11016";
 
 type SyncResource = "contacts" | "purchases" | "form_submissions";
 
@@ -108,19 +112,25 @@ async function findOrCreateLead(
   email: string | null,
   name: string | null,
   kajabiContactId: string | null,
+  firstTouch: string | null = null,
 ): Promise<string | null> {
   if (!email && !kajabiContactId) return null;
+
+  const firstTouchDate = firstTouch ? firstTouch.slice(0, 10) : null;
 
   if (kajabiContactId) {
     const { data: byKajabi } = await supabaseAdmin
       .from("leads")
-      .select("id")
+      .select("id, first_touch_date")
       .eq("kajabi_contact_id", kajabiContactId)
       .maybeSingle();
     if (byKajabi?.id) {
-      await supabaseAdmin.from("leads")
-        .update({ kajabi_synced_at: new Date().toISOString() })
-        .eq("id", byKajabi.id);
+      const patch: Record<string, any> = { kajabi_synced_at: new Date().toISOString() };
+      // Only overwrite first_touch_date if we have a better (earlier) one.
+      if (firstTouchDate && (!byKajabi.first_touch_date || firstTouchDate < byKajabi.first_touch_date)) {
+        patch.first_touch_date = firstTouchDate;
+      }
+      await supabaseAdmin.from("leads").update(patch).eq("id", byKajabi.id);
       return byKajabi.id;
     }
   }
@@ -128,15 +138,20 @@ async function findOrCreateLead(
   if (email) {
     const { data: byEmail } = await supabaseAdmin
       .from("leads")
-      .select("id, kajabi_contact_id")
+      .select("id, kajabi_contact_id, first_touch_date")
       .ilike("email", email)
       .maybeSingle();
     if (byEmail?.id) {
+      const patch: Record<string, any> = {};
       if (kajabiContactId && !byEmail.kajabi_contact_id) {
-        await supabaseAdmin.from("leads").update({
-          kajabi_contact_id: kajabiContactId,
-          kajabi_synced_at: new Date().toISOString(),
-        }).eq("id", byEmail.id);
+        patch.kajabi_contact_id = kajabiContactId;
+        patch.kajabi_synced_at = new Date().toISOString();
+      }
+      if (firstTouchDate && (!byEmail.first_touch_date || firstTouchDate < byEmail.first_touch_date)) {
+        patch.first_touch_date = firstTouchDate;
+      }
+      if (Object.keys(patch).length > 0) {
+        await supabaseAdmin.from("leads").update(patch).eq("id", byEmail.id);
       }
       return byEmail.id;
     }
@@ -151,7 +166,7 @@ async function findOrCreateLead(
       status: "New",
       kajabi_contact_id: kajabiContactId,
       kajabi_synced_at: new Date().toISOString(),
-      first_touch_date: new Date().toISOString().slice(0, 10),
+      first_touch_date: firstTouchDate ?? new Date().toISOString().slice(0, 10),
     })
     .select("id")
     .single();
@@ -165,15 +180,17 @@ async function findOrCreateLead(
 // ---------- per-resource sync ----------
 async function syncContacts() {
   let synced = 0, created = 0, errors = 0;
-  const rows = await fetchAllPages("/contacts");
+  // /contacts requires filter[site_id].
+  const rows = await fetchAllPagesWithParams("/contacts", { "filter[site_id]": KAJABI_SITE_ID });
   for (const row of rows) {
     try {
       const a = row.attributes ?? {};
       const email = a.email ?? null;
       const name = a.name ?? ([a.first_name, a.last_name].filter(Boolean).join(" ") || null);
       const id = String(row.id ?? "");
+      const createdAt = a.created_at ?? a.first_seen_at ?? null;
       const before = await supabaseAdmin.from("leads").select("id").eq("kajabi_contact_id", id).maybeSingle();
-      const leadId = await findOrCreateLead(email, name, id);
+      const leadId = await findOrCreateLead(email, name, id, createdAt);
       if (leadId && !before.data?.id) created++;
       synced++;
     } catch (e) {
