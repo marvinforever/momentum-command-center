@@ -89,6 +89,236 @@ export type Database = {
           },
         ]
       }
+      captivate_episode_downloads_daily: {
+        Row: {
+          captivate_episode_id: string
+          captivate_show_id: string
+          created_at: string
+          downloads: number | null
+          id: string
+          snapshot_date: string
+          updated_at: string
+        }
+        Insert: {
+          captivate_episode_id: string
+          captivate_show_id: string
+          created_at?: string
+          downloads?: number | null
+          id?: string
+          snapshot_date: string
+          updated_at?: string
+        }
+        Update: {
+          captivate_episode_id?: string
+          captivate_show_id?: string
+          created_at?: string
+          downloads?: number | null
+          id?: string
+          snapshot_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      captivate_episodes: {
+        Row: {
+          artwork_url: string | null
+          audio_url: string | null
+          captivate_episode_id: string
+          captivate_show_id: string
+          created_at: string
+          description: string | null
+          duration_seconds: number | null
+          episode_number: number | null
+          episode_type: string | null
+          episode_url: string | null
+          id: string
+          last_synced_at: string | null
+          published_date: string | null
+          raw: Json | null
+          season_number: number | null
+          show_uuid: string | null
+          status: string | null
+          title: string
+          total_downloads: number | null
+          updated_at: string
+        }
+        Insert: {
+          artwork_url?: string | null
+          audio_url?: string | null
+          captivate_episode_id: string
+          captivate_show_id: string
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          episode_number?: number | null
+          episode_type?: string | null
+          episode_url?: string | null
+          id?: string
+          last_synced_at?: string | null
+          published_date?: string | null
+          raw?: Json | null
+          season_number?: number | null
+          show_uuid?: string | null
+          status?: string | null
+          title: string
+          total_downloads?: number | null
+          updated_at?: string
+        }
+        Update: {
+          artwork_url?: string | null
+          audio_url?: string | null
+          captivate_episode_id?: string
+          captivate_show_id?: string
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          episode_number?: number | null
+          episode_type?: string | null
+          episode_url?: string | null
+          id?: string
+          last_synced_at?: string | null
+          published_date?: string | null
+          raw?: Json | null
+          season_number?: number | null
+          show_uuid?: string | null
+          status?: string | null
+          title?: string
+          total_downloads?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "captivate_episodes_show_uuid_fkey"
+            columns: ["show_uuid"]
+            isOneToOne: false
+            referencedRelation: "captivate_shows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      captivate_show_metrics_daily: {
+        Row: {
+          captivate_show_id: string
+          created_at: string
+          geography: Json | null
+          id: string
+          raw: Json | null
+          snapshot_date: string
+          sources: Json | null
+          total_downloads: number | null
+          total_subscribers: number | null
+          updated_at: string
+        }
+        Insert: {
+          captivate_show_id: string
+          created_at?: string
+          geography?: Json | null
+          id?: string
+          raw?: Json | null
+          snapshot_date: string
+          sources?: Json | null
+          total_downloads?: number | null
+          total_subscribers?: number | null
+          updated_at?: string
+        }
+        Update: {
+          captivate_show_id?: string
+          created_at?: string
+          geography?: Json | null
+          id?: string
+          raw?: Json | null
+          snapshot_date?: string
+          sources?: Json | null
+          total_downloads?: number | null
+          total_subscribers?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      captivate_shows: {
+        Row: {
+          artwork_url: string | null
+          captivate_show_id: string
+          created_at: string
+          description: string | null
+          id: string
+          itunes_url: string | null
+          last_synced_at: string | null
+          link: string | null
+          raw: Json | null
+          spotify_url: string | null
+          title: string
+          total_subscribers: number | null
+          updated_at: string
+        }
+        Insert: {
+          artwork_url?: string | null
+          captivate_show_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          itunes_url?: string | null
+          last_synced_at?: string | null
+          link?: string | null
+          raw?: Json | null
+          spotify_url?: string | null
+          title: string
+          total_subscribers?: number | null
+          updated_at?: string
+        }
+        Update: {
+          artwork_url?: string | null
+          captivate_show_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          itunes_url?: string | null
+          last_synced_at?: string | null
+          link?: string | null
+          raw?: Json | null
+          spotify_url?: string | null
+          title?: string
+          total_subscribers?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      captivate_sync_runs: {
+        Row: {
+          download_rows_synced: number | null
+          episodes_synced: number | null
+          error: string | null
+          finished_at: string | null
+          id: string
+          shows_synced: number | null
+          started_at: string
+          success: boolean | null
+          triggered_by: string | null
+        }
+        Insert: {
+          download_rows_synced?: number | null
+          episodes_synced?: number | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          shows_synced?: number | null
+          started_at?: string
+          success?: boolean | null
+          triggered_by?: string | null
+        }
+        Update: {
+          download_rows_synced?: number | null
+          episodes_synced?: number | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          shows_synced?: number | null
+          started_at?: string
+          success?: boolean | null
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       channel_metrics: {
         Row: {
           account_label: string | null
