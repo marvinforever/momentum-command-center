@@ -34,14 +34,17 @@ export function PodcastWidget() {
   const shows = showsQ.data ?? [];
   const episodes = episodesQ.data ?? [];
 
-  const totalSubs = useMemo(
-    () => shows.reduce((s: number, sh: any) => s + (Number(sh.total_subscribers) || 0), 0),
-    [shows]
-  );
   const totalDownloads = useMemo(
     () => episodes.reduce((s: number, e: any) => s + (Number(e.total_downloads) || 0), 0),
     [episodes]
   );
+  const avgDownloads = useMemo(() => {
+    const withDl = episodes.filter((e: any) => Number(e.total_downloads) > 0);
+    if (!withDl.length) return 0;
+    return Math.round(
+      withDl.reduce((s: number, e: any) => s + Number(e.total_downloads), 0) / withDl.length
+    );
+  }, [episodes]);
   const mostRecent = episodes[0];
 
   if (!showsQ.isLoading && shows.length === 0) {
@@ -79,20 +82,20 @@ export function PodcastWidget() {
             to="/captivate"
             className="rounded-lg bg-cream border border-line-soft p-3 hover:border-gold-soft hover:shadow-sm transition-all"
           >
-            <div className="text-[11px] text-ink-soft font-medium mb-2">Subscribers</div>
-            <div className="num-serif text-[24px] text-ink leading-none">{fmtNum(totalSubs)}</div>
+            <div className="text-[11px] text-ink-soft font-medium mb-2">Avg downloads / episode</div>
+            <div className="num-serif text-[24px] text-ink leading-none">{fmtNum(avgDownloads)}</div>
             <div className="text-[10px] text-ink-muted mt-1 uppercase tracking-[0.14em]">
-              {shows.length} show{shows.length === 1 ? "" : "s"}
+              across {episodes.length} eps
             </div>
           </Link>
           <Link
             to="/captivate"
             className="rounded-lg bg-cream border border-line-soft p-3 hover:border-gold-soft hover:shadow-sm transition-all"
           >
-            <div className="text-[11px] text-ink-soft font-medium mb-2">Downloads</div>
+            <div className="text-[11px] text-ink-soft font-medium mb-2">Total downloads</div>
             <div className="num-serif text-[24px] text-ink leading-none">{fmtNum(totalDownloads)}</div>
             <div className="text-[10px] text-ink-muted mt-1 uppercase tracking-[0.14em]">
-              {episodes.length} recent eps
+              {shows.length} show{shows.length === 1 ? "" : "s"}
             </div>
           </Link>
         </div>
@@ -107,7 +110,11 @@ export function PodcastWidget() {
                 <div className="flex-1 min-w-0">
                   <div className="text-[12px] font-medium text-ink truncate">{s.title}</div>
                   <div className="text-[10px] text-ink-muted">
-                    {fmtNum(s.total_subscribers ?? 0)} subscribers
+                    {fmtNum(
+                      episodes
+                        .filter((e: any) => e.captivate_show_id === s.captivate_show_id)
+                        .reduce((sum: number, e: any) => sum + (Number(e.total_downloads) || 0), 0)
+                    )} downloads
                   </div>
                 </div>
               </div>
