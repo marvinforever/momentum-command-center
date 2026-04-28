@@ -4,7 +4,7 @@ import { PageShell } from "@/components/mc/PageShell";
 import {
   useContact, useContactNotes, useContactActivity, useContactFollowUps,
   useAddContactNote, useAddFollowUp, useCompleteFollowUp, useUpdateContactStage,
-  useUpdateContact, PIPELINE_STAGES,
+  useUpdateContact, useCampaigns, PIPELINE_STAGES,
 } from "@/lib/queries-v2";
 import { fmtDate, fmtDateShort, timeAgo, initials } from "@/lib/format";
 import { toast } from "sonner";
