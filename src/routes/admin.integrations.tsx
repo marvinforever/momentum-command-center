@@ -103,7 +103,7 @@ function IntegrationsPage() {
 
       <KajabiApiSyncCard />
 
-      
+      <CaptivateSyncCard />
 
       {lastResult && (
         <MCCard className="p-6">
