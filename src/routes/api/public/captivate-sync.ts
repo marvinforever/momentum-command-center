@@ -165,34 +165,28 @@ async function syncEpisodes(token: string, showId: string) {
 }
 
 async function syncShowAnalytics(token: string, showId: string, lookbackDays: number) {
-  const start = daysAgoISO(lookbackDays);
   const end = todayISO();
 
-  // Total downloads (all time)
+  // Total downloads (all time). Captivate returns { hits: number }.
   const total = await capGet<any>(`/insights/${showId}/total`, token).catch((e) => ({ error: String(e) }));
-
-  // Range with breakdowns: daily + geography + sources
-  const range = await capPost<any>(`/insights/${showId}/range`, token, {
-    start,
-    end,
-    interval: "1d",
-    timezone: "America/New_York",
-    types: ["byLocation", "byUserAgentApp"],
-  }).catch((e) => ({ error: String(e) }));
 
   // Update show with latest totals
   const totalDownloads =
     Number(
-      total?.downloads ??
+      total?.hits ??
+        total?.downloads ??
         total?.total ??
         total?.data?.downloads ??
-        range?.totals?.downloads ??
         0,
     ) || 0;
 
-  // Geography + sources snapshot (today)
-  const geography = range?.byLocation ?? range?.locations ?? null;
-  const sources = range?.byUserAgentApp ?? range?.apps ?? range?.sources ?? null;
+  // NOTE: Captivate's /insights/:showId/range endpoint requires a `countryCode`
+  // (no aggregate option) and caps interval=1d at 190 days. We skip the
+  // breakdowns for now and just persist the totals snapshot.
+  const range: any = null;
+  const geography = null;
+  const sources = null;
+  void lookbackDays;
 
   const { error: snapErr } = await supabaseAdmin
     .from("captivate_show_metrics_daily")
