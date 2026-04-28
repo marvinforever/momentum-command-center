@@ -175,6 +175,15 @@ function CrmBoard() {
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            {selectedCampaign && (
+              <button
+                onClick={() => setEditCampaign(selectedCampaign)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 border border-line text-ink rounded-md text-sm hover:bg-cream-deep"
+                title="Edit campaign & data source"
+              >
+                <Settings className="h-4 w-4" /> Edit campaign
+              </button>
+            )}
             <Link
               to="/contacts"
               className="inline-flex items-center gap-1.5 px-3 py-2 border border-line text-ink rounded-md text-sm hover:bg-cream-deep"
