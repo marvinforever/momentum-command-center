@@ -356,6 +356,7 @@ export const Route = createFileRoute("/api/public/hooks/meta-sync")({
               };
             });
             adInsightsSynced = await chunkUpsert(supabase, "meta_ads_insights_daily", rows, "meta_ad_id,snapshot_date");
+            insightsSynced = adInsightsSynced;
 
             // Roll the most recent rankings up to the meta_ads row for fast list display
             const latestByAd = new Map<string, MetaInsight>();
