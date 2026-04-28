@@ -16,9 +16,13 @@ export type Database = {
     Tables: {
       campaigns: {
         Row: {
+          archived: boolean
           booking_goal: number | null
           budget: number | null
+          color: string | null
           created_at: string | null
+          data_source: string
+          data_source_config: Json
           end_date: string | null
           enrollment_goal: number | null
           goal: string | null
@@ -28,6 +32,7 @@ export type Database = {
           name: string
           notes: string | null
           offer_id: string | null
+          pipeline_stages: Json
           primary_channel: string | null
           spend_to_date: number | null
           start_date: string | null
@@ -35,9 +40,13 @@ export type Database = {
           type: string | null
         }
         Insert: {
+          archived?: boolean
           booking_goal?: number | null
           budget?: number | null
+          color?: string | null
           created_at?: string | null
+          data_source?: string
+          data_source_config?: Json
           end_date?: string | null
           enrollment_goal?: number | null
           goal?: string | null
@@ -47,6 +56,7 @@ export type Database = {
           name: string
           notes?: string | null
           offer_id?: string | null
+          pipeline_stages?: Json
           primary_channel?: string | null
           spend_to_date?: number | null
           start_date?: string | null
@@ -54,9 +64,13 @@ export type Database = {
           type?: string | null
         }
         Update: {
+          archived?: boolean
           booking_goal?: number | null
           budget?: number | null
+          color?: string | null
           created_at?: string | null
+          data_source?: string
+          data_source_config?: Json
           end_date?: string | null
           enrollment_goal?: number | null
           goal?: string | null
@@ -66,6 +80,7 @@ export type Database = {
           name?: string
           notes?: string | null
           offer_id?: string | null
+          pipeline_stages?: Json
           primary_channel?: string | null
           spend_to_date?: number | null
           start_date?: string | null
@@ -514,6 +529,7 @@ export type Database = {
       contacts: {
         Row: {
           archived: boolean
+          campaign_id: string | null
           client_id: string | null
           company: string | null
           created_at: string
@@ -534,6 +550,7 @@ export type Database = {
         }
         Insert: {
           archived?: boolean
+          campaign_id?: string | null
           client_id?: string | null
           company?: string | null
           created_at?: string
@@ -554,6 +571,7 @@ export type Database = {
         }
         Update: {
           archived?: boolean
+          campaign_id?: string | null
           client_id?: string | null
           company?: string | null
           created_at?: string
@@ -573,6 +591,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "contacts_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "contacts_client_id_fkey"
             columns: ["client_id"]

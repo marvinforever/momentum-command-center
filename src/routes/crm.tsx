@@ -3,9 +3,10 @@ import { useMemo, useState } from "react";
 import { PageShell } from "@/components/mc/PageShell";
 import {
   useContacts, useUpdateContactStage, useCreateContact,
-  PIPELINE_STAGES, type Contact,
+  useCampaigns, useCreateCampaign, DEFAULT_CAMPAIGN_STAGES,
+  type Contact, type Campaign,
 } from "@/lib/queries-v2";
-import { Plus, Search, List as ListIcon } from "lucide-react";
+import { Plus, Search, List as ListIcon, Megaphone } from "lucide-react";
 import { toast } from "sonner";
 import { fmtDateShort } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -27,40 +28,76 @@ const SOURCE_DOT: Record<string, string> = {
   Other: "bg-ink-muted",
 };
 
-const STAGE_ACCENT: Record<string, string> = {
-  "No Status": "border-l-ink-muted",
-  Prospect: "border-l-ink-soft",
-  "Discovery Booked": "border-l-sage",
-  "Follow Up": "border-l-gold",
-  Demo: "border-l-gold",
-  "Proposal Sent": "border-l-burgundy",
-  "Hold Off": "border-l-ink-muted",
-  "Closed Won": "border-l-sage",
-  "Closed Lost": "border-l-burgundy",
-};
+// Tints for any stage label — falls through gracefully for custom stage names.
+function stageAccent(stage: string): string {
+  const s = stage.toLowerCase();
+  if (s.includes("won")) return "border-l-sage";
+  if (s.includes("no sale") || s.includes("lost")) return "border-l-burgundy";
+  if (s.includes("follow")) return "border-l-gold";
+  if (s.includes("call") || s.includes("demo") || s.includes("booked")) return "border-l-sage";
+  if (s.includes("opt")) return "border-l-gold";
+  if (s.includes("lead") || s.includes("prospect")) return "border-l-ink-soft";
+  if (s.includes("hold")) return "border-l-ink-muted";
+  if (s.includes("proposal")) return "border-l-burgundy";
+  return "border-l-ink-muted";
+}
+
+const DATA_SOURCES = [
+  { value: "manual", label: "Manual" },
+  { value: "meta_ads", label: "Meta Ads" },
+  { value: "linkedin", label: "LinkedIn" },
+  { value: "kajabi", label: "Kajabi (Email)" },
+  { value: "youtube", label: "YouTube" },
+  { value: "podcast", label: "Podcast" },
+];
 
 function CrmBoard() {
   const navigate = useNavigate();
   const contactsQ = useContacts();
+  const campaignsQ = useCampaigns();
   const updateStage = useUpdateContactStage();
   const create = useCreateContact();
+  const createCampaign = useCreateCampaign();
+
+  const campaigns = campaignsQ.data ?? [];
+  const allContacts = contactsQ.data ?? [];
+
+  // "all" or campaign id
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string>("all");
+  const selectedCampaign: Campaign | null = useMemo(
+    () => campaigns.find((c) => c.id === selectedCampaignId) ?? null,
+    [campaigns, selectedCampaignId],
+  );
+
+  // Stages depend on selected campaign; "all" view shows the Lead-In funnel by default.
+  const stages: string[] = selectedCampaign?.pipeline_stages?.length
+    ? selectedCampaign.pipeline_stages
+    : DEFAULT_CAMPAIGN_STAGES;
 
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
+
+  // New contact
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState("");
   const [newCompany, setNewCompany] = useState("");
   const [newSource, setNewSource] = useState<string>("");
-  const [newStage, setNewStage] = useState<string>("Prospect");
+  const [newStage, setNewStage] = useState<string>(stages[0] ?? "Lead In");
+
+  // New campaign
+  const [showNewCampaign, setShowNewCampaign] = useState(false);
+  const [campName, setCampName] = useState("");
+  const [campSource, setCampSource] = useState("manual");
+  const [campChannel, setCampChannel] = useState("Other");
 
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
 
-  const allContacts = contactsQ.data ?? [];
-
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return allContacts.filter((c) => {
+    return allContacts.filter((c: any) => {
+      // Campaign filter
+      if (selectedCampaignId !== "all" && c.campaign_id !== selectedCampaignId) return false;
       if (sourceFilter !== "all" && (c.source ?? "") !== sourceFilter) return false;
       if (!q) return true;
       return (
@@ -69,19 +106,18 @@ function CrmBoard() {
         (c.email ?? "").toLowerCase().includes(q)
       );
     });
-  }, [allContacts, search, sourceFilter]);
+  }, [allContacts, search, sourceFilter, selectedCampaignId]);
 
   const byStage = new Map<string, Contact[]>();
-  for (const s of PIPELINE_STAGES) byStage.set(s, []);
+  for (const s of stages) byStage.set(s, []);
+  const orphanStage = stages[0]; // contacts with stages outside the current campaign's set land in column 1
   for (const c of filtered) {
-    const arr = byStage.get(c.stage) ?? byStage.get("No Status")!;
-    arr.push(c);
+    if (byStage.has(c.stage)) byStage.get(c.stage)!.push(c);
+    else byStage.get(orphanStage)!.push(c);
   }
 
-  const wonCount = (byStage.get("Closed Won") ?? []).length;
-  const activeCount = filtered.filter(
-    (c) => c.stage !== "Closed Won" && c.stage !== "Closed Lost",
-  ).length;
+  const wonCount = filtered.filter((c) => /won/i.test(c.stage)).length;
+  const activeCount = filtered.filter((c) => !/won|lost|no sale/i.test(c.stage)).length;
 
   const handleDrop = async (stage: string) => {
     setDragOverStage(null);
@@ -105,10 +141,25 @@ function CrmBoard() {
         company: newCompany.trim() || null,
         source: newSource || null,
         stage: newStage,
-      });
+        campaign_id: selectedCampaignId !== "all" ? selectedCampaignId : null,
+      } as any);
       toast.success("Contact created");
-      setShowNew(false); setNewName(""); setNewCompany(""); setNewSource(""); setNewStage("Prospect");
+      setShowNew(false); setNewName(""); setNewCompany(""); setNewSource(""); setNewStage(stages[0]);
     } catch (e: any) { toast.error(e.message ?? "Failed"); }
+  };
+
+  const handleCreateCampaign = async () => {
+    if (!campName.trim()) return;
+    try {
+      const c = await createCampaign.mutateAsync({
+        name: campName.trim(),
+        data_source: campSource,
+        primary_channel: campChannel,
+      });
+      toast.success(`Campaign "${c.name}" created`);
+      setSelectedCampaignId(c.id);
+      setShowNewCampaign(false); setCampName(""); setCampSource("manual"); setCampChannel("Other");
+    } catch (e: any) { toast.error(e.message ?? "Failed to create campaign"); }
   };
 
   return (
@@ -118,10 +169,10 @@ function CrmBoard() {
           <div>
             <h1 className="serif text-[32px] lg:text-[40px] leading-none text-ink">CRM</h1>
             <p className="mt-1.5 text-[12px] uppercase tracking-[0.18em] text-ink-muted">
-              Pipeline · {filtered.length} contacts · {activeCount} active · {wonCount} won
+              {selectedCampaign ? selectedCampaign.name : "All campaigns"} · {filtered.length} contacts · {activeCount} active · {wonCount} won
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Link
               to="/contacts"
               className="inline-flex items-center gap-1.5 px-3 py-2 border border-line text-ink rounded-md text-sm hover:bg-cream-deep"
@@ -135,6 +186,52 @@ function CrmBoard() {
               <Plus className="h-4 w-4" /> New contact
             </button>
           </div>
+        </div>
+
+        {/* Campaign selector */}
+        <div className="mb-4 -mx-1 flex items-center gap-2 overflow-x-auto pb-1 px-1">
+          <button
+            onClick={() => setSelectedCampaignId("all")}
+            className={cn(
+              "shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium border transition-colors",
+              selectedCampaignId === "all"
+                ? "bg-ink text-cream border-ink"
+                : "bg-paper text-ink border-line hover:border-ink-soft",
+            )}
+          >
+            All campaigns
+            <span className="text-[10px] opacity-70 tabular-nums">({allContacts.length})</span>
+          </button>
+          {campaigns.map((camp) => {
+            const count = allContacts.filter((c: any) => c.campaign_id === camp.id).length;
+            const active = selectedCampaignId === camp.id;
+            return (
+              <button
+                key={camp.id}
+                onClick={() => setSelectedCampaignId(camp.id)}
+                className={cn(
+                  "shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium border transition-colors",
+                  active
+                    ? "text-cream border-transparent"
+                    : "bg-paper text-ink border-line hover:border-ink-soft",
+                )}
+                style={active && camp.color ? { background: camp.color, borderColor: camp.color } : active ? { background: "var(--color-ink)" } : undefined}
+              >
+                <span
+                  className="inline-block h-2 w-2 rounded-full"
+                  style={{ background: camp.color ?? "var(--color-ink-muted)" }}
+                />
+                {camp.name}
+                <span className="text-[10px] opacity-70 tabular-nums">({count})</span>
+              </button>
+            );
+          })}
+          <button
+            onClick={() => setShowNewCampaign(true)}
+            className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] border border-dashed border-line text-ink-soft hover:border-gold hover:text-gold"
+          >
+            <Plus className="h-3.5 w-3.5" /> New campaign
+          </button>
         </div>
 
         {/* Filter bar */}
@@ -158,9 +255,55 @@ function CrmBoard() {
           </select>
         </div>
 
+        {showNewCampaign && (
+          <div className="mc-card p-4 mb-4 max-w-2xl">
+            <h3 className="serif text-lg text-ink mb-1 flex items-center gap-2">
+              <Megaphone className="h-4 w-4 text-gold" /> New campaign
+            </h3>
+            <p className="text-[11px] text-ink-muted mb-3">
+              Pick where this campaign's data lives. Manual = you'll log it yourself; the others will pull metrics from connected integrations.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <input
+                value={campName}
+                onChange={(e) => setCampName(e.target.value)}
+                placeholder="Campaign name *"
+                className="px-3 py-2 border border-line rounded text-sm sm:col-span-1"
+              />
+              <select
+                value={campSource}
+                onChange={(e) => setCampSource(e.target.value)}
+                className="px-3 py-2 border border-line rounded text-sm"
+              >
+                {DATA_SOURCES.map((d) => <option key={d.value} value={d.value}>Source: {d.label}</option>)}
+              </select>
+              <select
+                value={campChannel}
+                onChange={(e) => setCampChannel(e.target.value)}
+                className="px-3 py-2 border border-line rounded text-sm"
+              >
+                <option value="Other">Channel: Other</option>
+                <option value="Meta Ads">Channel: Meta Ads</option>
+                <option value="LinkedIn">Channel: LinkedIn</option>
+                <option value="YouTube">Channel: YouTube</option>
+                <option value="Email">Channel: Email</option>
+                <option value="Podcast">Channel: Podcast</option>
+                <option value="Multi-Channel">Channel: Multi-Channel</option>
+              </select>
+            </div>
+            <div className="flex gap-2 mt-3">
+              <button onClick={handleCreateCampaign} className="px-3 py-1.5 bg-ink text-cream rounded text-sm">Create campaign</button>
+              <button onClick={() => setShowNewCampaign(false)} className="px-3 py-1.5 border border-line rounded text-sm">Cancel</button>
+            </div>
+          </div>
+        )}
+
         {showNew && (
           <div className="mc-card p-4 mb-4 max-w-2xl">
-            <h3 className="serif text-lg text-ink mb-3">New contact</h3>
+            <h3 className="serif text-lg text-ink mb-3">
+              New contact
+              {selectedCampaign && <span className="text-[12px] text-ink-muted font-normal ml-2">→ {selectedCampaign.name}</span>}
+            </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Name *" className="px-3 py-2 border border-line rounded text-sm" />
               <input value={newCompany} onChange={(e) => setNewCompany(e.target.value)} placeholder="Company" className="px-3 py-2 border border-line rounded text-sm" />
@@ -169,7 +312,7 @@ function CrmBoard() {
                 {SOURCES.map((s) => <option key={s}>{s}</option>)}
               </select>
               <select value={newStage} onChange={(e) => setNewStage(e.target.value)} className="px-3 py-2 border border-line rounded text-sm">
-                {PIPELINE_STAGES.map((s) => <option key={s}>{s}</option>)}
+                {stages.map((s) => <option key={s}>{s}</option>)}
               </select>
             </div>
             <div className="flex gap-2 mt-3">
@@ -180,13 +323,23 @@ function CrmBoard() {
         )}
       </div>
 
-      {contactsQ.isLoading && (
+      {(contactsQ.isLoading || campaignsQ.isLoading) && (
         <div className="px-4 sm:px-6 lg:px-10 text-ink-muted text-sm">Loading pipeline…</div>
+      )}
+
+      {selectedCampaignId !== "all" && filtered.length === 0 && !contactsQ.isLoading && (
+        <div className="px-4 sm:px-6 lg:px-10 mb-4">
+          <div className="mc-card p-6 text-center text-ink-muted text-sm max-w-2xl">
+            No contacts in <strong className="text-ink">{selectedCampaign?.name}</strong> yet.
+            Add a contact and they'll be tagged to this campaign automatically, or open an existing
+            contact to assign them.
+          </div>
+        </div>
       )}
 
       <div className="overflow-x-auto px-4 sm:px-6 lg:px-10 pb-10">
         <div className="flex gap-3 min-w-max">
-          {PIPELINE_STAGES.map((stage) => {
+          {stages.map((stage) => {
             const cards = byStage.get(stage) ?? [];
             const isOver = dragOverStage === stage;
             return (
@@ -223,7 +376,7 @@ function CrmBoard() {
                         onClick={() => navigate({ to: "/crm/$id", params: { id: c.id } })}
                         className={cn(
                           "bg-paper border border-line-soft border-l-2 rounded-md p-2.5 cursor-grab active:cursor-grabbing hover:border-gold transition-colors",
-                          STAGE_ACCENT[stage],
+                          stageAccent(stage),
                           draggingId === c.id && "opacity-40",
                         )}
                       >

@@ -4,7 +4,7 @@ import { PageShell } from "@/components/mc/PageShell";
 import {
   useContact, useContactNotes, useContactActivity, useContactFollowUps,
   useAddContactNote, useAddFollowUp, useCompleteFollowUp, useUpdateContactStage,
-  useUpdateContact, PIPELINE_STAGES,
+  useUpdateContact, useCampaigns, PIPELINE_STAGES,
 } from "@/lib/queries-v2";
 import { fmtDate, fmtDateShort, timeAgo, initials } from "@/lib/format";
 import { toast } from "sonner";
@@ -29,6 +29,7 @@ function ContactDetail() {
   const notesQ = useContactNotes(id);
   const actQ = useContactActivity(id);
   const fuQ = useContactFollowUps(id);
+  const campaignsQ = useCampaigns();
 
   const addNote = useAddContactNote();
   const addFu = useAddFollowUp();
@@ -107,7 +108,13 @@ function ContactDetail() {
                     }}
                     className="px-2 py-1 border border-line rounded text-sm bg-paper"
                   >
-                    {PIPELINE_STAGES.map((s) => <option key={s}>{s}</option>)}
+                    {(() => {
+                      const camp = (campaignsQ.data ?? []).find((cmp: any) => cmp.id === (c as any).campaign_id);
+                      const opts: string[] = camp?.pipeline_stages?.length ? camp.pipeline_stages : (PIPELINE_STAGES as readonly string[]).slice();
+                      // include current stage even if it's not in the list, so we don't drop the value
+                      if (!opts.includes(c.stage)) opts.unshift(c.stage);
+                      return opts.map((s) => <option key={s}>{s}</option>);
+                    })()}
                   </select>
                   {c.email && (
                     <a href={`mailto:${c.email}`} className="inline-flex items-center gap-1 px-2 py-1 border border-line rounded text-xs text-ink-soft hover:bg-cream-deep">
@@ -133,6 +140,17 @@ function ContactDetail() {
                 value={c.source}
                 options={["", ...SOURCES]}
                 onSave={(v) => updateContact.mutate({ id: c.id, source: v || null })}
+              />
+              <SelectField
+                label="Campaign"
+                value={(c as any).campaign_id ?? ""}
+                options={["", ...(campaignsQ.data ?? []).map((cmp: any) => cmp.id)]}
+                renderOption={(v) => {
+                  if (!v) return "— None —";
+                  const cmp = (campaignsQ.data ?? []).find((x: any) => x.id === v);
+                  return cmp?.name ?? v;
+                }}
+                onSave={(v) => updateContact.mutate({ id: c.id, campaign_id: (v || null) as any })}
               />
               <Field label="Owner" value={c.owner} onSave={(v) => updateContact.mutate({ id: c.id, owner: v || null })} />
             </div>
@@ -290,7 +308,7 @@ function Field({ label, value, onSave }: { label: string; value: string | null; 
   );
 }
 
-function SelectField({ label, value, options, onSave }: { label: string; value: string | null; options: string[]; onSave: (v: string) => void }) {
+function SelectField({ label, value, options, onSave, renderOption }: { label: string; value: string | null; options: string[]; onSave: (v: string) => void; renderOption?: (v: string) => string }) {
   return (
     <div>
       <div className="text-[10px] uppercase tracking-[0.14em] text-ink-muted">{label}</div>
@@ -299,7 +317,7 @@ function SelectField({ label, value, options, onSave }: { label: string; value: 
         onChange={(e) => onSave(e.target.value)}
         className="w-full px-1 py-0.5 -mx-1 bg-transparent text-ink text-sm hover:bg-cream-deep rounded focus:outline-none focus:bg-cream-deep"
       >
-        {options.map((o) => <option key={o} value={o}>{o || "— add —"}</option>)}
+        {options.map((o) => <option key={o} value={o}>{renderOption ? renderOption(o) : (o || "— add —")}</option>)}
       </select>
     </div>
   );
