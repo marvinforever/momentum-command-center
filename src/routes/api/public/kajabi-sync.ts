@@ -135,7 +135,7 @@ async function findOrCreateLead(
       .eq("kajabi_contact_id", kajabiContactId)
       .maybeSingle();
     if (byKajabi?.id) {
-      const patch: Record<string, any> = { kajabi_synced_at: new Date().toISOString() };
+      const patch: { kajabi_synced_at: string; first_touch_date?: string } = { kajabi_synced_at: new Date().toISOString() };
       // Only overwrite first_touch_date if we have a better (earlier) one.
       if (firstTouchDate && (!byKajabi.first_touch_date || firstTouchDate < byKajabi.first_touch_date)) {
         patch.first_touch_date = firstTouchDate;
@@ -152,7 +152,7 @@ async function findOrCreateLead(
       .ilike("email", email)
       .maybeSingle();
     if (byEmail?.id) {
-      const patch: Record<string, any> = {};
+      const patch: { kajabi_contact_id?: string; kajabi_synced_at?: string; first_touch_date?: string } = {};
       if (kajabiContactId && !byEmail.kajabi_contact_id) {
         patch.kajabi_contact_id = kajabiContactId;
         patch.kajabi_synced_at = new Date().toISOString();
