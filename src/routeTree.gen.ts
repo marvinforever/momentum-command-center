@@ -15,6 +15,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as LinkedinRouteImport } from './routes/linkedin'
 import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as KajabiRouteImport } from './routes/kajabi'
+import { Route as IntegrationsRouteImport } from './routes/integrations'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CampaignsIndexRouteImport } from './routes/campaigns.index'
@@ -53,6 +54,11 @@ const LeadsRoute = LeadsRouteImport.update({
 const KajabiRoute = KajabiRouteImport.update({
   id: '/kajabi',
   path: '/kajabi',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IntegrationsRoute = IntegrationsRouteImport.update({
+  id: '/integrations',
+  path: '/integrations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -104,6 +110,7 @@ const ApiPublicHooksMetaSyncRoute = ApiPublicHooksMetaSyncRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/integrations': typeof IntegrationsRoute
   '/kajabi': typeof KajabiRoute
   '/leads': typeof LeadsRoute
   '/linkedin': typeof LinkedinRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/integrations': typeof IntegrationsRoute
   '/kajabi': typeof KajabiRoute
   '/leads': typeof LeadsRoute
   '/linkedin': typeof LinkedinRoute
@@ -139,6 +147,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/integrations': typeof IntegrationsRoute
   '/kajabi': typeof KajabiRoute
   '/leads': typeof LeadsRoute
   '/linkedin': typeof LinkedinRoute
@@ -158,6 +167,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/integrations'
     | '/kajabi'
     | '/leads'
     | '/linkedin'
@@ -175,6 +185,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/integrations'
     | '/kajabi'
     | '/leads'
     | '/linkedin'
@@ -192,6 +203,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/integrations'
     | '/kajabi'
     | '/leads'
     | '/linkedin'
@@ -210,6 +222,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
+  IntegrationsRoute: typeof IntegrationsRoute
   KajabiRoute: typeof KajabiRoute
   LeadsRoute: typeof LeadsRoute
   LinkedinRoute: typeof LinkedinRoute
@@ -266,6 +279,13 @@ declare module '@tanstack/react-router' {
       path: '/kajabi'
       fullPath: '/kajabi'
       preLoaderRoute: typeof KajabiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/integrations': {
+      id: '/integrations'
+      path: '/integrations'
+      fullPath: '/integrations'
+      preLoaderRoute: typeof IntegrationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -347,6 +367,7 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
+  IntegrationsRoute: IntegrationsRoute,
   KajabiRoute: KajabiRoute,
   LeadsRoute: LeadsRoute,
   LinkedinRoute: LinkedinRoute,
