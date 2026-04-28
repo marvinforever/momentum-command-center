@@ -22,6 +22,7 @@ import { Route as ContactsRouteImport } from './routes/contacts'
 import { Route as CaptivateRouteImport } from './routes/captivate'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CrmIndexRouteImport } from './routes/crm.index'
 import { Route as CampaignsIndexRouteImport } from './routes/campaigns.index'
 import { Route as CrmIdRouteImport } from './routes/crm.$id'
 import { Route as CampaignsIdRouteImport } from './routes/campaigns.$id'
@@ -100,6 +101,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const CrmIndexRoute = CrmIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CrmRoute,
 } as any)
 const CampaignsIndexRoute = CampaignsIndexRouteImport.update({
   id: '/campaigns/',
@@ -188,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/campaigns/$id': typeof CampaignsIdRoute
   '/crm/$id': typeof CrmIdRoute
   '/campaigns/': typeof CampaignsIndexRoute
+  '/crm/': typeof CrmIndexRoute
   '/api/public/captivate-sync': typeof ApiPublicCaptivateSyncRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
@@ -202,7 +209,6 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteWithChildren
   '/captivate': typeof CaptivateRoute
   '/contacts': typeof ContactsRoute
-  '/crm': typeof CrmRouteWithChildren
   '/integrations': typeof IntegrationsRoute
   '/kajabi': typeof KajabiRoute
   '/leads': typeof LeadsRoute
@@ -216,6 +222,7 @@ export interface FileRoutesByTo {
   '/campaigns/$id': typeof CampaignsIdRoute
   '/crm/$id': typeof CrmIdRoute
   '/campaigns': typeof CampaignsIndexRoute
+  '/crm': typeof CrmIndexRoute
   '/api/public/captivate-sync': typeof ApiPublicCaptivateSyncRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
@@ -245,6 +252,7 @@ export interface FileRoutesById {
   '/campaigns/$id': typeof CampaignsIdRoute
   '/crm/$id': typeof CrmIdRoute
   '/campaigns/': typeof CampaignsIndexRoute
+  '/crm/': typeof CrmIndexRoute
   '/api/public/captivate-sync': typeof ApiPublicCaptivateSyncRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
@@ -275,6 +283,7 @@ export interface FileRouteTypes {
     | '/campaigns/$id'
     | '/crm/$id'
     | '/campaigns/'
+    | '/crm/'
     | '/api/public/captivate-sync'
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
@@ -289,7 +298,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/captivate'
     | '/contacts'
-    | '/crm'
     | '/integrations'
     | '/kajabi'
     | '/leads'
@@ -303,6 +311,7 @@ export interface FileRouteTypes {
     | '/campaigns/$id'
     | '/crm/$id'
     | '/campaigns'
+    | '/crm'
     | '/api/public/captivate-sync'
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
@@ -331,6 +340,7 @@ export interface FileRouteTypes {
     | '/campaigns/$id'
     | '/crm/$id'
     | '/campaigns/'
+    | '/crm/'
     | '/api/public/captivate-sync'
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
@@ -460,6 +470,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/crm/': {
+      id: '/crm/'
+      path: '/'
+      fullPath: '/crm/'
+      preLoaderRoute: typeof CrmIndexRouteImport
+      parentRoute: typeof CrmRoute
+    }
     '/campaigns/': {
       id: '/campaigns/'
       path: '/campaigns'
@@ -568,10 +585,12 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface CrmRouteChildren {
   CrmIdRoute: typeof CrmIdRoute
+  CrmIndexRoute: typeof CrmIndexRoute
 }
 
 const CrmRouteChildren: CrmRouteChildren = {
   CrmIdRoute: CrmIdRoute,
+  CrmIndexRoute: CrmIndexRoute,
 }
 
 const CrmRouteWithChildren = CrmRoute._addFileChildren(CrmRouteChildren)
