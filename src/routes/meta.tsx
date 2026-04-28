@@ -131,7 +131,8 @@ function CampaignList() {
 // ============================================================================
 function CampaignView({ campaignId }: { campaignId: string }) {
   const { data: campaigns = [] } = useMetaCampaigns();
-  const { data: adsets = [], isLoading } = useMetaAdSets(campaignId);
+  const { data: adsets = [] } = useMetaAdSets(campaignId);
+  const { data: ads = [], isLoading: adsLoading } = useMetaAds({ campaignId });
   const { data: campaignInsights = [] } = useMetaAdsInsightsDaily({ campaignId, days: 30 });
 
   const campaign = campaigns.find((c) => c.meta_campaign_id === campaignId);
@@ -139,6 +140,16 @@ function CampaignView({ campaignId }: { campaignId: string }) {
   const totals = useMemo(() => {
     return aggregateMetaMetrics(campaignInsights);
   }, [campaignInsights]);
+
+  const adRows = useMemo(() => {
+    const tot = groupMetaMetricsBy(campaignInsights, "meta_ad_id");
+    return ads
+      .map((a) => ({
+        ...a,
+        ...(tot.get(a.meta_ad_id) ?? emptyMetaTotals),
+      }))
+      .sort((a, b) => (b.spend ?? 0) - (a.spend ?? 0));
+  }, [ads, campaignInsights]);
 
   const adsetRows = useMemo(() => {
     const tot = groupMetaMetricsBy(campaignInsights, "meta_adset_id");
@@ -177,13 +188,48 @@ function CampaignView({ campaignId }: { campaignId: string }) {
         </div>
       </MCCard>
 
+      {/* Primary drill-down: individual ads with creative previews */}
       <MCCard>
-        <CardHeader title="Ad Sets" meta={`${adsetRows.length} total`} />
-        {isLoading ? (
+        <CardHeader
+          title="Ads"
+          meta={`${adRows.length} total · click any ad to see the creative & performance`}
+        />
+        {adsLoading ? (
           <div className="p-6 text-[12px] text-ink-muted">Loading…</div>
-        ) : adsetRows.length === 0 ? (
-          <div className="p-6 text-[12px] text-ink-muted">No ad sets found.</div>
+        ) : adRows.length === 0 ? (
+          <div className="p-6 text-[12px] text-ink-muted">No ads found in this campaign.</div>
         ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+            {adRows.map((ad) => (
+              <Link
+                key={ad.id}
+                to="/meta"
+                search={{ campaign: campaignId, adset: ad.meta_adset_id, ad: ad.meta_ad_id }}
+                className="block rounded-lg border border-line-soft hover:border-gold/40 hover:shadow-sm overflow-hidden transition bg-white"
+              >
+                <CreativePreview thumbnail={ad.thumbnail_url} image={ad.image_url} />
+                <div className="p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="font-medium text-ink text-[13px] truncate">{ad.name}</div>
+                    <CampaignStatus status={ad.effective_status ?? ad.status} small />
+                  </div>
+                  {ad.body && <div className="text-[11px] text-ink-muted line-clamp-2">{ad.body}</div>}
+                  <div className="grid grid-cols-3 gap-2 text-[10px] uppercase tracking-[0.12em] text-ink-muted pt-2 border-t border-line-soft">
+                    <Mini label="Spend" value={fmtUSD(ad.spend)} />
+                    <Mini label="Leads" value={fmtNum(ad.leads)} />
+                    <Mini label="CPL" value={ad.cpl !== null ? `$${ad.cpl.toFixed(2)}` : "—"} />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </MCCard>
+
+      {/* Secondary: ad sets breakdown (collapsed by default if only one) */}
+      {adsetRows.length > 1 && (
+        <MCCard>
+          <CardHeader title="Ad Sets" meta={`${adsetRows.length} total`} />
           <div className="overflow-x-auto">
             <table className="w-full text-[12px]">
               <thead className="bg-cream-deep text-[10px] uppercase tracking-[0.14em] text-ink-muted">
@@ -218,8 +264,8 @@ function CampaignView({ campaignId }: { campaignId: string }) {
               </tbody>
             </table>
           </div>
-        )}
-      </MCCard>
+        </MCCard>
+      )}
     </div>
   );
 }
