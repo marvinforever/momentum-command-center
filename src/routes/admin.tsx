@@ -8,6 +8,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useLeadMagnets, useOffers, useCampaigns, useLeads } from "@/lib/queries";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useServerFn } from "@tanstack/react-start";
+import { mirrorDiscoveryCallToNotion, mirrorLeadToNotion } from "@/server/notion.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — Momentum Command Center" }] }),
@@ -367,16 +369,29 @@ function CallForm() {
   const inv = useInvalidate(["discovery_calls"]);
   const { data: leads = [] } = useLeads();
   const { data: offers = [] } = useOffers();
+  const mirrorCall = useServerFn(mirrorDiscoveryCallToNotion);
   return (
     <FormCard title="New Discovery Call" onSubmit={async () => {
-      const { error } = await supabase.from("discovery_calls").insert({
+      const { data: inserted, error } = await supabase.from("discovery_calls").insert({
         lead_id: s.lead_id || null, name: s.name || (leads.find((l) => l.id === s.lead_id)?.name ?? "Unknown"),
         call_date: s.call_date, fu_date: s.fu_date || null, call_type: s.call_type,
         fit_rating: Number(s.fit_rating) || null, status: s.status, lead_source: s.lead_source,
         location: s.location, role_position: s.role_position, offer_id: s.offer_id || null, notes: s.notes,
-      });
+      }).select("id").single();
       if (error) return toast.error(error.message);
-      toast.success("Call logged."); inv(); reset();
+      toast.success("Call logged.");
+      // Fire-and-forget mirror to Notion. Failure does NOT block the local save.
+      if (inserted?.id) {
+        mirrorCall({ data: { callId: inserted.id } })
+          .then((r) => {
+            if (r.ok && r.action === "create") toast.success("Mirrored to Notion");
+            else if (!r.ok && r.error && !/not connected|not configured/i.test(r.error)) {
+              toast.warning(`Notion sync failed: ${r.error}`);
+            }
+          })
+          .catch((e) => toast.warning(`Notion sync failed: ${e instanceof Error ? e.message : "unknown"}`));
+      }
+      inv(); reset();
     }}>
       <Field label="Lead">
         <select className={inputCls} value={s.lead_id} onChange={(e) => { set("lead_id", e.target.value); const l = leads.find((x) => x.id === e.target.value); if (l) set("name", l.name); }}>
