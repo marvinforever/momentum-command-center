@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.kajabi-webhook]
 verify_jwt = false
+
+[functions.analyst-chat]
+verify_jwt = false

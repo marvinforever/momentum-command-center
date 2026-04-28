@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { AnalystChat } from "@/components/mc/AnalystChat";
 
 interface RouterContext {
   queryClient: QueryClient;
@@ -124,5 +125,10 @@ function AuthGate({ children }: { children: ReactNode }) {
   }
 
   if (!user && !isLogin) return null;
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      {user && !isLogin && <AnalystChat />}
+    </>
+  );
 }
