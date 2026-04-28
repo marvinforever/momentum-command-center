@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PageShell } from "@/components/mc/PageShell";
 import {
@@ -53,7 +53,6 @@ const DATA_SOURCES = [
 ];
 
 function CrmBoard() {
-  const navigate = useNavigate();
   const contactsQ = useContacts();
   const campaignsQ = useCampaigns();
   const updateStage = useUpdateContactStage();
@@ -379,12 +378,14 @@ function CrmBoard() {
                   {cards.map((c) => {
                     const overdue = c.next_followup_at && c.next_followup_at <= new Date().toISOString().slice(0, 10);
                     return (
-                      <div
+                      <Link
                         key={c.id}
-                        onClick={() => navigate({ to: "/crm/$id", params: { id: c.id } })}
+                        to="/crm/$id"
+                        params={{ id: c.id }}
+                        preload="intent"
                         title="Click to open · Drag handle to move"
                         className={cn(
-                          "group bg-paper border border-line-soft border-l-2 rounded-md p-2.5 cursor-pointer hover:border-gold hover:shadow-sm transition-all",
+                          "group block bg-paper border border-line-soft border-l-2 rounded-md p-2.5 cursor-pointer hover:border-gold hover:shadow-sm transition-all",
                           stageAccent(stage),
                           draggingId === c.id && "opacity-40",
                         )}
@@ -426,7 +427,7 @@ function CrmBoard() {
                             </span>
                           )}
                         </div>
-                      </div>
+                      </Link>
                     );
                   })}
                 </div>
