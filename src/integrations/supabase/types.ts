@@ -235,6 +235,8 @@ export type Database = {
           location: string | null
           name: string
           notes: string | null
+          notion_page_id: string | null
+          notion_synced_at: string | null
           offer_id: string | null
           role_position: string | null
           status: string | null
@@ -252,6 +254,8 @@ export type Database = {
           location?: string | null
           name: string
           notes?: string | null
+          notion_page_id?: string | null
+          notion_synced_at?: string | null
           offer_id?: string | null
           role_position?: string | null
           status?: string | null
@@ -269,6 +273,8 @@ export type Database = {
           location?: string | null
           name?: string
           notes?: string | null
+          notion_page_id?: string | null
+          notion_synced_at?: string | null
           offer_id?: string | null
           role_position?: string | null
           status?: string | null
@@ -536,6 +542,8 @@ export type Database = {
           lead_source: string | null
           name: string
           notes: string | null
+          notion_page_id: string | null
+          notion_synced_at: string | null
           opt_in: string | null
           phone: string | null
           status: string | null
@@ -558,6 +566,8 @@ export type Database = {
           lead_source?: string | null
           name: string
           notes?: string | null
+          notion_page_id?: string | null
+          notion_synced_at?: string | null
           opt_in?: string | null
           phone?: string | null
           status?: string | null
@@ -580,6 +590,8 @@ export type Database = {
           lead_source?: string | null
           name?: string
           notes?: string | null
+          notion_page_id?: string | null
+          notion_synced_at?: string | null
           opt_in?: string | null
           phone?: string | null
           status?: string | null
@@ -1156,6 +1168,93 @@ export type Database = {
           started_at?: string
           success?: boolean | null
           triggered_by?: string | null
+        }
+        Relationships: []
+      }
+      notion_connections: {
+        Row: {
+          access_token: string
+          bot_id: string | null
+          calls_database_id: string | null
+          calls_property_map: Json | null
+          created_at: string
+          enabled: boolean
+          id: string
+          leads_database_id: string | null
+          leads_property_map: Json | null
+          owner_info: Json | null
+          updated_at: string
+          workspace_icon: string | null
+          workspace_id: string
+          workspace_name: string | null
+        }
+        Insert: {
+          access_token: string
+          bot_id?: string | null
+          calls_database_id?: string | null
+          calls_property_map?: Json | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          leads_database_id?: string | null
+          leads_property_map?: Json | null
+          owner_info?: Json | null
+          updated_at?: string
+          workspace_icon?: string | null
+          workspace_id: string
+          workspace_name?: string | null
+        }
+        Update: {
+          access_token?: string
+          bot_id?: string | null
+          calls_database_id?: string | null
+          calls_property_map?: Json | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          leads_database_id?: string | null
+          leads_property_map?: Json | null
+          owner_info?: Json | null
+          updated_at?: string
+          workspace_icon?: string | null
+          workspace_id?: string
+          workspace_name?: string | null
+        }
+        Relationships: []
+      }
+      notion_sync_log: {
+        Row: {
+          action: string
+          created_at: string
+          error: string | null
+          id: string
+          notion_page_id: string | null
+          payload: Json | null
+          resource_id: string | null
+          resource_type: string
+          success: boolean
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          notion_page_id?: string | null
+          payload?: Json | null
+          resource_id?: string | null
+          resource_type: string
+          success: boolean
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          notion_page_id?: string | null
+          payload?: Json | null
+          resource_id?: string | null
+          resource_type?: string
+          success?: boolean
         }
         Relationships: []
       }
