@@ -86,7 +86,7 @@ export const saveNotionConfig = createServerFn({ method: "POST" })
 
     const { error } = await supabaseAdmin
       .from("notion_connections")
-      .update(update)
+      .update(update as never)
       .eq("id", conn.id);
     if (error) throw new Error(error.message);
     return { ok: true };
