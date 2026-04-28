@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { PageShell } from "@/components/mc/PageShell";
 import { PageHeader } from "@/components/mc/PageHeader";
 import { MCCard, CardHeader } from "@/components/mc/Primitives";
@@ -7,9 +7,21 @@ import { fmtNum, fmtDate } from "@/lib/format";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ResponsiveContainer, LineChart, Line, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { z } from "zod";
+
+const ACCOUNTS = ["christine", "mark"] as const;
+type Account = (typeof ACCOUNTS)[number];
+const ACCOUNT_LABEL: Record<Account, "Christine" | "Mark"> = { christine: "Christine", mark: "Mark" };
+const ACCENT: Record<Account, string> = { christine: "#C4924A", mark: "#6B8E7F" };
+
+const searchSchema = z.object({
+  account: fallback(z.enum(ACCOUNTS), "christine").default("christine"),
+});
 
 export const Route = createFileRoute("/linkedin")({
-  head: () => ({ meta: [{ title: "LinkedIn — Christine — Momentum Command Center" }] }),
+  validateSearch: zodValidator(searchSchema),
+  head: () => ({ meta: [{ title: "LinkedIn — Momentum Command Center" }] }),
   component: LinkedInPage,
 });
 
@@ -17,8 +29,20 @@ type SortKey = "post_date" | "impressions" | "reach" | "reactions" | "profile_vi
 type SortDir = "asc" | "desc";
 
 function LinkedInPage() {
-  const { data: posts = [] } = useLinkedinPosts();
-  const { data: weekly = [] } = useLinkedinWeekly();
+  const { account } = Route.useSearch();
+  const navigate = useNavigate({ from: "/linkedin" });
+  const accountLabel = ACCOUNT_LABEL[account];
+  const accent = ACCENT[account];
+  const { data: postsAll = [] } = useLinkedinPosts();
+  const { data: weeklyAll = [] } = useLinkedinWeekly();
+  const posts = useMemo(
+    () => (postsAll as any[]).filter((p) => (p.account_label ?? "Christine") === accountLabel),
+    [postsAll, accountLabel],
+  );
+  const weekly = useMemo(
+    () => (weeklyAll as any[]).filter((w) => (w.account_label ?? "Christine") === accountLabel),
+    [weeklyAll, accountLabel],
+  );
 
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
