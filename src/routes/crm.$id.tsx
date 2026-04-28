@@ -29,6 +29,7 @@ function ContactDetail() {
   const notesQ = useContactNotes(id);
   const actQ = useContactActivity(id);
   const fuQ = useContactFollowUps(id);
+  const campaignsQ = useCampaigns();
 
   const addNote = useAddContactNote();
   const addFu = useAddFollowUp();
