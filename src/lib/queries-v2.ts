@@ -152,6 +152,66 @@ export const PIPELINE_STAGES = [
 ] as const;
 export type PipelineStage = (typeof PIPELINE_STAGES)[number];
 
+export const DEFAULT_CAMPAIGN_STAGES = [
+  "Lead In",
+  "Opt-In",
+  "Call Booked",
+  "Call Attended",
+  "Follow Up",
+  "Closed Won",
+  "No Sale",
+];
+
+export type Campaign = {
+  id: string;
+  name: string;
+  type: string | null;
+  primary_channel: string | null;
+  status: string | null;
+  data_source: string;
+  data_source_config: Record<string, any>;
+  pipeline_stages: string[];
+  color: string | null;
+  archived: boolean;
+  created_at: string;
+};
+
+export function useCampaigns() {
+  return useQuery({
+    queryKey: ["campaigns"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("campaigns")
+        .select("id,name,type,primary_channel,status,data_source,data_source_config,pipeline_stages,color,archived,created_at")
+        .eq("archived", false)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as Campaign[];
+    },
+  });
+}
+
+export function useCreateCampaign() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { name: string; data_source?: string; primary_channel?: string; type?: string; color?: string; pipeline_stages?: string[] }) => {
+      const payload: any = {
+        name: input.name,
+        data_source: input.data_source ?? "manual",
+        primary_channel: input.primary_channel ?? "Other",
+        type: input.type ?? "Evergreen",
+        status: "Live",
+        color: input.color ?? null,
+        pipeline_stages: input.pipeline_stages ?? DEFAULT_CAMPAIGN_STAGES,
+      };
+      const { data, error } = await (supabase as any).from("campaigns").insert(payload).select().single();
+      if (error) throw error;
+      return data as Campaign;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["campaigns"] }),
+  });
+}
+
 export type Contact = {
   id: string;
   name: string;
@@ -162,6 +222,7 @@ export type Contact = {
   source: string | null;
   stage: string;
   client_id: string | null;
+  campaign_id: string | null;
   owner: string | null;
   notes_summary: string | null;
   last_touch_at: string | null;
