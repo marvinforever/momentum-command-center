@@ -308,7 +308,7 @@ function Field({ label, value, onSave }: { label: string; value: string | null; 
   );
 }
 
-function SelectField({ label, value, options, onSave }: { label: string; value: string | null; options: string[]; onSave: (v: string) => void }) {
+function SelectField({ label, value, options, onSave, renderOption }: { label: string; value: string | null; options: string[]; onSave: (v: string) => void; renderOption?: (v: string) => string }) {
   return (
     <div>
       <div className="text-[10px] uppercase tracking-[0.14em] text-ink-muted">{label}</div>
@@ -317,7 +317,7 @@ function SelectField({ label, value, options, onSave }: { label: string; value: 
         onChange={(e) => onSave(e.target.value)}
         className="w-full px-1 py-0.5 -mx-1 bg-transparent text-ink text-sm hover:bg-cream-deep rounded focus:outline-none focus:bg-cream-deep"
       >
-        {options.map((o) => <option key={o} value={o}>{o || "— add —"}</option>)}
+        {options.map((o) => <option key={o} value={o}>{renderOption ? renderOption(o) : (o || "— add —")}</option>)}
       </select>
     </div>
   );
