@@ -381,11 +381,8 @@ function CrmBoard() {
                     return (
                       <div
                         key={c.id}
-                        draggable
-                        onDragStart={() => setDraggingId(c.id)}
-                        onDragEnd={() => { setDraggingId(null); setDragOverStage(null); }}
                         onClick={() => navigate({ to: "/crm/$id", params: { id: c.id } })}
-                        title="Click to open · Drag to move"
+                        title="Click to open · Drag handle to move"
                         className={cn(
                           "group bg-paper border border-line-soft border-l-2 rounded-md p-2.5 cursor-pointer hover:border-gold hover:shadow-sm transition-all",
                           stageAccent(stage),
@@ -393,9 +390,16 @@ function CrmBoard() {
                         )}
                       >
                         <div className="flex items-start gap-1.5">
-                          <GripVertical
-                            className="h-3 w-3 text-ink-muted/40 mt-1 shrink-0 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
-                          />
+                          <div
+                            draggable
+                            onDragStart={(e) => { e.stopPropagation(); setDraggingId(c.id); }}
+                            onDragEnd={(e) => { e.stopPropagation(); setDraggingId(null); setDragOverStage(null); }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="cursor-grab active:cursor-grabbing shrink-0 mt-1 opacity-40 group-hover:opacity-100 transition-opacity"
+                            title="Drag to move"
+                          >
+                            <GripVertical className="h-3 w-3 text-ink-muted" />
+                          </div>
                           <span
                             className={cn(
                               "mt-1.5 inline-block h-1.5 w-1.5 rounded-full shrink-0",
