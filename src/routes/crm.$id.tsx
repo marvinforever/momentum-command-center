@@ -108,7 +108,13 @@ function ContactDetail() {
                     }}
                     className="px-2 py-1 border border-line rounded text-sm bg-paper"
                   >
-                    {PIPELINE_STAGES.map((s) => <option key={s}>{s}</option>)}
+                    {(() => {
+                      const camp = (campaignsQ.data ?? []).find((cmp: any) => cmp.id === (c as any).campaign_id);
+                      const opts: string[] = camp?.pipeline_stages?.length ? camp.pipeline_stages : (PIPELINE_STAGES as readonly string[]).slice();
+                      // include current stage even if it's not in the list, so we don't drop the value
+                      if (!opts.includes(c.stage)) opts.unshift(c.stage);
+                      return opts.map((s) => <option key={s}>{s}</option>);
+                    })()}
                   </select>
                   {c.email && (
                     <a href={`mailto:${c.email}`} className="inline-flex items-center gap-1 px-2 py-1 border border-line rounded text-xs text-ink-soft hover:bg-cream-deep">
