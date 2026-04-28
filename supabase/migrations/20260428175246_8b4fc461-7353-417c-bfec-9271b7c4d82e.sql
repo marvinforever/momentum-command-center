@@ -1,0 +1,2 @@
+UPDATE public.clients SET name = 'Christine Jewell', slug = 'christine-jewell' WHERE id = 'a9803fce-7e0a-4a40-9c4b-6e825e04d2ba';
+UPDATE public.clients SET active = false WHERE id = '4d179b6d-1168-4621-a723-339b48e8f679';
