@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { NotionCard } from "@/components/mc/NotionCard";
 
 const KAJABI_WEBHOOK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/kajabi-webhook`;
 
@@ -95,6 +96,8 @@ function IntegrationsPage() {
           />
         </div>
       </MCCard>
+
+      <NotionCard />
 
       <KajabiCard />
 
