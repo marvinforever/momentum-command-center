@@ -234,6 +234,26 @@ async function getForm(id: string): Promise<{ name: string | null }> {
   }
 }
 
+// Bulk-load all forms for the site once and populate the formCache. The per-id
+// /forms/{id} lookup often returns 404 for older/archived forms; the list
+// endpoint reliably returns every form attached to the site.
+async function preloadForms() {
+  try {
+    const rows = await fetchAllPagesWithParams("/forms", {
+      "filter[site_id]": KAJABI_SITE_ID,
+    });
+    for (const row of rows) {
+      const id = String(row.id ?? "");
+      if (!id) continue;
+      const a = row.attributes ?? {};
+      formCache.set(id, { name: a.title ?? a.name ?? null });
+    }
+    console.log(`preloadForms: cached ${formCache.size} forms`);
+  } catch (e) {
+    console.error("preloadForms failed", e);
+  }
+}
+
 async function getContact(id: string): Promise<{ created_at: string | null; email: string | null; name: string | null }> {
   if (!id) return { created_at: null, email: null, name: null };
   if (contactCache.has(id)) return contactCache.get(id)!;
@@ -354,6 +374,7 @@ async function syncPurchases() {
 
 async function syncFormSubmissions() {
   let synced = 0, errors = 0;
+  await preloadForms();
   const rows = await fetchAllPages("/form_submissions");
   for (const row of rows) {
     try {
