@@ -176,19 +176,18 @@ function Dashboard() {
       {/* The Funnel */}
       <SectionTitle title="The Funnel" meta="Month to date · Click any stage" />
       <MCCard className="p-3 sm:p-6 mb-6 lg:mb-9 overflow-hidden">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-y divide-line-soft sm:divide-y-0 sm:divide-x">
-          <FunnelStage label="Visitors" value="12,418" trend="+18.2% vs last month" tone="gold" />
-          <FunnelStage label="Leads Captured" value={fmtNum(leadsMTD)} trend="+22.6% vs last month" tone="gold" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 divide-y divide-line-soft sm:divide-y-0 sm:divide-x">
+          <FunnelStage label="Leads Captured" value={fmtNum(leadsMTD)} trend="Month to date" tone="gold" />
           <FunnelStage
             label="Calls Booked"
             value={fmtNum(callsBookedMTD)}
-            trend="+10.7% vs last month"
+            trend="Month to date"
             tone="sage"
             highlighted
             onClick={() => navigate({ to: "/campaigns" })}
           />
           <FunnelStage label="Calls Held" value={fmtNum(callsHeldMTD)} trend={`${showRateMTD}% show rate`} tone="amber" />
-          <FunnelStage label="RIC Enrolled" value={fmtNum(enrolledMTD)} trend="+1 from March" tone="burgundy" />
+          <FunnelStage label="RIC Enrolled" value={fmtNum(enrolledMTD)} trend="Month to date" tone="burgundy" />
         </div>
       </MCCard>
 
