@@ -173,6 +173,7 @@ export type Campaign = {
   pipeline_stages: string[];
   color: string | null;
   archived: boolean;
+  webhook_token: string | null;
   created_at: string;
 };
 
@@ -182,7 +183,7 @@ export function useCampaigns() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("campaigns")
-        .select("id,name,type,primary_channel,status,data_source,data_source_config,pipeline_stages,color,archived,created_at")
+        .select("id,name,type,primary_channel,status,data_source,data_source_config,pipeline_stages,color,archived,webhook_token,created_at")
         .eq("archived", false)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -209,6 +210,59 @@ export function useCreateCampaign() {
       return data as Campaign;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["campaigns"] }),
+  });
+}
+
+export function useUpdateCampaign() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string } & Partial<Campaign>) => {
+      const { id, ...patch } = input;
+      const { data, error } = await (supabase as any).from("campaigns").update(patch).eq("id", id).select().single();
+      if (error) throw error;
+      return data as Campaign;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["campaigns"] }),
+  });
+}
+
+// Distinct Kajabi forms with submission counts (for the Data Source picker)
+export function useKajabiForms() {
+  return useQuery({
+    queryKey: ["kajabi_forms"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("kajabi_form_submissions")
+        .select("kajabi_form_id,form_name");
+      if (error) throw error;
+      const map = new Map<string, { id: string; name: string; count: number }>();
+      for (const r of data ?? []) {
+        if (!r.kajabi_form_id) continue;
+        const existing = map.get(r.kajabi_form_id);
+        if (existing) {
+          existing.count++;
+          if (!existing.name && r.form_name) existing.name = r.form_name;
+        } else {
+          map.set(r.kajabi_form_id, { id: r.kajabi_form_id, name: r.form_name ?? "(unnamed form)", count: 1 });
+        }
+      }
+      return Array.from(map.values()).sort((a, b) => b.count - a.count);
+    },
+  });
+}
+
+// Meta campaigns (for the Data Source picker)
+export function useMetaCampaignsForPicker() {
+  return useQuery({
+    queryKey: ["meta_campaigns_picker"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("meta_campaigns")
+        .select("meta_campaign_id,name,status")
+        .order("name");
+      if (error) throw error;
+      return (data ?? []) as { meta_campaign_id: string; name: string; status: string | null }[];
+    },
   });
 }
 

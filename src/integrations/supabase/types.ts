@@ -38,6 +38,7 @@ export type Database = {
           start_date: string | null
           status: string | null
           type: string | null
+          webhook_token: string | null
         }
         Insert: {
           archived?: boolean
@@ -62,6 +63,7 @@ export type Database = {
           start_date?: string | null
           status?: string | null
           type?: string | null
+          webhook_token?: string | null
         }
         Update: {
           archived?: boolean
@@ -86,6 +88,7 @@ export type Database = {
           start_date?: string | null
           status?: string | null
           type?: string | null
+          webhook_token?: string | null
         }
         Relationships: [
           {
