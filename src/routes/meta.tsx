@@ -7,11 +7,10 @@ import {
   useMetaAdSets,
   useMetaAds,
   useMetaAd,
-  useMetaAdsDaily,
-  useMetaAdsetsDaily,
   useMetaAdsInsightsDaily,
 } from "@/lib/queries";
 import { fmtNum, fmtUSD, fmtPct, fmtDate } from "@/lib/format";
+import { aggregateMetaMetrics, groupMetaMetricsBy } from "@/lib/metaMetrics";
 import { useMemo } from "react";
 import { ResponsiveContainer, LineChart, Line, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
 import { ChevronRight, ExternalLink, ArrowLeft, ImageOff } from "lucide-react";
@@ -56,26 +55,15 @@ function MetaPage() {
 // ============================================================================
 function CampaignList() {
   const { data: campaigns = [], isLoading } = useMetaCampaigns();
-  const { data: daily = [] } = useMetaAdsDaily(30);
+  const { data: daily = [] } = useMetaAdsInsightsDaily({ days: 30 });
 
   const rows = useMemo(() => {
-    const totals = new Map<string, { spend: number; leads: number; clicks: number; impressions: number }>();
-    for (const r of daily) {
-      const k = r.meta_campaign_id;
-      const cur = totals.get(k) ?? { spend: 0, leads: 0, clicks: 0, impressions: 0 };
-      cur.spend += Number(r.spend ?? 0);
-      cur.leads += Number(r.leads ?? 0);
-      cur.clicks += Number(r.clicks ?? 0);
-      cur.impressions += Number(r.impressions ?? 0);
-      totals.set(k, cur);
-    }
+    const totals = groupMetaMetricsBy(daily, "meta_campaign_id");
     return campaigns.map((c) => {
-      const t = totals.get(c.meta_campaign_id) ?? { spend: 0, leads: 0, clicks: 0, impressions: 0 };
+      const t = totals.get(c.meta_campaign_id) ?? emptyMetaTotals;
       return {
         ...c,
         ...t,
-        cpl: t.leads ? t.spend / t.leads : null,
-        ctr: t.impressions ? (t.clicks / t.impressions) * 100 : null,
       };
     }).sort((a, b) => (b.spend ?? 0) - (a.spend ?? 0));
   }, [campaigns, daily]);
@@ -134,32 +122,23 @@ function CampaignList() {
 function CampaignView({ campaignId }: { campaignId: string }) {
   const { data: campaigns = [] } = useMetaCampaigns();
   const { data: adsets = [], isLoading } = useMetaAdSets(campaignId);
-  const { data: adsetDaily = [] } = useMetaAdsetsDaily({ campaignId, days: 30 });
-  const { data: campDaily = [] } = useMetaAdsDaily(30);
+  const { data: campaignInsights = [] } = useMetaAdsInsightsDaily({ campaignId, days: 30 });
 
   const campaign = campaigns.find((c) => c.meta_campaign_id === campaignId);
 
   const totals = useMemo(() => {
-    const filtered = campDaily.filter((r) => r.meta_campaign_id === campaignId);
-    return aggregate(filtered);
-  }, [campDaily, campaignId]);
+    return aggregateMetaMetrics(campaignInsights);
+  }, [campaignInsights]);
 
   const adsetRows = useMemo(() => {
-    const tot = new Map<string, ReturnType<typeof aggregate>>();
-    const grouped = new Map<string, typeof adsetDaily>();
-    for (const r of adsetDaily) {
-      const arr = grouped.get(r.meta_adset_id) ?? [];
-      arr.push(r);
-      grouped.set(r.meta_adset_id, arr);
-    }
-    grouped.forEach((arr, k) => tot.set(k, aggregate(arr)));
+    const tot = groupMetaMetricsBy(campaignInsights, "meta_adset_id");
     return adsets
       .map((a) => ({
         ...a,
-        ...(tot.get(a.meta_adset_id) ?? { spend: 0, leads: 0, clicks: 0, impressions: 0, reach: 0, cpl: null, ctr: null }),
+        ...(tot.get(a.meta_adset_id) ?? emptyMetaTotals),
       }))
       .sort((a, b) => (b.spend ?? 0) - (a.spend ?? 0));
-  }, [adsets, adsetDaily]);
+  }, [adsets, campaignInsights]);
 
   return (
     <div className="mt-6 space-y-6">
