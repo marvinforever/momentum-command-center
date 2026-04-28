@@ -263,7 +263,7 @@ async function syncShowAnalytics(token: string, showId: string, lookbackDays: nu
     .from("captivate_shows")
     .update({ last_synced_at: new Date().toISOString() })
     .eq("captivate_show_id", showId);
-  void totalDownloads;
+  
 
   return { totalDownloads, dlRowsInserted, epTotalsUpdated };
 }
