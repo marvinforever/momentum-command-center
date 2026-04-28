@@ -252,10 +252,10 @@ function Dashboard() {
           <CardHeader title="Week Pulse" meta="7d trend" />
           <div className="p-6">
             <div className="grid grid-cols-2 gap-3">
-              <SmallTile label="New Leads" value={fmtNum(newLeads7)} delta="+14% vs prev 7d" />
-              <SmallTile label="Calls Booked" value={fmtNum(callsBooked7)} delta="+2 vs prev" />
-              <SmallTile label="Ad Spend" value={fmtUSD(adSpend7)} delta="On pace" />
-              <SmallTile label="Cost / Lead" value={`$${cpl.toFixed(2)}`} delta="Below target" tone="sage" />
+              <SmallTile label="New Leads" value={fmtNum(pulse.newLeads)} delta={pulse.newLeadsDelta} />
+              <SmallTile label="Calls Booked" value={fmtNum(pulse.callsBooked)} delta={pulse.callsBookedDelta} />
+              <SmallTile label="Ad Spend" value={fmtUSD(pulse.adSpend)} delta={pulse.adSpendDelta} />
+              <SmallTile label="Cost / Lead" value={`$${pulse.cpl.toFixed(2)}`} delta={pulse.cplDelta} tone={pulse.cplTone} />
             </div>
             <div className="mt-5 h-[60px]">
               <ResponsiveContainer width="100%" height="100%">
