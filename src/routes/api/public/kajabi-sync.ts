@@ -184,9 +184,48 @@ async function syncContacts() {
   return { resource: "contacts" as const, synced, created, errors };
 }
 
-// Cache so we don't refetch the same customer/offer for every purchase row.
+// Cache so we don't refetch the same customer/offer/form/contact for every row.
 const customerCache = new Map<string, { email: string | null; name: string | null }>();
 const offerCache = new Map<string, { name: string | null }>();
+const formCache = new Map<string, { name: string | null }>();
+const contactCache = new Map<string, { created_at: string | null; email: string | null; name: string | null }>();
+
+async function getForm(id: string): Promise<{ name: string | null }> {
+  if (!id) return { name: null };
+  if (formCache.has(id)) return formCache.get(id)!;
+  try {
+    const json = await kajabiFetch(`/forms/${id}`);
+    const a = json?.data?.attributes ?? {};
+    const name = a.title ?? a.name ?? null;
+    const result = { name };
+    formCache.set(id, result);
+    return result;
+  } catch (e) {
+    console.error(`getForm(${id}) failed`, e);
+    formCache.set(id, { name: null });
+    return { name: null };
+  }
+}
+
+async function getContact(id: string): Promise<{ created_at: string | null; email: string | null; name: string | null }> {
+  if (!id) return { created_at: null, email: null, name: null };
+  if (contactCache.has(id)) return contactCache.get(id)!;
+  try {
+    const json = await kajabiFetch(`/contacts/${id}`);
+    const a = json?.data?.attributes ?? {};
+    const result = {
+      created_at: a.created_at ?? a.first_seen_at ?? null,
+      email: a.email ?? null,
+      name: a.name ?? [a.first_name, a.last_name].filter(Boolean).join(" ") ?? null,
+    };
+    contactCache.set(id, result);
+    return result;
+  } catch (e) {
+    console.error(`getContact(${id}) failed`, e);
+    contactCache.set(id, { created_at: null, email: null, name: null });
+    return { created_at: null, email: null, name: null };
+  }
+}
 
 async function getCustomer(id: string): Promise<{ email: string | null; name: string | null }> {
   if (!id) return { email: null, name: null };
@@ -296,12 +335,22 @@ async function syncFormSubmissions() {
       const submissionId = String(row.id ?? "");
       if (!submissionId) continue;
 
-      const email = a.email ?? a.contact_email ?? null;
-      const name = a.name ?? a.contact_name ?? null;
-      const formName = a.form_title ?? a.form_name ?? null;
       const kajabiFormId = (String(r?.form?.data?.id ?? "")) || null;
       const kajabiContactId = (String(r?.contact?.data?.id ?? "")) || null;
-      const submittedAt = a.submitted_at ?? a.created_at ?? new Date().toISOString();
+
+      // Kajabi's form_submissions API does NOT return a submission timestamp
+      // or form title — we have to enrich from /forms/{id} and /contacts/{id}.
+      // The contact's created_at is the closest proxy for when they submitted.
+      const formInfo = kajabiFormId ? await getForm(kajabiFormId) : { name: null };
+      const contactInfo = kajabiContactId
+        ? await getContact(kajabiContactId)
+        : { created_at: null, email: null, name: null };
+
+      const email = a.email ?? a.contact_email ?? contactInfo.email ?? null;
+      const name = a.name ?? a.contact_name ?? contactInfo.name ?? null;
+      const formName = a.form_title ?? a.form_name ?? formInfo.name ?? null;
+      const submittedAt =
+        a.submitted_at ?? a.created_at ?? contactInfo.created_at ?? null;
 
       const leadId = await findOrCreateLead(email, name, kajabiContactId);
 
