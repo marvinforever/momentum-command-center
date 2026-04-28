@@ -261,11 +261,9 @@ async function syncShowAnalytics(token: string, showId: string, lookbackDays: nu
 
   await supabaseAdmin
     .from("captivate_shows")
-    .update({
-      total_subscribers: totalDownloads, // store all-time downloads on the show row for quick rollups
-      last_synced_at: new Date().toISOString(),
-    })
+    .update({ last_synced_at: new Date().toISOString() })
     .eq("captivate_show_id", showId);
+  void totalDownloads;
 
   return { totalDownloads, dlRowsInserted, epTotalsUpdated };
 }
