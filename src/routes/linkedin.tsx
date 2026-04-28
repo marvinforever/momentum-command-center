@@ -7,20 +7,17 @@ import { fmtNum, fmtDate } from "@/lib/format";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ResponsiveContainer, LineChart, Line, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
-import { zodValidator, fallback } from "@tanstack/zod-adapter";
-import { z } from "zod";
 
 const ACCOUNTS = ["christine", "mark"] as const;
 type Account = (typeof ACCOUNTS)[number];
 const ACCOUNT_LABEL: Record<Account, "Christine" | "Mark"> = { christine: "Christine", mark: "Mark" };
 const ACCENT: Record<Account, string> = { christine: "#C4924A", mark: "#6B8E7F" };
 
-const searchSchema = z.object({
-  account: fallback(z.enum(ACCOUNTS), "christine").default("christine"),
-});
-
 export const Route = createFileRoute("/linkedin")({
-  validateSearch: zodValidator(searchSchema),
+  validateSearch: (raw: Record<string, unknown>): { account: Account } => {
+    const a = raw?.account;
+    return { account: a === "mark" ? "mark" : "christine" };
+  },
   head: () => ({ meta: [{ title: "LinkedIn — Momentum Command Center" }] }),
   component: LinkedInPage,
 });
