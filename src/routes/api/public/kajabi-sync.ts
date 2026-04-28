@@ -94,9 +94,19 @@ async function kajabiFetch(path: string, params: Record<string, string> = {}) {
 
 // Walk paginated JSON:API responses. Stop at maxPages to avoid runaway loops.
 async function fetchAllPages(path: string, pageSize = 100, maxPages = 50): Promise<any[]> {
+  return fetchAllPagesWithParams(path, {}, pageSize, maxPages);
+}
+
+async function fetchAllPagesWithParams(
+  path: string,
+  extraParams: Record<string, string>,
+  pageSize = 100,
+  maxPages = 50,
+): Promise<any[]> {
   const all: any[] = [];
   for (let page = 1; page <= maxPages; page++) {
     const json = await kajabiFetch(path, {
+      ...extraParams,
       "page[size]": String(pageSize),
       "page[number]": String(page),
     });
