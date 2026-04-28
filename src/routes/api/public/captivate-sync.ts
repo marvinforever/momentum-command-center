@@ -248,7 +248,7 @@ async function syncShowAnalytics(token: string, showId: string, lookbackDays: nu
   for (const ep of epList ?? []) {
     try {
       const t = await capGet<any>(`/insights/${showId}/total/${ep.captivate_episode_id}`, token);
-      const dl = Number(t?.downloads ?? t?.total ?? t?.data?.downloads ?? 0) || 0;
+      const dl = Number(t?.hits ?? t?.downloads ?? t?.total ?? t?.data?.downloads ?? 0) || 0;
       await supabaseAdmin
         .from("captivate_episodes")
         .update({ total_downloads: dl, last_synced_at: new Date().toISOString() })
@@ -261,7 +261,10 @@ async function syncShowAnalytics(token: string, showId: string, lookbackDays: nu
 
   await supabaseAdmin
     .from("captivate_shows")
-    .update({ last_synced_at: new Date().toISOString() })
+    .update({
+      total_subscribers: totalDownloads, // store all-time downloads on the show row for quick rollups
+      last_synced_at: new Date().toISOString(),
+    })
     .eq("captivate_show_id", showId);
 
   return { totalDownloads, dlRowsInserted, epTotalsUpdated };
