@@ -16,6 +16,7 @@ import { Route as LinkedinRouteImport } from './routes/linkedin'
 import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as KajabiRouteImport } from './routes/kajabi'
 import { Route as IntegrationsRouteImport } from './routes/integrations'
+import { Route as CaptivateRouteImport } from './routes/captivate'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CampaignsIndexRouteImport } from './routes/campaigns.index'
@@ -60,6 +61,11 @@ const KajabiRoute = KajabiRouteImport.update({
 const IntegrationsRoute = IntegrationsRouteImport.update({
   id: '/integrations',
   path: '/integrations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CaptivateRoute = CaptivateRouteImport.update({
+  id: '/captivate',
+  path: '/captivate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -116,6 +122,7 @@ const ApiPublicHooksMetaSyncRoute = ApiPublicHooksMetaSyncRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/captivate': typeof CaptivateRoute
   '/integrations': typeof IntegrationsRoute
   '/kajabi': typeof KajabiRoute
   '/leads': typeof LeadsRoute
@@ -135,6 +142,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/captivate': typeof CaptivateRoute
   '/integrations': typeof IntegrationsRoute
   '/kajabi': typeof KajabiRoute
   '/leads': typeof LeadsRoute
@@ -155,6 +163,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/captivate': typeof CaptivateRoute
   '/integrations': typeof IntegrationsRoute
   '/kajabi': typeof KajabiRoute
   '/leads': typeof LeadsRoute
@@ -176,6 +185,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/captivate'
     | '/integrations'
     | '/kajabi'
     | '/leads'
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/captivate'
     | '/integrations'
     | '/kajabi'
     | '/leads'
@@ -214,6 +225,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/captivate'
     | '/integrations'
     | '/kajabi'
     | '/leads'
@@ -234,6 +246,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
+  CaptivateRoute: typeof CaptivateRoute
   IntegrationsRoute: typeof IntegrationsRoute
   KajabiRoute: typeof KajabiRoute
   LeadsRoute: typeof LeadsRoute
@@ -299,6 +312,13 @@ declare module '@tanstack/react-router' {
       path: '/integrations'
       fullPath: '/integrations'
       preLoaderRoute: typeof IntegrationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/captivate': {
+      id: '/captivate'
+      path: '/captivate'
+      fullPath: '/captivate'
+      preLoaderRoute: typeof CaptivateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -387,6 +407,7 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
+  CaptivateRoute: CaptivateRoute,
   IntegrationsRoute: IntegrationsRoute,
   KajabiRoute: KajabiRoute,
   LeadsRoute: LeadsRoute,
