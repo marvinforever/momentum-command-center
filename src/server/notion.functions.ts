@@ -9,7 +9,7 @@ import {
   getDatabaseSchema,
   mirrorDiscoveryCall,
   mirrorLead,
-} from "@/server/notion";
+} from "@/server/notion.server";
 
 // ---------- Build the OAuth start URL ----------
 export const buildNotionAuthUrl = createServerFn({ method: "GET" })

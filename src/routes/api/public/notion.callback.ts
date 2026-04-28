@@ -3,7 +3,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { exchangeOAuthCode } from "@/server/notion";
+import { exchangeOAuthCode } from "@/server/notion.server";
 
 export const Route = createFileRoute("/api/public/notion/callback")({
   server: {
