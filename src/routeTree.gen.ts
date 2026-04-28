@@ -16,6 +16,7 @@ import { Route as LinkedinRouteImport } from './routes/linkedin'
 import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as KajabiRouteImport } from './routes/kajabi'
 import { Route as IntegrationsRouteImport } from './routes/integrations'
+import { Route as CaptivateRouteImport } from './routes/captivate'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CampaignsIndexRouteImport } from './routes/campaigns.index'
@@ -23,6 +24,7 @@ import { Route as CampaignsIdRouteImport } from './routes/campaigns.$id'
 import { Route as AdminIntegrationsRouteImport } from './routes/admin.integrations'
 import { Route as ApiPublicZapierLeadRouteImport } from './routes/api/public/zapier-lead'
 import { Route as ApiPublicKajabiSyncRouteImport } from './routes/api/public/kajabi-sync'
+import { Route as ApiPublicCaptivateSyncRouteImport } from './routes/api/public/captivate-sync'
 import { Route as ApiPublicNotionCallbackRouteImport } from './routes/api/public/notion.callback'
 import { Route as ApiPublicHooksMetaSyncRouteImport } from './routes/api/public/hooks/meta-sync'
 
@@ -61,6 +63,11 @@ const IntegrationsRoute = IntegrationsRouteImport.update({
   path: '/integrations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CaptivateRoute = CaptivateRouteImport.update({
+  id: '/captivate',
+  path: '/captivate',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -96,6 +103,11 @@ const ApiPublicKajabiSyncRoute = ApiPublicKajabiSyncRouteImport.update({
   path: '/api/public/kajabi-sync',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCaptivateSyncRoute = ApiPublicCaptivateSyncRouteImport.update({
+  id: '/api/public/captivate-sync',
+  path: '/api/public/captivate-sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicNotionCallbackRoute = ApiPublicNotionCallbackRouteImport.update({
   id: '/api/public/notion/callback',
   path: '/api/public/notion/callback',
@@ -110,6 +122,7 @@ const ApiPublicHooksMetaSyncRoute = ApiPublicHooksMetaSyncRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/captivate': typeof CaptivateRoute
   '/integrations': typeof IntegrationsRoute
   '/kajabi': typeof KajabiRoute
   '/leads': typeof LeadsRoute
@@ -120,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/campaigns/$id': typeof CampaignsIdRoute
   '/campaigns/': typeof CampaignsIndexRoute
+  '/api/public/captivate-sync': typeof ApiPublicCaptivateSyncRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
   '/api/public/hooks/meta-sync': typeof ApiPublicHooksMetaSyncRoute
@@ -128,6 +142,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/captivate': typeof CaptivateRoute
   '/integrations': typeof IntegrationsRoute
   '/kajabi': typeof KajabiRoute
   '/leads': typeof LeadsRoute
@@ -138,6 +153,7 @@ export interface FileRoutesByTo {
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/campaigns/$id': typeof CampaignsIdRoute
   '/campaigns': typeof CampaignsIndexRoute
+  '/api/public/captivate-sync': typeof ApiPublicCaptivateSyncRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
   '/api/public/hooks/meta-sync': typeof ApiPublicHooksMetaSyncRoute
@@ -147,6 +163,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/captivate': typeof CaptivateRoute
   '/integrations': typeof IntegrationsRoute
   '/kajabi': typeof KajabiRoute
   '/leads': typeof LeadsRoute
@@ -157,6 +174,7 @@ export interface FileRoutesById {
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/campaigns/$id': typeof CampaignsIdRoute
   '/campaigns/': typeof CampaignsIndexRoute
+  '/api/public/captivate-sync': typeof ApiPublicCaptivateSyncRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
   '/api/public/hooks/meta-sync': typeof ApiPublicHooksMetaSyncRoute
@@ -167,6 +185,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/captivate'
     | '/integrations'
     | '/kajabi'
     | '/leads'
@@ -177,6 +196,7 @@ export interface FileRouteTypes {
     | '/admin/integrations'
     | '/campaigns/$id'
     | '/campaigns/'
+    | '/api/public/captivate-sync'
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
     | '/api/public/hooks/meta-sync'
@@ -185,6 +205,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/captivate'
     | '/integrations'
     | '/kajabi'
     | '/leads'
@@ -195,6 +216,7 @@ export interface FileRouteTypes {
     | '/admin/integrations'
     | '/campaigns/$id'
     | '/campaigns'
+    | '/api/public/captivate-sync'
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
     | '/api/public/hooks/meta-sync'
@@ -203,6 +225,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/captivate'
     | '/integrations'
     | '/kajabi'
     | '/leads'
@@ -213,6 +236,7 @@ export interface FileRouteTypes {
     | '/admin/integrations'
     | '/campaigns/$id'
     | '/campaigns/'
+    | '/api/public/captivate-sync'
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
     | '/api/public/hooks/meta-sync'
@@ -222,6 +246,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
+  CaptivateRoute: typeof CaptivateRoute
   IntegrationsRoute: typeof IntegrationsRoute
   KajabiRoute: typeof KajabiRoute
   LeadsRoute: typeof LeadsRoute
@@ -231,6 +256,7 @@ export interface RootRouteChildren {
   YoutubeRoute: typeof YoutubeRoute
   CampaignsIdRoute: typeof CampaignsIdRoute
   CampaignsIndexRoute: typeof CampaignsIndexRoute
+  ApiPublicCaptivateSyncRoute: typeof ApiPublicCaptivateSyncRoute
   ApiPublicKajabiSyncRoute: typeof ApiPublicKajabiSyncRoute
   ApiPublicZapierLeadRoute: typeof ApiPublicZapierLeadRoute
   ApiPublicHooksMetaSyncRoute: typeof ApiPublicHooksMetaSyncRoute
@@ -288,6 +314,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntegrationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/captivate': {
+      id: '/captivate'
+      path: '/captivate'
+      fullPath: '/captivate'
+      preLoaderRoute: typeof CaptivateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -337,6 +370,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicKajabiSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/captivate-sync': {
+      id: '/api/public/captivate-sync'
+      path: '/api/public/captivate-sync'
+      fullPath: '/api/public/captivate-sync'
+      preLoaderRoute: typeof ApiPublicCaptivateSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/notion/callback': {
       id: '/api/public/notion/callback'
       path: '/api/public/notion/callback'
@@ -367,6 +407,7 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
+  CaptivateRoute: CaptivateRoute,
   IntegrationsRoute: IntegrationsRoute,
   KajabiRoute: KajabiRoute,
   LeadsRoute: LeadsRoute,
@@ -376,6 +417,7 @@ const rootRouteChildren: RootRouteChildren = {
   YoutubeRoute: YoutubeRoute,
   CampaignsIdRoute: CampaignsIdRoute,
   CampaignsIndexRoute: CampaignsIndexRoute,
+  ApiPublicCaptivateSyncRoute: ApiPublicCaptivateSyncRoute,
   ApiPublicKajabiSyncRoute: ApiPublicKajabiSyncRoute,
   ApiPublicZapierLeadRoute: ApiPublicZapierLeadRoute,
   ApiPublicHooksMetaSyncRoute: ApiPublicHooksMetaSyncRoute,
