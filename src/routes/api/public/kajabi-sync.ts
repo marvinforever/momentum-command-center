@@ -374,6 +374,7 @@ async function syncPurchases() {
 
 async function syncFormSubmissions() {
   let synced = 0, errors = 0;
+  await preloadForms();
   const rows = await fetchAllPages("/form_submissions");
   for (const row of rows) {
     try {
