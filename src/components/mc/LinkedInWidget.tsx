@@ -79,7 +79,7 @@ export function LinkedInWidget({ account = "Christine" }: LinkedInWidgetProps) {
       <CardHeader
         title={`LinkedIn — ${account}`}
         meta={
-          <Link to="/linkedin" className="text-gold hover:underline">
+          <Link to="/linkedin" search={{ account: account.toLowerCase() as "christine" | "mark" }} className="text-gold hover:underline">
             Drill down →
           </Link>
         }
