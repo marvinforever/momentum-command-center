@@ -370,6 +370,218 @@ export type Database = {
         }
         Relationships: []
       }
+      clients: {
+        Row: {
+          active: boolean
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      contact_activity: {
+        Row: {
+          contact_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          type: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          type: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_activity_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_follow_ups: {
+        Row: {
+          completed_at: string | null
+          contact_id: string
+          created_at: string
+          description: string
+          due_date: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          contact_id: string
+          created_at?: string
+          description: string
+          due_date: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          contact_id?: string
+          created_at?: string
+          description?: string
+          due_date?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_follow_ups_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_notes: {
+        Row: {
+          body: string
+          contact_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+        }
+        Insert: {
+          body: string
+          contact_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+        }
+        Update: {
+          body?: string
+          contact_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_notes_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          archived: boolean
+          client_id: string | null
+          company: string | null
+          created_at: string
+          email: string | null
+          external_id: string | null
+          external_source: string | null
+          id: string
+          last_touch_at: string | null
+          name: string
+          next_followup_at: string | null
+          notes_summary: string | null
+          owner: string | null
+          phone: string | null
+          role: string | null
+          source: string | null
+          stage: string
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          client_id?: string | null
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          external_id?: string | null
+          external_source?: string | null
+          id?: string
+          last_touch_at?: string | null
+          name: string
+          next_followup_at?: string | null
+          notes_summary?: string | null
+          owner?: string | null
+          phone?: string | null
+          role?: string | null
+          source?: string | null
+          stage?: string
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          client_id?: string | null
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          external_id?: string | null
+          external_source?: string | null
+          id?: string
+          last_touch_at?: string | null
+          name?: string
+          next_followup_at?: string | null
+          notes_summary?: string | null
+          owner?: string | null
+          phone?: string | null
+          role?: string | null
+          source?: string | null
+          stage?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content: {
         Row: {
           campaign_id: string | null
@@ -1401,6 +1613,62 @@ export type Database = {
         }
         Relationships: []
       }
+      metric_definitions: {
+        Row: {
+          active: boolean
+          client_id: string
+          created_at: string
+          description: string | null
+          format: string | null
+          id: string
+          key: string
+          label: string
+          section: string
+          sort_order: number | null
+          source: string | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          client_id: string
+          created_at?: string
+          description?: string | null
+          format?: string | null
+          id?: string
+          key: string
+          label: string
+          section: string
+          sort_order?: number | null
+          source?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          format?: string | null
+          id?: string
+          key?: string
+          label?: string
+          section?: string
+          sort_order?: number | null
+          source?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metric_definitions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notion_connections: {
         Row: {
           access_token: string
@@ -1529,6 +1797,50 @@ export type Database = {
           url?: string | null
         }
         Relationships: []
+      }
+      weekly_metric_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          metric_definition_id: string
+          note: string | null
+          source: string | null
+          updated_at: string
+          value: number | null
+          value_text: string | null
+          week_ending: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metric_definition_id: string
+          note?: string | null
+          source?: string | null
+          updated_at?: string
+          value?: number | null
+          value_text?: string | null
+          week_ending: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metric_definition_id?: string
+          note?: string | null
+          source?: string | null
+          updated_at?: string
+          value?: number | null
+          value_text?: string | null
+          week_ending?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_metric_snapshots_metric_definition_id_fkey"
+            columns: ["metric_definition_id"]
+            isOneToOne: false
+            referencedRelation: "metric_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       youtube_channels: {
         Row: {
