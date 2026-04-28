@@ -231,14 +231,21 @@ export async function importMetricsToDb(opts: {
     }
   }
 
-  // Build snapshot upserts
-  const snapshots: any[] = [];
+  // Build snapshot upserts — dedupe by (metric_definition_id, week_ending).
+  // Postgres rejects upserts that hit the same conflict target twice in one
+  // batch, so duplicate week columns in the CSV (e.g. two "03/06/2026" cols)
+  // would otherwise blow up the entire chunk and silently write nothing.
+  const snapshotMap = new Map<string, any>();
+  let dupeCount = 0;
   for (const row of parsed.rows) {
     const def = byKey.get(row.key);
     if (!def) continue;
     for (const v of row.values) {
       if (v.value == null && (v.valueText == null || v.valueText === "")) continue;
-      snapshots.push({
+      const k = `${def.id}__${v.weekEnding}`;
+      if (snapshotMap.has(k)) dupeCount++;
+      // Last value wins — typically the rightmost column is the most recent edit.
+      snapshotMap.set(k, {
         metric_definition_id: def.id,
         week_ending: v.weekEnding,
         value: v.value,
@@ -246,6 +253,10 @@ export async function importMetricsToDb(opts: {
         source: "csv_import",
       });
     }
+  }
+  const snapshots = Array.from(snapshotMap.values());
+  if (dupeCount > 0) {
+    parsed.warnings.push(`${dupeCount} duplicate (metric, week) cells were collapsed — check the CSV header for repeated dates`);
   }
 
   // Chunk upserts (Supabase has payload limits)
