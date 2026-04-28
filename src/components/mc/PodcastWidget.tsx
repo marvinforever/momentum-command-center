@@ -110,7 +110,11 @@ export function PodcastWidget() {
                 <div className="flex-1 min-w-0">
                   <div className="text-[12px] font-medium text-ink truncate">{s.title}</div>
                   <div className="text-[10px] text-ink-muted">
-                    {fmtNum(s.total_subscribers ?? 0)} subscribers
+                    {fmtNum(
+                      episodes
+                        .filter((e: any) => e.captivate_show_id === s.captivate_show_id)
+                        .reduce((sum: number, e: any) => sum + (Number(e.total_downloads) || 0), 0)
+                    )} downloads
                   </div>
                 </div>
               </div>
