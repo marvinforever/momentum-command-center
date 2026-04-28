@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/mc/PageShell";
 import { PageHeader } from "@/components/mc/PageHeader";
 import { MCCard, SectionTitle, CardHeader, StatusBadge, ChannelBadge, Avatar, KpiTile } from "@/components/mc/Primitives";
-import { useLeads, useDiscoveryCalls, useCampaigns, useContent, monthFilter, last7Filter, last30Filter } from "@/lib/queries";
+import { useLeads, useDiscoveryCalls, useCampaigns, useContent, useKajabiFormSubmissions, useMetaAdsInsightsDaily, monthFilter, last7Filter, last30Filter } from "@/lib/queries";
 import { fmtNum, fmtUSD, fmtPct, fmtDate, timeAgo, isoDate, daysAgo } from "@/lib/format";
 import { ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Tooltip } from "recharts";
 import { useMemo } from "react";
@@ -25,6 +25,8 @@ function Dashboard() {
   const callsQ = useDiscoveryCalls();
   const campaignsQ = useCampaigns();
   const contentQ = useContent();
+  const formsQ = useKajabiFormSubmissions();
+  const metaInsightsQ = useMetaAdsInsightsDaily({ days: 14 });
 
   const month = monthFilter();
   const week = last7Filter();
@@ -34,6 +36,8 @@ function Dashboard() {
   const calls = callsQ.data ?? [];
   const campaigns = campaignsQ.data ?? [];
   const content = contentQ.data ?? [];
+  const forms = formsQ.data ?? [];
+  const metaInsights = metaInsightsQ.data ?? [];
 
   const inMonth = (d: string | null) => !!d && d >= month.from && d <= month.to;
   const inWeek = (d: string | null) => !!d && d >= week.from && d <= week.to;
@@ -60,20 +64,78 @@ function Dashboard() {
   }, [leads]);
   const totalLeads = channelMix.reduce((s, c) => s + c.value, 0);
 
-  // Week pulse
-  const newLeads7 = leads.filter((l) => inWeek(l.first_touch_date)).length;
-  const callsBooked7 = calls.filter((c) => inWeek(c.call_date)).length;
-  const adSpend7 = 1820; // hardcoded per spec
-  const cpl = newLeads7 ? adSpend7 / newLeads7 : 0;
+  // Week pulse — real data with prev-7d deltas
+  const pulse = useMemo(() => {
+    const now = Date.now();
+    const day = 86400_000;
+    const cur7Start = new Date(now - 7 * day).toISOString().slice(0, 10);
+    const prev7Start = new Date(now - 14 * day).toISOString().slice(0, 10);
+    const prev7End = cur7Start;
+
+    const leadRowsCur = leads.filter((l) => l.first_touch_date && l.first_touch_date >= cur7Start).length;
+    const leadRowsPrev = leads.filter((l) => l.first_touch_date && l.first_touch_date >= prev7Start && l.first_touch_date < prev7End).length;
+    const formsCur = forms.filter((f: any) => {
+      const d = (f.submitted_at ?? f.created_at ?? "").slice(0, 10);
+      return d && d >= cur7Start;
+    }).length;
+    const formsPrev = forms.filter((f: any) => {
+      const d = (f.submitted_at ?? f.created_at ?? "").slice(0, 10);
+      return d && d >= prev7Start && d < prev7End;
+    }).length;
+    const newLeadsCur = leadRowsCur + formsCur;
+    const newLeadsPrev = leadRowsPrev + formsPrev;
+
+    const callsCur = calls.filter((c) => c.call_date && c.call_date >= cur7Start).length;
+    const callsPrev = calls.filter((c) => c.call_date && c.call_date >= prev7Start && c.call_date < prev7End).length;
+
+    let spendCur = 0, spendPrev = 0, metaLeadsCur = 0, metaLeadsPrev = 0;
+    for (const r of metaInsights as any[]) {
+      const d = r.snapshot_date as string;
+      if (!d) continue;
+      if (d >= cur7Start) {
+        spendCur += Number(r.spend ?? 0);
+        metaLeadsCur += Number(r.leads ?? 0);
+      } else if (d >= prev7Start && d < prev7End) {
+        spendPrev += Number(r.spend ?? 0);
+        metaLeadsPrev += Number(r.leads ?? 0);
+      }
+    }
+    const cplCur = metaLeadsCur ? spendCur / metaLeadsCur : 0;
+    const cplPrev = metaLeadsPrev ? spendPrev / metaLeadsPrev : 0;
+
+    const pctDelta = (cur: number, prev: number) => {
+      if (!prev) return cur > 0 ? "New" : "—";
+      const pct = Math.round(((cur - prev) / prev) * 100);
+      return `${pct >= 0 ? "+" : ""}${pct}% vs prev 7d`;
+    };
+    const absDelta = (cur: number, prev: number) => {
+      const diff = cur - prev;
+      return `${diff >= 0 ? "+" : ""}${diff} vs prev`;
+    };
+
+    return {
+      newLeads: newLeadsCur,
+      newLeadsDelta: pctDelta(newLeadsCur, newLeadsPrev),
+      callsBooked: callsCur,
+      callsBookedDelta: absDelta(callsCur, callsPrev),
+      adSpend: spendCur,
+      adSpendDelta: pctDelta(spendCur, spendPrev),
+      cpl: cplCur,
+      cplDelta: cplPrev ? pctDelta(cplCur, cplPrev) : "—",
+      cplTone: (cplPrev && cplCur <= cplPrev ? "sage" : undefined) as "sage" | undefined,
+    };
+  }, [leads, forms, calls, metaInsights]);
 
   const sparkData = useMemo(() => {
     const days: { day: string; leads: number }[] = [];
     for (let i = 6; i >= 0; i--) {
       const d = isoDate(daysAgo(i));
-      days.push({ day: d, leads: leads.filter((l) => l.first_touch_date === d).length });
+      const leadCount = leads.filter((l) => l.first_touch_date === d).length;
+      const formCount = forms.filter((f: any) => (f.submitted_at ?? f.created_at ?? "").slice(0, 10) === d).length;
+      days.push({ day: d, leads: leadCount + formCount });
     }
     return days;
-  }, [leads]);
+  }, [leads, forms]);
 
   // Active campaigns list (top 4, Live first)
   const activeCampaigns = useMemo(() => {
@@ -190,10 +252,10 @@ function Dashboard() {
           <CardHeader title="Week Pulse" meta="7d trend" />
           <div className="p-6">
             <div className="grid grid-cols-2 gap-3">
-              <SmallTile label="New Leads" value={fmtNum(newLeads7)} delta="+14% vs prev 7d" />
-              <SmallTile label="Calls Booked" value={fmtNum(callsBooked7)} delta="+2 vs prev" />
-              <SmallTile label="Ad Spend" value={fmtUSD(adSpend7)} delta="On pace" />
-              <SmallTile label="Cost / Lead" value={`$${cpl.toFixed(2)}`} delta="Below target" tone="sage" />
+              <SmallTile label="New Leads" value={fmtNum(pulse.newLeads)} delta={pulse.newLeadsDelta} />
+              <SmallTile label="Calls Booked" value={fmtNum(pulse.callsBooked)} delta={pulse.callsBookedDelta} />
+              <SmallTile label="Ad Spend" value={fmtUSD(pulse.adSpend)} delta={pulse.adSpendDelta} />
+              <SmallTile label="Cost / Lead" value={`$${pulse.cpl.toFixed(2)}`} delta={pulse.cplDelta} tone={pulse.cplTone} />
             </div>
             <div className="mt-5 h-[60px]">
               <ResponsiveContainer width="100%" height="100%">
