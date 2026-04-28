@@ -385,13 +385,17 @@ function CrmBoard() {
                         onDragStart={() => setDraggingId(c.id)}
                         onDragEnd={() => { setDraggingId(null); setDragOverStage(null); }}
                         onClick={() => navigate({ to: "/crm/$id", params: { id: c.id } })}
+                        title="Click to open · Drag to move"
                         className={cn(
-                          "bg-paper border border-line-soft border-l-2 rounded-md p-2.5 cursor-grab active:cursor-grabbing hover:border-gold transition-colors",
+                          "group bg-paper border border-line-soft border-l-2 rounded-md p-2.5 cursor-pointer hover:border-gold hover:shadow-sm transition-all",
                           stageAccent(stage),
                           draggingId === c.id && "opacity-40",
                         )}
                       >
                         <div className="flex items-start gap-1.5">
+                          <GripVertical
+                            className="h-3 w-3 text-ink-muted/40 mt-1 shrink-0 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+                          />
                           <span
                             className={cn(
                               "mt-1.5 inline-block h-1.5 w-1.5 rounded-full shrink-0",
@@ -400,9 +404,10 @@ function CrmBoard() {
                             title={c.source ?? "No source"}
                           />
                           <div className="min-w-0 flex-1">
-                            <div className="text-[13px] text-ink font-medium truncate">{c.name}</div>
+                            <div className="text-[13px] text-ink font-medium truncate group-hover:text-gold group-hover:underline underline-offset-2 decoration-gold/40">{c.name}</div>
                             {c.company && <div className="text-[11px] text-ink-muted truncate">{c.company}</div>}
                           </div>
+                          <ChevronRight className="h-3.5 w-3.5 text-gold shrink-0 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5" />
                         </div>
                         <div className="flex items-center justify-between mt-2 text-[10px] text-ink-muted">
                           <span className="truncate">
