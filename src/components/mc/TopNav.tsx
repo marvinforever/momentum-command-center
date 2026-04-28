@@ -5,7 +5,8 @@ import { useNavigate } from "@tanstack/react-router";
 
 const ITEMS = [
   { to: "/", label: "Dashboard" },
-  { to: "/crm", label: "CRM" },
+  { to: "/crm", label: "Pipeline" },
+  { to: "/contacts", label: "Contacts" },
   { to: "/widgets", label: "Channels" },
   { to: "/admin", label: "Admin" },
 ] as const;

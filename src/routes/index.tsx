@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell } from "@/components/mc/PageShell";
 import { MetricsGrid } from "@/components/mc/MetricsGrid";
+import { TodayPanel } from "@/components/mc/TodayPanel";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "Dashboard — Momentum" }] }),
@@ -16,6 +17,7 @@ function Home() {
           Weekly historical view · Click any row to drill in
         </p>
       </div>
+      <TodayPanel />
       <MetricsGrid />
     </PageShell>
   );
