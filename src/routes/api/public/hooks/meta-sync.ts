@@ -314,79 +314,10 @@ export const Route = createFileRoute("/api/public/hooks/meta-sync")({
             adsSynced = await chunkUpsert(supabase, "meta_ads", rows, "meta_ad_id");
           }
 
-          // ============ 4. INSIGHTS — campaign level (existing table) ============
+          // ============ 4. INSIGHTS — ad level canonical source ============
           const baseInsightFields = "impressions,reach,clicks,spend,cpm,cpc,ctr,frequency,actions,cost_per_action_type,date_start,date_stop";
-          const campInsightFields = `campaign_id,${baseInsightFields}`;
-          const campaignInsights = await fetchAllPages<MetaInsight>(
-            `https://graph.facebook.com/${META_API_VERSION}/${adAccountId}/insights?level=campaign&fields=${campInsightFields}&time_increment=1&date_preset=last_30d&limit=200`,
-            token
-          );
-
           let insightsSynced = 0;
-          if (campaignInsights.length) {
-            const rows = campaignInsights.map((i) => {
-              const impressions = num(i.impressions);
-              const clicks = num(i.clicks);
-              const spend = num(i.spend);
-              const leads = extractLeads(i);
-              return {
-                meta_campaign_id: i.campaign_id!,
-                snapshot_date: i.date_start,
-                impressions,
-                reach: num(i.reach),
-                clicks,
-                spend,
-                leads,
-                cpm: i.cpm ? num(i.cpm) : impressions ? (spend / impressions) * 1000 : null,
-                cpc: i.cpc ? num(i.cpc) : clicks ? spend / clicks : null,
-                ctr: i.ctr ? num(i.ctr) : impressions ? (clicks / impressions) * 100 : null,
-                cpl: leads ? spend / leads : null,
-                frequency: i.frequency ? num(i.frequency) : null,
-                raw: i as unknown as Record<string, unknown>,
-                updated_at: nowIso,
-              };
-            });
-            insightsSynced = await chunkUpsert(supabase, "meta_ads_daily", rows, "meta_campaign_id,snapshot_date");
-          }
-
-          // ============ 5. INSIGHTS — adset level ============
-          const adsetInsightFields = `campaign_id,adset_id,${baseInsightFields}`;
-          const adsetInsights = await fetchAllPages<MetaInsight>(
-            `https://graph.facebook.com/${META_API_VERSION}/${adAccountId}/insights?level=adset&fields=${adsetInsightFields}&time_increment=1&date_preset=last_30d&limit=500`,
-            token
-          );
-
           let adsetInsightsSynced = 0;
-          if (adsetInsights.length) {
-            const rows = adsetInsights.map((i) => {
-              const impressions = num(i.impressions);
-              const clicks = num(i.clicks);
-              const spend = num(i.spend);
-              const leads = extractLeads(i);
-              const eng = engagementCounts(i);
-              return {
-                meta_adset_id: i.adset_id!,
-                meta_campaign_id: i.campaign_id!,
-                snapshot_date: i.date_start,
-                impressions,
-                reach: num(i.reach),
-                clicks,
-                spend,
-                leads,
-                cpm: i.cpm ? num(i.cpm) : impressions ? (spend / impressions) * 1000 : null,
-                cpc: i.cpc ? num(i.cpc) : clicks ? spend / clicks : null,
-                ctr: i.ctr ? num(i.ctr) : impressions ? (clicks / impressions) * 100 : null,
-                cpl: leads ? spend / leads : null,
-                frequency: i.frequency ? num(i.frequency) : null,
-                ...eng,
-                raw: i as unknown as Record<string, unknown>,
-                updated_at: nowIso,
-              };
-            });
-            adsetInsightsSynced = await chunkUpsert(supabase, "meta_adsets_daily", rows, "meta_adset_id,snapshot_date");
-          }
-
-          // ============ 6. INSIGHTS — ad level (with quality rankings) ============
           const adInsightFields = `campaign_id,adset_id,ad_id,${baseInsightFields},quality_ranking,engagement_rate_ranking,conversion_rate_ranking`;
           const adInsights = await fetchAllPages<MetaInsight>(
             `https://graph.facebook.com/${META_API_VERSION}/${adAccountId}/insights?level=ad&fields=${adInsightFields}&time_increment=1&date_preset=last_30d&limit=500`,
@@ -425,6 +356,7 @@ export const Route = createFileRoute("/api/public/hooks/meta-sync")({
               };
             });
             adInsightsSynced = await chunkUpsert(supabase, "meta_ads_insights_daily", rows, "meta_ad_id,snapshot_date");
+            insightsSynced = adInsightsSynced;
 
             // Roll the most recent rankings up to the meta_ads row for fast list display
             const latestByAd = new Map<string, MetaInsight>();

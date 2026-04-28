@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfMonth, endOfMonth, daysAgo, isoDate } from "@/lib/format";
+import { startOfMonth, endOfMonth } from "@/lib/format";
+import { utcDateRangeForLastNDays } from "@/lib/metaMetrics";
 
 export function useLeads() {
   return useQuery({
@@ -136,22 +137,6 @@ export function useYoutubeContent() {
   });
 }
 
-export function useMetaAdsDaily(days = 30) {
-  return useQuery({
-    queryKey: ["meta_ads_daily", days],
-    queryFn: async () => {
-      const from = isoDate(daysAgo(days));
-      const { data, error } = await supabase
-        .from("meta_ads_daily")
-        .select("*")
-        .gte("snapshot_date", from)
-        .order("snapshot_date", { ascending: true });
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-}
-
 export function useMetaCampaigns() {
   return useQuery({
     queryKey: ["meta_campaigns"],
@@ -209,36 +194,17 @@ export function useMetaAd(adId?: string) {
   });
 }
 
-export function useMetaAdsetsDaily(filters: { campaignId?: string; adsetId?: string; days?: number } = {}) {
-  const days = filters.days ?? 30;
-  return useQuery({
-    queryKey: ["meta_adsets_daily", filters.campaignId ?? "", filters.adsetId ?? "", days],
-    queryFn: async () => {
-      const from = isoDate(daysAgo(days));
-      let q = supabase
-        .from("meta_adsets_daily")
-        .select("*")
-        .gte("snapshot_date", from)
-        .order("snapshot_date", { ascending: true });
-      if (filters.adsetId) q = q.eq("meta_adset_id", filters.adsetId);
-      else if (filters.campaignId) q = q.eq("meta_campaign_id", filters.campaignId);
-      const { data, error } = await q;
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-}
-
 export function useMetaAdsInsightsDaily(filters: { campaignId?: string; adsetId?: string; adId?: string; days?: number } = {}) {
   const days = filters.days ?? 30;
+  const { from, to } = utcDateRangeForLastNDays(days);
   return useQuery({
-    queryKey: ["meta_ads_insights_daily", filters.campaignId ?? "", filters.adsetId ?? "", filters.adId ?? "", days],
+    queryKey: ["meta_ads_insights_daily", filters.campaignId ?? "", filters.adsetId ?? "", filters.adId ?? "", from, to],
     queryFn: async () => {
-      const from = isoDate(daysAgo(days));
       let q = supabase
         .from("meta_ads_insights_daily")
         .select("*")
         .gte("snapshot_date", from)
+        .lte("snapshot_date", to)
         .order("snapshot_date", { ascending: true });
       if (filters.adId) q = q.eq("meta_ad_id", filters.adId);
       else if (filters.adsetId) q = q.eq("meta_adset_id", filters.adsetId);
@@ -326,9 +292,9 @@ export function monthFilter() {
 }
 
 export function last7Filter() {
-  return { from: isoDate(daysAgo(7)), to: isoDate(new Date()) };
+  return utcDateRangeForLastNDays(7);
 }
 
 export function last30Filter() {
-  return { from: isoDate(daysAgo(30)), to: isoDate(new Date()) };
+  return utcDateRangeForLastNDays(30);
 }
