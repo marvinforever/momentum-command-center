@@ -23,16 +23,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Listener FIRST per the auth pattern
+    let mounted = true;
+    const loadingTimeout = window.setTimeout(() => {
+      if (mounted) setLoading(false);
+    }, 4000);
+
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+      if (!mounted) return;
       setSession(s);
+      window.clearTimeout(loadingTimeout);
       setLoading(false);
     });
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
-    return () => sub.subscription.unsubscribe();
+
+    supabase.auth.getSession()
+      .then(({ data }) => {
+        if (!mounted) return;
+        setSession(data.session);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setSession(null);
+      })
+      .finally(() => {
+        if (!mounted) return;
+        window.clearTimeout(loadingTimeout);
+        setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+      window.clearTimeout(loadingTimeout);
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const value: AuthCtx = {
