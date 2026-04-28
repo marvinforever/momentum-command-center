@@ -292,9 +292,9 @@ export function monthFilter() {
 }
 
 export function last7Filter() {
-  return { from: isoDate(daysAgo(7)), to: isoDate(new Date()) };
+  return utcDateRangeForLastNDays(7);
 }
 
 export function last30Filter() {
-  return { from: isoDate(daysAgo(30)), to: isoDate(new Date()) };
+  return utcDateRangeForLastNDays(30);
 }
