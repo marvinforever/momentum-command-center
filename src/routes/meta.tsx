@@ -424,22 +424,6 @@ function AdDetailView({ adId, backTo }: { adId: string; backTo: { campaign?: str
 // ============================================================================
 // helpers
 // ============================================================================
-function aggregate(rows: Array<{ spend?: number | null; leads?: number | null; clicks?: number | null; impressions?: number | null; reach?: number | null }>) {
-  const t = { spend: 0, leads: 0, clicks: 0, impressions: 0, reach: 0 };
-  for (const r of rows) {
-    t.spend += Number(r.spend ?? 0);
-    t.leads += Number(r.leads ?? 0);
-    t.clicks += Number(r.clicks ?? 0);
-    t.impressions += Number(r.impressions ?? 0);
-    t.reach += Number(r.reach ?? 0);
-  }
-  return {
-    ...t,
-    cpl: t.leads ? t.spend / t.leads : null,
-    ctr: t.impressions ? (t.clicks / t.impressions) * 100 : null,
-  };
-}
-
 function Th({ children, align }: { children?: React.ReactNode; align?: "right" }) {
   return <th className={`px-4 py-2.5 ${align === "right" ? "text-right" : "text-left"}`}>{children}</th>;
 }
