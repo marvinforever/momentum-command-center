@@ -1,6 +1,7 @@
 import { MCCard, CardHeader } from "@/components/mc/Primitives";
-import { useMetaAdsDaily, useMetaCampaigns, useMetaSyncRuns } from "@/lib/queries";
+import { useMetaAdsInsightsDaily, useMetaCampaigns, useMetaSyncRuns } from "@/lib/queries";
 import { fmtNum, fmtUSD, timeAgo } from "@/lib/format";
+import { aggregateMetaMetricsByDay } from "@/lib/metaMetrics";
 import { ResponsiveContainer, LineChart, Line, Tooltip, XAxis } from "recharts";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
 export function MetaAdsWidget() {
-  const dailyQ = useMetaAdsDaily(30);
+  const dailyQ = useMetaAdsInsightsDaily({ days: 30 });
   const campaignsQ = useMetaCampaigns();
   const runsQ = useMetaSyncRuns();
   const qc = useQueryClient();
@@ -22,18 +23,7 @@ export function MetaAdsWidget() {
 
   // Aggregate last 30 days vs prev 30 days (matches drill-down totals)
   const totals = useMemo(() => {
-    const byDay = new Map<string, { spend: number; leads: number; clicks: number; impressions: number }>();
-    for (const r of daily) {
-      const cur = byDay.get(r.snapshot_date) ?? { spend: 0, leads: 0, clicks: 0, impressions: 0 };
-      cur.spend += Number(r.spend ?? 0);
-      cur.leads += Number(r.leads ?? 0);
-      cur.clicks += Number(r.clicks ?? 0);
-      cur.impressions += Number(r.impressions ?? 0);
-      byDay.set(r.snapshot_date, cur);
-    }
-    const sorted = Array.from(byDay.entries())
-      .map(([date, v]) => ({ date, ...v }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+    const sorted = aggregateMetaMetricsByDay(daily);
 
     const last7 = sorted.slice(-7);
     const prev7 = sorted.slice(-14, -7);
@@ -79,7 +69,7 @@ export function MetaAdsWidget() {
       if (!res.ok || !json.success) throw new Error(json.error ?? `HTTP ${res.status}`);
       setSyncMsg(`Synced ${json.campaigns_synced} campaigns, ${json.insights_synced} days`);
       await Promise.all([
-        qc.invalidateQueries({ queryKey: ["meta_ads_daily"] }),
+        qc.invalidateQueries({ queryKey: ["meta_ads_insights_daily"] }),
         qc.invalidateQueries({ queryKey: ["meta_campaigns"] }),
         qc.invalidateQueries({ queryKey: ["meta_sync_runs"] }),
       ]);
