@@ -77,10 +77,9 @@ export const Route = createFileRoute("/api/public/hooks/campaign-lead/$token")({
 
         const input = parsed.data;
         const email = input.email.toLowerCase();
+        const stages = (campaign.pipeline_stages as unknown as string[] | null) ?? ["Lead In"];
         const stage =
-          input.stage && (campaign.pipeline_stages ?? []).includes(input.stage)
-            ? input.stage
-            : campaign.pipeline_stages?.[0] ?? "Lead In";
+          input.stage && stages.includes(input.stage) ? input.stage : stages[0] ?? "Lead In";
 
         // Find or create
         const { data: existing } = await supabaseAdmin

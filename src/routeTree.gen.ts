@@ -32,6 +32,9 @@ import { Route as ApiPublicKajabiSyncRouteImport } from './routes/api/public/kaj
 import { Route as ApiPublicCaptivateSyncRouteImport } from './routes/api/public/captivate-sync'
 import { Route as ApiPublicNotionCallbackRouteImport } from './routes/api/public/notion.callback'
 import { Route as ApiPublicHooksMetaSyncRouteImport } from './routes/api/public/hooks/meta-sync'
+import { Route as ApiPublicHooksCampaignIngestRouteImport } from './routes/api/public/hooks/campaign-ingest'
+import { Route as ApiPublicHooksCalendlyRouteImport } from './routes/api/public/hooks/calendly'
+import { Route as ApiPublicHooksCampaignLeadTokenRouteImport } from './routes/api/public/hooks/campaign-lead.$token'
 
 const YoutubeRoute = YoutubeRouteImport.update({
   id: '/youtube',
@@ -148,6 +151,23 @@ const ApiPublicHooksMetaSyncRoute = ApiPublicHooksMetaSyncRouteImport.update({
   path: '/api/public/hooks/meta-sync',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksCampaignIngestRoute =
+  ApiPublicHooksCampaignIngestRouteImport.update({
+    id: '/api/public/hooks/campaign-ingest',
+    path: '/api/public/hooks/campaign-ingest',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksCalendlyRoute = ApiPublicHooksCalendlyRouteImport.update({
+  id: '/api/public/hooks/calendly',
+  path: '/api/public/hooks/calendly',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksCampaignLeadTokenRoute =
+  ApiPublicHooksCampaignLeadTokenRouteImport.update({
+    id: '/api/public/hooks/campaign-lead/$token',
+    path: '/api/public/hooks/campaign-lead/$token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -171,8 +191,11 @@ export interface FileRoutesByFullPath {
   '/api/public/captivate-sync': typeof ApiPublicCaptivateSyncRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
+  '/api/public/hooks/calendly': typeof ApiPublicHooksCalendlyRoute
+  '/api/public/hooks/campaign-ingest': typeof ApiPublicHooksCampaignIngestRoute
   '/api/public/hooks/meta-sync': typeof ApiPublicHooksMetaSyncRoute
   '/api/public/notion/callback': typeof ApiPublicNotionCallbackRoute
+  '/api/public/hooks/campaign-lead/$token': typeof ApiPublicHooksCampaignLeadTokenRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -196,8 +219,11 @@ export interface FileRoutesByTo {
   '/api/public/captivate-sync': typeof ApiPublicCaptivateSyncRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
+  '/api/public/hooks/calendly': typeof ApiPublicHooksCalendlyRoute
+  '/api/public/hooks/campaign-ingest': typeof ApiPublicHooksCampaignIngestRoute
   '/api/public/hooks/meta-sync': typeof ApiPublicHooksMetaSyncRoute
   '/api/public/notion/callback': typeof ApiPublicNotionCallbackRoute
+  '/api/public/hooks/campaign-lead/$token': typeof ApiPublicHooksCampaignLeadTokenRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -222,8 +248,11 @@ export interface FileRoutesById {
   '/api/public/captivate-sync': typeof ApiPublicCaptivateSyncRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
+  '/api/public/hooks/calendly': typeof ApiPublicHooksCalendlyRoute
+  '/api/public/hooks/campaign-ingest': typeof ApiPublicHooksCampaignIngestRoute
   '/api/public/hooks/meta-sync': typeof ApiPublicHooksMetaSyncRoute
   '/api/public/notion/callback': typeof ApiPublicNotionCallbackRoute
+  '/api/public/hooks/campaign-lead/$token': typeof ApiPublicHooksCampaignLeadTokenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -249,8 +278,11 @@ export interface FileRouteTypes {
     | '/api/public/captivate-sync'
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
+    | '/api/public/hooks/calendly'
+    | '/api/public/hooks/campaign-ingest'
     | '/api/public/hooks/meta-sync'
     | '/api/public/notion/callback'
+    | '/api/public/hooks/campaign-lead/$token'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -274,8 +306,11 @@ export interface FileRouteTypes {
     | '/api/public/captivate-sync'
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
+    | '/api/public/hooks/calendly'
+    | '/api/public/hooks/campaign-ingest'
     | '/api/public/hooks/meta-sync'
     | '/api/public/notion/callback'
+    | '/api/public/hooks/campaign-lead/$token'
   id:
     | '__root__'
     | '/'
@@ -299,8 +334,11 @@ export interface FileRouteTypes {
     | '/api/public/captivate-sync'
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
+    | '/api/public/hooks/calendly'
+    | '/api/public/hooks/campaign-ingest'
     | '/api/public/hooks/meta-sync'
     | '/api/public/notion/callback'
+    | '/api/public/hooks/campaign-lead/$token'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -322,8 +360,11 @@ export interface RootRouteChildren {
   ApiPublicCaptivateSyncRoute: typeof ApiPublicCaptivateSyncRoute
   ApiPublicKajabiSyncRoute: typeof ApiPublicKajabiSyncRoute
   ApiPublicZapierLeadRoute: typeof ApiPublicZapierLeadRoute
+  ApiPublicHooksCalendlyRoute: typeof ApiPublicHooksCalendlyRoute
+  ApiPublicHooksCampaignIngestRoute: typeof ApiPublicHooksCampaignIngestRoute
   ApiPublicHooksMetaSyncRoute: typeof ApiPublicHooksMetaSyncRoute
   ApiPublicNotionCallbackRoute: typeof ApiPublicNotionCallbackRoute
+  ApiPublicHooksCampaignLeadTokenRoute: typeof ApiPublicHooksCampaignLeadTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -489,6 +530,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksMetaSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/campaign-ingest': {
+      id: '/api/public/hooks/campaign-ingest'
+      path: '/api/public/hooks/campaign-ingest'
+      fullPath: '/api/public/hooks/campaign-ingest'
+      preLoaderRoute: typeof ApiPublicHooksCampaignIngestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/calendly': {
+      id: '/api/public/hooks/calendly'
+      path: '/api/public/hooks/calendly'
+      fullPath: '/api/public/hooks/calendly'
+      preLoaderRoute: typeof ApiPublicHooksCalendlyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/campaign-lead/$token': {
+      id: '/api/public/hooks/campaign-lead/$token'
+      path: '/api/public/hooks/campaign-lead/$token'
+      fullPath: '/api/public/hooks/campaign-lead/$token'
+      preLoaderRoute: typeof ApiPublicHooksCampaignLeadTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -533,8 +595,11 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCaptivateSyncRoute: ApiPublicCaptivateSyncRoute,
   ApiPublicKajabiSyncRoute: ApiPublicKajabiSyncRoute,
   ApiPublicZapierLeadRoute: ApiPublicZapierLeadRoute,
+  ApiPublicHooksCalendlyRoute: ApiPublicHooksCalendlyRoute,
+  ApiPublicHooksCampaignIngestRoute: ApiPublicHooksCampaignIngestRoute,
   ApiPublicHooksMetaSyncRoute: ApiPublicHooksMetaSyncRoute,
   ApiPublicNotionCallbackRoute: ApiPublicNotionCallbackRoute,
+  ApiPublicHooksCampaignLeadTokenRoute: ApiPublicHooksCampaignLeadTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
