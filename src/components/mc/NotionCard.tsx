@@ -71,6 +71,7 @@ export function NotionCard() {
       const qs = params.toString();
       window.history.replaceState({}, "", window.location.pathname + (qs ? `?${qs}` : ""));
       qc.invalidateQueries({ queryKey: ["notion_status"] });
+      qc.invalidateQueries({ queryKey: ["notion_databases"] });
     }
   }, [qc]);
 
@@ -156,6 +157,7 @@ function ConnectedPanel(props: {
   const fetchSchema = useServerFn(fetchNotionDatabaseSchema);
   const saveCfg = useServerFn(saveNotionConfig);
   const backfill = useServerFn(backfillCallsToNotion);
+  const buildAuth = useServerFn(buildNotionAuthUrl);
 
   const dbs = useQuery({
     queryKey: ["notion_databases"],
@@ -215,17 +217,59 @@ function ConnectedPanel(props: {
 
   const databases = dbs.data?.databases ?? [];
 
+  async function reconnectNotion() {
+    try {
+      const { url } = await buildAuth({ data: { origin: window.location.origin } });
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to start Notion auth");
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="rounded-lg bg-cream border border-line-soft p-4">
-        <div className="flex items-center gap-2 text-[13px]">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-[13px]">
+          <div className="flex items-center gap-2">
           {props.workspaceIcon && <span className="text-[18px]">{props.workspaceIcon}</span>}
           <div>
             <div className="font-medium text-ink">Connected to {props.workspaceName}</div>
-            <div className="text-[11px] text-ink-muted">{databases.length} database(s) shared with this integration</div>
+            <div className="text-[11px] text-ink-muted">
+              {dbs.isFetching ? "Checking shared Notion databases…" : `${databases.length} database(s) shared with this integration`}
+            </div>
+          </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => dbs.refetch()}
+              disabled={dbs.isFetching}
+              className="rounded-lg border border-line text-ink px-3 py-1.5 text-[11px] hover:bg-cream-deep disabled:opacity-50"
+            >
+              {dbs.isFetching ? "Refreshing…" : "Refresh"}
+            </button>
+            <button
+              type="button"
+              onClick={reconnectNotion}
+              className="rounded-lg border border-line text-ink px-3 py-1.5 text-[11px] hover:bg-cream-deep"
+            >
+              Reconnect access
+            </button>
           </div>
         </div>
       </div>
+
+      {dbs.error && (
+        <div className="rounded-lg border border-line-soft bg-cream-deep p-4 text-[12px] text-ink-muted">
+          Couldn’t load Notion databases: {dbs.error instanceof Error ? dbs.error.message : "unknown error"}
+        </div>
+      )}
+
+      {!dbs.isFetching && !dbs.error && databases.length === 0 && (
+        <div className="rounded-lg border border-line-soft bg-cream-deep p-4 text-[12px] text-ink-muted">
+          No Notion databases are available yet. Reconnect access and choose the Notion page or database you want Momentum to write to, then refresh this list.
+        </div>
+      )}
 
       <DbMappingSection
         title="Calls database"
