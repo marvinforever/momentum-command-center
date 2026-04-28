@@ -13,13 +13,13 @@ export const Route = createFileRoute("/kajabi")({
   component: KajabiPage,
 });
 
-type Tab = "purchases" | "forms";
+type Tab = "forms" | "purchases";
 
 function KajabiPage() {
   const { data: purchases = [] } = useKajabiPurchases();
   const { data: forms = [] } = useKajabiFormSubmissions();
 
-  const [tab, setTab] = useState<Tab>("purchases");
+  const [tab, setTab] = useState<Tab>("forms");
   const [search, setSearch] = useState("");
   const [range, setRange] = useState<"30" | "90" | "365" | "all">("90");
 
@@ -58,17 +58,47 @@ function KajabiPage() {
     return rows;
   }, [forms, cutoff, search]);
 
-  const totals = useMemo(() => {
+  // Lead-gen focused metrics
+  const leadMetrics = useMemo(() => {
+    const uniqueEmails = new Set<string>();
+    for (const f of formsFiltered) {
+      const e = (f.contact_email ?? "").toLowerCase().trim();
+      if (e) uniqueEmails.add(e);
+    }
+    const buyerEmails = new Set<string>();
+    for (const p of purchasesFiltered) {
+      const e = (p.buyer_email ?? "").toLowerCase().trim();
+      if (e) buyerEmails.add(e);
+    }
+    // Conversion: how many lead emails ended up purchasing (in window)
+    let converted = 0;
+    for (const e of uniqueEmails) if (buyerEmails.has(e)) converted += 1;
+    const convRate = uniqueEmails.size ? (converted / uniqueEmails.size) * 100 : 0;
     const revenue = purchasesFiltered.reduce((s, p) => s + (p.amount_cents ?? 0), 0) / 100;
-    const refunded = purchasesFiltered.filter((p) => p.refunded_at).length;
     return {
-      revenue,
+      formCount: formsFiltered.length,
+      uniqueLeads: uniqueEmails.size,
+      converted,
+      convRate,
       purchases: purchasesFiltered.length,
-      refunded,
-      forms: formsFiltered.length,
-      avgOrder: purchasesFiltered.length ? revenue / purchasesFiltered.length : 0,
+      revenue,
     };
-  }, [purchasesFiltered, formsFiltered]);
+  }, [formsFiltered, purchasesFiltered]);
+
+  const formsBreakdown = useMemo(() => {
+    const map = new Map<string, { count: number; emails: Set<string> }>();
+    for (const f of formsFiltered) {
+      const k = f.form_name ?? "Unnamed form";
+      const ex = map.get(k) ?? { count: 0, emails: new Set<string>() };
+      ex.count += 1;
+      const e = (f.contact_email ?? "").toLowerCase().trim();
+      if (e) ex.emails.add(e);
+      map.set(k, ex);
+    }
+    return Array.from(map.entries())
+      .map(([name, v]) => ({ name, count: v.count, uniqueLeads: v.emails.size }))
+      .sort((a, b) => b.count - a.count);
+  }, [formsFiltered]);
 
   const offersBreakdown = useMemo(() => {
     const map = new Map<string, { count: number; revenue: number }>();
@@ -84,53 +114,77 @@ function KajabiPage() {
       .sort((a, b) => b.revenue - a.revenue);
   }, [purchasesFiltered]);
 
-  const chartData = useMemo(() => {
+  // Form submissions over time (lead-gen primary chart)
+  const leadsChartData = useMemo(() => {
     const days = range === "all" ? 365 : parseInt(range);
-    const map: Record<string, { day: string; revenue: number; purchases: number }> = {};
+    const map: Record<string, { day: string; submissions: number }> = {};
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date(Date.now() - i * 86400_000).toISOString().slice(0, 10);
-      map[d] = { day: d, revenue: 0, purchases: 0 };
+      map[d] = { day: d, submissions: 0 };
     }
-    for (const p of purchasesFiltered) {
-      if (!p.purchased_at) continue;
-      const d = String(p.purchased_at).slice(0, 10);
-      if (map[d]) {
-        map[d].revenue += (p.amount_cents ?? 0) / 100;
-        map[d].purchases += 1;
-      }
+    for (const f of formsFiltered) {
+      if (!f.submitted_at) continue;
+      const d = String(f.submitted_at).slice(0, 10);
+      if (map[d]) map[d].submissions += 1;
     }
     return Object.values(map);
-  }, [purchasesFiltered, range]);
+  }, [formsFiltered, range]);
 
   return (
     <PageShell>
       <PageHeader
         title="Kajabi"
-        subtitle={`${(purchases as any[]).length} purchases · ${(forms as any[]).length} form submissions`}
+        subtitle={`Lead generation · ${(forms as any[]).length} form submissions · ${(purchases as any[]).length} purchases`}
       />
 
+      {/* Lead-gen KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
-        <Kpi label="Revenue" value={fmtUSD(totals.revenue)} sub={range === "all" ? "All time" : `Last ${range} days`} />
-        <Kpi label="Purchases" value={fmtNum(totals.purchases)} sub="Completed orders" />
-        <Kpi label="Avg Order Value" value={fmtUSD(totals.avgOrder)} sub="Per purchase" />
-        <Kpi label="Refunded" value={fmtNum(totals.refunded)} sub="Orders" />
-        <Kpi label="Form Submissions" value={fmtNum(totals.forms)} sub="Lead capture" />
+        <Kpi label="Form Submissions" value={fmtNum(leadMetrics.formCount)} sub={range === "all" ? "All time" : `Last ${range} days`} />
+        <Kpi label="Unique Leads" value={fmtNum(leadMetrics.uniqueLeads)} sub="Distinct emails" />
+        <Kpi label="Lead → Buyer" value={fmtNum(leadMetrics.converted)} sub={`${leadMetrics.convRate.toFixed(1)}% conversion`} />
+        <Kpi label="Purchases" value={fmtNum(leadMetrics.purchases)} sub="In window" />
+        <Kpi label="Revenue" value={fmtUSD(leadMetrics.revenue)} sub="Secondary metric" />
       </div>
 
+      {/* Filters */}
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search forms, offers, names, emails…"
+          className="flex-1 min-w-[240px] rounded-lg border border-line-soft bg-white px-3 py-2 text-[13px] text-ink placeholder:text-ink-muted focus:outline-none focus:border-gold"
+        />
+        <div className="flex items-center gap-1 rounded-lg bg-cream p-1 border border-line-soft">
+          {(["30", "90", "365", "all"] as const).map((r) => (
+            <button
+              key={r}
+              onClick={() => setRange(r)}
+              className={cn(
+                "px-3 py-1.5 rounded text-[11px] uppercase tracking-[0.14em] transition-colors",
+                range === r ? "bg-white text-ink shadow-sm" : "text-ink-muted hover:text-ink",
+              )}
+            >
+              {r === "all" ? "All" : `${r}d`}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Lead-gen chart */}
       <MCCard className="mb-6">
-        <CardHeader title="Revenue Over Time" meta="Daily" />
+        <CardHeader title="Form Submissions Over Time" meta="Daily lead capture" />
         <div className="p-6">
           <div className="h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 4, right: 12, left: 0, bottom: 0 }}>
+              <BarChart data={leadsChartData} margin={{ top: 4, right: 12, left: 0, bottom: 0 }}>
                 <CartesianGrid stroke="#E8E2D2" strokeDasharray="3 3" />
                 <XAxis dataKey="day" tick={{ fontSize: 10 }} tickFormatter={(d: any) => fmtDate(d)} />
-                <YAxis tick={{ fontSize: 10 }} domain={["auto", "auto"]} />
-                <Bar dataKey="revenue" fill="#C4924A" radius={[2, 2, 0, 0]} />
+                <YAxis tick={{ fontSize: 10 }} domain={["auto", "auto"]} allowDecimals={false} />
+                <Bar dataKey="submissions" fill="#5B7553" radius={[2, 2, 0, 0]} />
                 <Tooltip
                   contentStyle={{ background: "#1F2937", border: "none", borderRadius: 8, color: "#F7F3EC", fontSize: 11 }}
                   labelFormatter={(d: any) => fmtDate(d)}
-                  formatter={(v: any) => fmtUSD(Number(v))}
+                  formatter={(v: any) => [`${v} submissions`, "Leads"]}
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -138,38 +192,51 @@ function KajabiPage() {
         </div>
       </MCCard>
 
-      {offersBreakdown.length > 0 && (
+      {/* Funnels: Top forms */}
+      {formsBreakdown.length > 0 && (
         <MCCard className="mb-6 overflow-hidden">
-          <CardHeader title="Revenue by Offer" meta={`${offersBreakdown.length} offers`} />
+          <CardHeader title="Lead Capture by Form" meta={`${formsBreakdown.length} funnels`} />
           <div className="overflow-x-auto">
             <table className="w-full min-w-[600px]">
               <thead>
                 <tr>
-                  <Th>Offer</Th>
-                  <Th right>Purchases</Th>
-                  <Th right>Revenue</Th>
-                  <Th right>Avg / Order</Th>
+                  <Th>Form / Funnel</Th>
+                  <Th right>Submissions</Th>
+                  <Th right>Unique Leads</Th>
+                  <Th right>Share</Th>
                 </tr>
               </thead>
               <tbody>
-                {offersBreakdown.map((o) => (
-                  <tr key={o.name} className="border-t border-line-soft">
-                    <td className="px-4 py-3 text-[13px] text-ink">{o.name}</td>
-                    <td className="px-4 py-3 num-serif text-right text-ink">{fmtNum(o.count)}</td>
-                    <td className="px-4 py-3 num-serif text-right text-ink">{fmtUSD(o.revenue)}</td>
-                    <td className="px-4 py-3 num-serif text-right text-ink">{fmtUSD(o.revenue / o.count)}</td>
-                  </tr>
-                ))}
+                {formsBreakdown.map((f) => {
+                  const share = leadMetrics.formCount ? (f.count / leadMetrics.formCount) * 100 : 0;
+                  return (
+                    <tr key={f.name} className="border-t border-line-soft">
+                      <td className="px-4 py-3 text-[13px] text-ink">{f.name}</td>
+                      <td className="px-4 py-3 num-serif text-right text-ink">{fmtNum(f.count)}</td>
+                      <td className="px-4 py-3 num-serif text-right text-ink">{fmtNum(f.uniqueLeads)}</td>
+                      <td className="px-4 py-3 num-serif text-right text-ink-soft">{share.toFixed(1)}%</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </MCCard>
       )}
 
+      {/* Note about email opens */}
+      <div className="mb-6 rounded-lg border border-line-soft bg-cream/60 px-4 py-3 text-[12px] text-ink-soft leading-relaxed">
+        <strong className="text-ink">Note on email open rates:</strong> Kajabi's public API does not expose
+        broadcast/email open or click metrics — those live only inside Kajabi's Email Campaigns dashboard.
+        We capture every contact email here (under Form Submissions and Purchases), but per-email open
+        rates would require a separate ESP (e.g. ConvertKit, Mailchimp) or Kajabi adding it to their API.
+      </div>
+
+      {/* Tabs: Forms primary, Purchases secondary */}
       <MCCard className="overflow-hidden">
         <div className="p-4 flex flex-wrap items-center gap-3 border-b border-line-soft">
           <div className="flex items-center gap-1 rounded-lg bg-cream p-1 border border-line-soft">
-            {(["purchases", "forms"] as const).map((t) => (
+            {(["forms", "purchases"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -178,70 +245,14 @@ function KajabiPage() {
                   tab === t ? "bg-white text-ink shadow-sm" : "text-ink-muted hover:text-ink",
                 )}
               >
-                {t === "purchases" ? "Purchases" : "Form Submissions"}
-              </button>
-            ))}
-          </div>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by offer, name, email…"
-            className="flex-1 min-w-[200px] rounded-lg border border-line-soft bg-white px-3 py-2 text-[13px] text-ink placeholder:text-ink-muted focus:outline-none focus:border-gold"
-          />
-          <div className="flex items-center gap-1 rounded-lg bg-cream p-1 border border-line-soft">
-            {(["30", "90", "365", "all"] as const).map((r) => (
-              <button
-                key={r}
-                onClick={() => setRange(r)}
-                className={cn(
-                  "px-3 py-1.5 rounded text-[11px] uppercase tracking-[0.14em] transition-colors",
-                  range === r ? "bg-white text-ink shadow-sm" : "text-ink-muted hover:text-ink",
-                )}
-              >
-                {r === "all" ? "All" : `${r}d`}
+                {t === "forms" ? "Form Submissions" : "Purchases (Book etc.)"}
               </button>
             ))}
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          {tab === "purchases" ? (
-            <table className="w-full min-w-[800px]">
-              <thead>
-                <tr>
-                  <Th>Date</Th>
-                  <Th>Offer</Th>
-                  <Th>Buyer</Th>
-                  <Th right>Amount</Th>
-                  <Th>Status</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {purchasesFiltered.map((p) => (
-                  <tr key={p.id} className="border-t border-line-soft">
-                    <td className="px-4 py-3 text-[12px] text-ink-soft whitespace-nowrap">{fmtDate(p.purchased_at)}</td>
-                    <td className="px-4 py-3 text-[13px] text-ink">{p.offer_name ?? "—"}</td>
-                    <td className="px-4 py-3 text-[12px]">
-                      <div className="text-ink">{p.buyer_name ?? "—"}</div>
-                      <div className="text-ink-muted text-[11px]">{p.buyer_email ?? ""}</div>
-                    </td>
-                    <td className="px-4 py-3 num-serif text-right text-ink">{fmtUSD((p.amount_cents ?? 0) / 100)}</td>
-                    <td className="px-4 py-3 text-[11px]">
-                      <span className={cn(
-                        "inline-block rounded px-2 py-0.5",
-                        p.refunded_at ? "bg-burgundy/10 text-burgundy" : "bg-sage-bg text-sage",
-                      )}>
-                        {p.refunded_at ? "Refunded" : (p.status ?? "completed")}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-                {purchasesFiltered.length === 0 && (
-                  <tr><td colSpan={5} className="text-center text-ink-muted py-12 text-[13px]">No purchases match these filters.</td></tr>
-                )}
-              </tbody>
-            </table>
-          ) : (
+          {tab === "forms" ? (
             <table className="w-full min-w-[700px]">
               <thead>
                 <tr>
@@ -254,8 +265,6 @@ function KajabiPage() {
               <tbody>
                 {formsFiltered.map((f) => {
                   const attrs = (f.raw?.attributes ?? {}) as Record<string, any>;
-                  // Fields worth showing: anything non-null besides name/email
-                  // (already rendered in Contact column).
                   const fields = Object.entries(attrs).filter(
                     ([k, v]) =>
                       v != null &&
@@ -294,6 +303,57 @@ function KajabiPage() {
                 )}
               </tbody>
             </table>
+          ) : (
+            <>
+              {offersBreakdown.length > 0 && (
+                <div className="border-b border-line-soft bg-cream/30 px-4 py-3">
+                  <div className="label-eyebrow text-[9px] mb-2">Revenue by Offer</div>
+                  <div className="flex flex-wrap gap-2">
+                    {offersBreakdown.map((o) => (
+                      <div key={o.name} className="rounded border border-line-soft bg-white px-3 py-1.5 text-[11px]">
+                        <span className="text-ink">{o.name}</span>
+                        <span className="text-ink-muted ml-2">{fmtNum(o.count)} · {fmtUSD(o.revenue)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <table className="w-full min-w-[800px]">
+                <thead>
+                  <tr>
+                    <Th>Date</Th>
+                    <Th>Offer</Th>
+                    <Th>Buyer</Th>
+                    <Th right>Amount</Th>
+                    <Th>Status</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {purchasesFiltered.map((p) => (
+                    <tr key={p.id} className="border-t border-line-soft">
+                      <td className="px-4 py-3 text-[12px] text-ink-soft whitespace-nowrap">{fmtDate(p.purchased_at)}</td>
+                      <td className="px-4 py-3 text-[13px] text-ink">{p.offer_name ?? "—"}</td>
+                      <td className="px-4 py-3 text-[12px]">
+                        <div className="text-ink">{p.buyer_name ?? "—"}</div>
+                        <div className="text-ink-muted text-[11px]">{p.buyer_email ?? ""}</div>
+                      </td>
+                      <td className="px-4 py-3 num-serif text-right text-ink">{fmtUSD((p.amount_cents ?? 0) / 100)}</td>
+                      <td className="px-4 py-3 text-[11px]">
+                        <span className={cn(
+                          "inline-block rounded px-2 py-0.5",
+                          p.refunded_at ? "bg-burgundy/10 text-burgundy" : "bg-sage-bg text-sage",
+                        )}>
+                          {p.refunded_at ? "Refunded" : (p.status ?? "completed")}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  {purchasesFiltered.length === 0 && (
+                    <tr><td colSpan={5} className="text-center text-ink-muted py-12 text-[13px]">No purchases match these filters.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </>
           )}
         </div>
       </MCCard>
