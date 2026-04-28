@@ -82,20 +82,20 @@ export function PodcastWidget() {
             to="/captivate"
             className="rounded-lg bg-cream border border-line-soft p-3 hover:border-gold-soft hover:shadow-sm transition-all"
           >
-            <div className="text-[11px] text-ink-soft font-medium mb-2">Subscribers</div>
-            <div className="num-serif text-[24px] text-ink leading-none">{fmtNum(totalSubs)}</div>
+            <div className="text-[11px] text-ink-soft font-medium mb-2">Avg downloads / episode</div>
+            <div className="num-serif text-[24px] text-ink leading-none">{fmtNum(avgDownloads)}</div>
             <div className="text-[10px] text-ink-muted mt-1 uppercase tracking-[0.14em]">
-              {shows.length} show{shows.length === 1 ? "" : "s"}
+              across {episodes.length} eps
             </div>
           </Link>
           <Link
             to="/captivate"
             className="rounded-lg bg-cream border border-line-soft p-3 hover:border-gold-soft hover:shadow-sm transition-all"
           >
-            <div className="text-[11px] text-ink-soft font-medium mb-2">Downloads</div>
+            <div className="text-[11px] text-ink-soft font-medium mb-2">Total downloads</div>
             <div className="num-serif text-[24px] text-ink leading-none">{fmtNum(totalDownloads)}</div>
             <div className="text-[10px] text-ink-muted mt-1 uppercase tracking-[0.14em]">
-              {episodes.length} recent eps
+              {shows.length} show{shows.length === 1 ? "" : "s"}
             </div>
           </Link>
         </div>
