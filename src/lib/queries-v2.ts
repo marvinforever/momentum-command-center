@@ -160,6 +160,7 @@ export const DEFAULT_CAMPAIGN_STAGES = [
   "Follow Up",
   "Closed Won",
   "No Sale",
+  "Not Qualified",
 ];
 
 export type Campaign = {
