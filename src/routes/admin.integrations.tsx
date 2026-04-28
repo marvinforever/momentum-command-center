@@ -103,7 +103,7 @@ function IntegrationsPage() {
 
       <KajabiApiSyncCard />
 
-      <ZapierCard />
+      
 
       {lastResult && (
         <MCCard className="p-6">
@@ -277,128 +277,6 @@ function KajabiCard() {
                 {!e.signature_valid && <span className="text-burgundy text-[11px] font-medium">invalid signature</span>}
                 {e.error && <span className="text-amber-700 text-[11px] truncate max-w-[200px]" title={e.error}>{e.error}</span>}
                 {e.signature_valid && e.processed && !e.error && <span className="text-green-700 text-[11px]">processed</span>}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </MCCard>
-  );
-}
-
-// ============================================================
-// Zapier (for Kajabi form submissions — Kajabi plan limitation workaround)
-// ============================================================
-function ZapierCard() {
-  const [copied, setCopied] = useState(false);
-  const [showSecret, setShowSecret] = useState(false);
-  const [secret, setSecret] = useState("");
-
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const zapierUrl = secret
-    ? `${baseUrl}/api/public/zapier-lead?secret=${encodeURIComponent(secret)}`
-    : `${baseUrl}/api/public/zapier-lead?secret=YOUR_SECRET_HERE`;
-
-  const recentLeads = useQuery({
-    queryKey: ["zapier_recent_leads"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("leads")
-        .select("id, name, email, lead_source, how_did_you_hear, created_at")
-        .ilike("lead_source", "%Zapier%")
-        .order("created_at", { ascending: false })
-        .limit(10);
-      if (error) throw error;
-      return data ?? [];
-    },
-    refetchInterval: 10000,
-  });
-
-  async function copyUrl() {
-    if (!secret) {
-      toast.error("Paste your secret first to generate the full URL");
-      return;
-    }
-    await navigator.clipboard.writeText(zapierUrl);
-    setCopied(true);
-    toast.success("Zapier URL copied");
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  return (
-    <MCCard className="p-5 sm:p-7 lg:p-8 mb-6">
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h2 className="serif text-[26px] text-ink">Zapier (Form Submissions)</h2>
-          <p className="text-[13px] text-ink-soft mt-1">
-            Captures lead-magnet opt-ins from Kajabi forms via Zapier (since Kajabi's plan only exposes purchase webhooks).
-            Each Zap fires this URL with form data → new lead row created.
-          </p>
-        </div>
-      </div>
-
-      <div className="rounded-lg bg-cream border border-line-soft p-4 mb-5">
-        <div className="label-eyebrow mb-2">1. Paste your secret to generate the full URL</div>
-        <div className="flex items-center gap-2 mb-3">
-          <input
-            type={showSecret ? "text" : "password"}
-            value={secret}
-            onChange={(e) => setSecret(e.target.value.trim())}
-            placeholder="Paste ZAPIER_LEAD_WEBHOOK_SECRET value"
-            className="flex-1 text-[12px] bg-cream-deep rounded px-3 py-2 font-mono border border-line-soft focus:border-gold outline-none"
-          />
-          <button
-            onClick={() => setShowSecret((v) => !v)}
-            className="rounded-lg bg-cream-deep border border-line-soft px-3 py-2 text-[11px] text-ink-soft hover:text-ink"
-          >
-            {showSecret ? "Hide" : "Show"}
-          </button>
-        </div>
-
-        <div className="label-eyebrow mb-2">2. Webhook URL — paste into Zapier "Webhooks by Zapier" POST action</div>
-        <div className="flex items-center gap-2">
-          <code className="flex-1 text-[12px] text-ink bg-cream-deep rounded px-3 py-2 font-mono break-all">
-            {zapierUrl}
-          </code>
-          <button
-            onClick={copyUrl}
-            className="rounded-lg bg-gold px-4 py-2 text-[12px] font-medium text-white hover:bg-gold/90 transition-colors whitespace-nowrap"
-          >
-            {copied ? "Copied!" : "Copy"}
-          </button>
-        </div>
-        <div className="text-[11px] text-ink-muted mt-3 leading-relaxed">
-          <strong className="text-ink-soft">Zap setup:</strong> Trigger = Kajabi "New Form Submission" →
-          Action = Webhooks by Zapier "POST". Set <code className="bg-cream-deep px-1 py-0.5 rounded">Payload Type: JSON</code> and
-          map these fields: <code className="bg-cream-deep px-1 py-0.5 rounded">email</code>,{" "}
-          <code className="bg-cream-deep px-1 py-0.5 rounded">first_name</code>,{" "}
-          <code className="bg-cream-deep px-1 py-0.5 rounded">last_name</code>,{" "}
-          <code className="bg-cream-deep px-1 py-0.5 rounded">phone</code>,{" "}
-          <code className="bg-cream-deep px-1 py-0.5 rounded">form_name</code>,{" "}
-          <code className="bg-cream-deep px-1 py-0.5 rounded">source</code>.
-        </div>
-      </div>
-
-      <div className="border-t border-line-soft pt-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="label-eyebrow">Recent leads from Zapier</div>
-          <div className="text-[10px] text-ink-muted">Auto-refreshing every 10s</div>
-        </div>
-        {!recentLeads.data?.length ? (
-          <div className="text-[12px] text-ink-muted py-6 text-center bg-cream-deep rounded-lg">
-            No Zapier leads yet. Send a test from Zapier and they'll appear here.
-          </div>
-        ) : (
-          <div className="space-y-1.5 max-h-[280px] overflow-auto">
-            {recentLeads.data.map((l: any) => (
-              <div key={l.id} className="flex items-center gap-3 text-[12px] py-2 px-3 rounded-lg bg-cream border border-line-soft">
-                <span className="inline-block w-2 h-2 rounded-full shrink-0 bg-green-600" />
-                <span className="font-medium text-ink min-w-[140px] truncate">{l.name}</span>
-                <span className="text-ink-soft min-w-[200px] truncate">{l.email}</span>
-                {l.how_did_you_hear && <span className="text-ink-muted text-[11px] truncate flex-1">{l.how_did_you_hear}</span>}
-                <span className="text-ink-muted text-[11px] whitespace-nowrap">
-                  {new Date(l.created_at).toLocaleString()}
-                </span>
               </div>
             ))}
           </div>
