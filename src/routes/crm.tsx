@@ -426,6 +426,9 @@ function CrmBoard() {
           })}
         </div>
       </div>
+      {editCampaign && (
+        <EditCampaignDrawer campaign={editCampaign} onClose={() => setEditCampaign(null)} />
+      )}
     </PageShell>
   );
 }
