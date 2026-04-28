@@ -10,18 +10,22 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as YoutubeRouteImport } from './routes/youtube'
+import { Route as WidgetsRouteImport } from './routes/widgets'
 import { Route as MetaRouteImport } from './routes/meta'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LinkedinRouteImport } from './routes/linkedin'
 import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as KajabiRouteImport } from './routes/kajabi'
 import { Route as IntegrationsRouteImport } from './routes/integrations'
+import { Route as CrmRouteImport } from './routes/crm'
 import { Route as CaptivateRouteImport } from './routes/captivate'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CampaignsIndexRouteImport } from './routes/campaigns.index'
+import { Route as CrmIdRouteImport } from './routes/crm.$id'
 import { Route as CampaignsIdRouteImport } from './routes/campaigns.$id'
 import { Route as AdminIntegrationsRouteImport } from './routes/admin.integrations'
+import { Route as AdminImportMetricsRouteImport } from './routes/admin.import-metrics'
 import { Route as ApiPublicZapierLeadRouteImport } from './routes/api/public/zapier-lead'
 import { Route as ApiPublicKajabiSyncRouteImport } from './routes/api/public/kajabi-sync'
 import { Route as ApiPublicCaptivateSyncRouteImport } from './routes/api/public/captivate-sync'
@@ -31,6 +35,11 @@ import { Route as ApiPublicHooksMetaSyncRouteImport } from './routes/api/public/
 const YoutubeRoute = YoutubeRouteImport.update({
   id: '/youtube',
   path: '/youtube',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WidgetsRoute = WidgetsRouteImport.update({
+  id: '/widgets',
+  path: '/widgets',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MetaRoute = MetaRouteImport.update({
@@ -63,6 +72,11 @@ const IntegrationsRoute = IntegrationsRouteImport.update({
   path: '/integrations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CrmRoute = CrmRouteImport.update({
+  id: '/crm',
+  path: '/crm',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CaptivateRoute = CaptivateRouteImport.update({
   id: '/captivate',
   path: '/captivate',
@@ -83,6 +97,11 @@ const CampaignsIndexRoute = CampaignsIndexRouteImport.update({
   path: '/campaigns/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CrmIdRoute = CrmIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => CrmRoute,
+} as any)
 const CampaignsIdRoute = CampaignsIdRouteImport.update({
   id: '/campaigns/$id',
   path: '/campaigns/$id',
@@ -91,6 +110,11 @@ const CampaignsIdRoute = CampaignsIdRouteImport.update({
 const AdminIntegrationsRoute = AdminIntegrationsRouteImport.update({
   id: '/integrations',
   path: '/integrations',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminImportMetricsRoute = AdminImportMetricsRouteImport.update({
+  id: '/import-metrics',
+  path: '/import-metrics',
   getParentRoute: () => AdminRoute,
 } as any)
 const ApiPublicZapierLeadRoute = ApiPublicZapierLeadRouteImport.update({
@@ -123,15 +147,19 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/captivate': typeof CaptivateRoute
+  '/crm': typeof CrmRouteWithChildren
   '/integrations': typeof IntegrationsRoute
   '/kajabi': typeof KajabiRoute
   '/leads': typeof LeadsRoute
   '/linkedin': typeof LinkedinRoute
   '/login': typeof LoginRoute
   '/meta': typeof MetaRoute
+  '/widgets': typeof WidgetsRoute
   '/youtube': typeof YoutubeRoute
+  '/admin/import-metrics': typeof AdminImportMetricsRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/campaigns/$id': typeof CampaignsIdRoute
+  '/crm/$id': typeof CrmIdRoute
   '/campaigns/': typeof CampaignsIndexRoute
   '/api/public/captivate-sync': typeof ApiPublicCaptivateSyncRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
@@ -143,15 +171,19 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/captivate': typeof CaptivateRoute
+  '/crm': typeof CrmRouteWithChildren
   '/integrations': typeof IntegrationsRoute
   '/kajabi': typeof KajabiRoute
   '/leads': typeof LeadsRoute
   '/linkedin': typeof LinkedinRoute
   '/login': typeof LoginRoute
   '/meta': typeof MetaRoute
+  '/widgets': typeof WidgetsRoute
   '/youtube': typeof YoutubeRoute
+  '/admin/import-metrics': typeof AdminImportMetricsRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/campaigns/$id': typeof CampaignsIdRoute
+  '/crm/$id': typeof CrmIdRoute
   '/campaigns': typeof CampaignsIndexRoute
   '/api/public/captivate-sync': typeof ApiPublicCaptivateSyncRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
@@ -164,15 +196,19 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/captivate': typeof CaptivateRoute
+  '/crm': typeof CrmRouteWithChildren
   '/integrations': typeof IntegrationsRoute
   '/kajabi': typeof KajabiRoute
   '/leads': typeof LeadsRoute
   '/linkedin': typeof LinkedinRoute
   '/login': typeof LoginRoute
   '/meta': typeof MetaRoute
+  '/widgets': typeof WidgetsRoute
   '/youtube': typeof YoutubeRoute
+  '/admin/import-metrics': typeof AdminImportMetricsRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
   '/campaigns/$id': typeof CampaignsIdRoute
+  '/crm/$id': typeof CrmIdRoute
   '/campaigns/': typeof CampaignsIndexRoute
   '/api/public/captivate-sync': typeof ApiPublicCaptivateSyncRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
@@ -186,15 +222,19 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/captivate'
+    | '/crm'
     | '/integrations'
     | '/kajabi'
     | '/leads'
     | '/linkedin'
     | '/login'
     | '/meta'
+    | '/widgets'
     | '/youtube'
+    | '/admin/import-metrics'
     | '/admin/integrations'
     | '/campaigns/$id'
+    | '/crm/$id'
     | '/campaigns/'
     | '/api/public/captivate-sync'
     | '/api/public/kajabi-sync'
@@ -206,15 +246,19 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/captivate'
+    | '/crm'
     | '/integrations'
     | '/kajabi'
     | '/leads'
     | '/linkedin'
     | '/login'
     | '/meta'
+    | '/widgets'
     | '/youtube'
+    | '/admin/import-metrics'
     | '/admin/integrations'
     | '/campaigns/$id'
+    | '/crm/$id'
     | '/campaigns'
     | '/api/public/captivate-sync'
     | '/api/public/kajabi-sync'
@@ -226,15 +270,19 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/captivate'
+    | '/crm'
     | '/integrations'
     | '/kajabi'
     | '/leads'
     | '/linkedin'
     | '/login'
     | '/meta'
+    | '/widgets'
     | '/youtube'
+    | '/admin/import-metrics'
     | '/admin/integrations'
     | '/campaigns/$id'
+    | '/crm/$id'
     | '/campaigns/'
     | '/api/public/captivate-sync'
     | '/api/public/kajabi-sync'
@@ -247,12 +295,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   CaptivateRoute: typeof CaptivateRoute
+  CrmRoute: typeof CrmRouteWithChildren
   IntegrationsRoute: typeof IntegrationsRoute
   KajabiRoute: typeof KajabiRoute
   LeadsRoute: typeof LeadsRoute
   LinkedinRoute: typeof LinkedinRoute
   LoginRoute: typeof LoginRoute
   MetaRoute: typeof MetaRoute
+  WidgetsRoute: typeof WidgetsRoute
   YoutubeRoute: typeof YoutubeRoute
   CampaignsIdRoute: typeof CampaignsIdRoute
   CampaignsIndexRoute: typeof CampaignsIndexRoute
@@ -270,6 +320,13 @@ declare module '@tanstack/react-router' {
       path: '/youtube'
       fullPath: '/youtube'
       preLoaderRoute: typeof YoutubeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/widgets': {
+      id: '/widgets'
+      path: '/widgets'
+      fullPath: '/widgets'
+      preLoaderRoute: typeof WidgetsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/meta': {
@@ -314,6 +371,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntegrationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/crm': {
+      id: '/crm'
+      path: '/crm'
+      fullPath: '/crm'
+      preLoaderRoute: typeof CrmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/captivate': {
       id: '/captivate'
       path: '/captivate'
@@ -342,6 +406,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CampaignsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/crm/$id': {
+      id: '/crm/$id'
+      path: '/$id'
+      fullPath: '/crm/$id'
+      preLoaderRoute: typeof CrmIdRouteImport
+      parentRoute: typeof CrmRoute
+    }
     '/campaigns/$id': {
       id: '/campaigns/$id'
       path: '/campaigns/$id'
@@ -354,6 +425,13 @@ declare module '@tanstack/react-router' {
       path: '/integrations'
       fullPath: '/admin/integrations'
       preLoaderRoute: typeof AdminIntegrationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/import-metrics': {
+      id: '/admin/import-metrics'
+      path: '/import-metrics'
+      fullPath: '/admin/import-metrics'
+      preLoaderRoute: typeof AdminImportMetricsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/api/public/zapier-lead': {
@@ -395,25 +473,39 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminImportMetricsRoute: typeof AdminImportMetricsRoute
   AdminIntegrationsRoute: typeof AdminIntegrationsRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminImportMetricsRoute: AdminImportMetricsRoute,
   AdminIntegrationsRoute: AdminIntegrationsRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface CrmRouteChildren {
+  CrmIdRoute: typeof CrmIdRoute
+}
+
+const CrmRouteChildren: CrmRouteChildren = {
+  CrmIdRoute: CrmIdRoute,
+}
+
+const CrmRouteWithChildren = CrmRoute._addFileChildren(CrmRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   CaptivateRoute: CaptivateRoute,
+  CrmRoute: CrmRouteWithChildren,
   IntegrationsRoute: IntegrationsRoute,
   KajabiRoute: KajabiRoute,
   LeadsRoute: LeadsRoute,
   LinkedinRoute: LinkedinRoute,
   LoginRoute: LoginRoute,
   MetaRoute: MetaRoute,
+  WidgetsRoute: WidgetsRoute,
   YoutubeRoute: YoutubeRoute,
   CampaignsIdRoute: CampaignsIdRoute,
   CampaignsIndexRoute: CampaignsIndexRoute,

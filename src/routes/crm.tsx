@@ -107,7 +107,7 @@ function CrmBoard() {
                     key={c.id}
                     draggable
                     onDragStart={() => setDraggingId(c.id)}
-                    onClick={() => navigate({ to: "/crm/$id" as any, params: { id: c.id } })}
+                    onClick={() => navigate({ to: "/crm/$id", params: { id: c.id } })}
                     className={
                       "bg-paper border border-line-soft rounded-md p-2.5 cursor-grab active:cursor-grabbing hover:border-gold transition-colors " +
                       (draggingId === c.id ? "opacity-40" : "")
