@@ -77,7 +77,7 @@ export function NotionCard() {
   async function startConnect() {
     try {
       const { url } = await buildAuth({ data: { origin: window.location.origin } });
-      window.location.href = url;
+      window.open(url, "_blank", "noopener,noreferrer");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to start Notion auth");
     }
