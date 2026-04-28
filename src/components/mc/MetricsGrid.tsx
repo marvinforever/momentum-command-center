@@ -42,7 +42,7 @@ export function MetricsGrid() {
     <div>
       {/* Client picker */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
-        <span className="label-eyebrow mr-2">Client</span>
+        <span className="label-eyebrow mr-2">Focus Area</span>
         {clients.map((c) => (
           <button
             key={c.id}
