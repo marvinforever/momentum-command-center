@@ -321,26 +321,28 @@ function ConnectedPanel(props: {
         </div>
       )}
 
+      <PlainEnglishHelp />
+
       <DbMappingSection
         title="Calls database"
-        subtitle="Maps each new discovery call from Lovable into a Notion page in this database."
+        subtitle="Each new discovery call in Lovable will become a page in this Notion database."
         databases={databases}
         selectedDbId={callsDb}
-        onSelectDb={setCallsDb}
+        onSelectDb={(id) => { setCallsDb(id); setCallsMap({}); }}
         schema={callsSchema}
-        fields={CALL_FIELDS as readonly { key: string; label: string }[]}
+        fields={CALL_FIELDS}
         map={callsMap}
         onMapChange={setCallsMap}
       />
 
       <DbMappingSection
-        title="Leads database"
-        subtitle="Maps new leads from Lovable into a Notion page in this database. (Optional — leave unset to skip lead mirroring.)"
+        title="Leads database (optional)"
+        subtitle="Each new lead in Lovable will become a page in this Notion database. Skip this section if you only want to sync calls."
         databases={databases}
         selectedDbId={leadsDb}
-        onSelectDb={setLeadsDb}
+        onSelectDb={(id) => { setLeadsDb(id); setLeadsMap({}); }}
         schema={leadsSchema}
-        fields={LEAD_FIELDS as readonly { key: string; label: string }[]}
+        fields={LEAD_FIELDS}
         map={leadsMap}
         onMapChange={setLeadsMap}
       />
