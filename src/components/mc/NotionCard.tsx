@@ -267,6 +267,19 @@ function ConnectedPanel(props: {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Backfill failed"),
   });
 
+  const importM = useMutation({
+    mutationFn: async () => importFromNotion(),
+    onSuccess: (r) => {
+      if (!r.ok) toast.error(r.errors?.[0] ?? "Import failed");
+      else
+        toast.success(
+          `Imported from Notion — ${r.fetched} pages: ${r.inserted} new, ${r.updated} updated, ${r.skipped} skipped, ${r.failed} failed`,
+        );
+      qc.invalidateQueries({ queryKey: ["notion_sync_log"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Import failed"),
+  });
+
   const databases = dbs.data?.databases ?? [];
 
   async function reconnectNotion() {
