@@ -15,39 +15,89 @@ import {
   getRecentNotionSyncLog,
 } from "@/server/notion.functions";
 
-// Lovable fields available for mapping. The admin picks which Notion property each maps to.
-const CALL_FIELDS = [
-  { key: "name", label: "Name" },
-  { key: "call_date", label: "Call Date" },
-  { key: "fu_date", label: "Follow-up Date" },
-  { key: "call_type", label: "Call Type" },
-  { key: "status", label: "Status" },
-  { key: "fit_rating", label: "Fit Rating" },
-  { key: "lead_source", label: "Lead Source" },
-  { key: "location", label: "Location" },
-  { key: "role_position", label: "Role / Position" },
-  { key: "follow_up_actions", label: "Follow-up Actions (multi)" },
-  { key: "notes", label: "Notes" },
-  { key: "offer", label: "Offer name" },
-  { key: "lead", label: "Lead name" },
-  { key: "lead_email", label: "Lead email" },
-  { key: "lovable_id", label: "Lovable ID (sync key)" },
-] as const;
+// Lovable fields available for mapping. `hint` is a plain-English explanation
+// shown in the UI; `aliases` are alternative names we'll auto-match against
+// the Notion property names (case/punctuation-insensitive).
+type FieldDef = { key: string; label: string; hint: string; aliases: string[] };
 
-const LEAD_FIELDS = [
-  { key: "name", label: "Name" },
-  { key: "email", label: "Email" },
-  { key: "phone", label: "Phone" },
-  { key: "first_touch_date", label: "First Touch Date" },
-  { key: "lead_source", label: "Lead Source" },
-  { key: "status", label: "Status" },
-  { key: "utm_source", label: "UTM Source" },
-  { key: "utm_medium", label: "UTM Medium" },
-  { key: "utm_campaign", label: "UTM Campaign" },
-  { key: "how_did_you_hear", label: "How they heard" },
-  { key: "notes", label: "Notes" },
-  { key: "lovable_id", label: "Lovable ID (sync key)" },
-] as const;
+const CALL_FIELDS: readonly FieldDef[] = [
+  { key: "name", label: "Name", hint: "Title of the call (usually the lead's name)", aliases: ["name", "title", "call", "lead"] },
+  { key: "call_date", label: "Call Date", hint: "When the call happened", aliases: ["call date", "date", "meeting date", "scheduled", "when"] },
+  { key: "fu_date", label: "Follow-up Date", hint: "When to follow up next", aliases: ["follow up date", "followup", "fu date", "next followup", "next touch"] },
+  { key: "call_type", label: "Call Type", hint: "e.g. Discovery, Sales, Strategy", aliases: ["call type", "type", "meeting type"] },
+  { key: "status", label: "Status", hint: "Pending / Done / No-show / etc.", aliases: ["status", "state", "stage"] },
+  { key: "fit_rating", label: "Fit Rating", hint: "Score from 1–5 of how good a fit", aliases: ["fit rating", "fit", "rating", "score", "quality"] },
+  { key: "lead_source", label: "Lead Source", hint: "How they found you", aliases: ["lead source", "source", "channel", "where from"] },
+  { key: "location", label: "Location", hint: "City / country / region", aliases: ["location", "city", "country", "region", "where"] },
+  { key: "role_position", label: "Role / Position", hint: "Their job title", aliases: ["role", "position", "job", "title", "role / position"] },
+  { key: "follow_up_actions", label: "Follow-up Actions", hint: "Checklist of next steps (multi-select)", aliases: ["follow up actions", "followup actions", "actions", "next steps", "todo", "to-do"] },
+  { key: "notes", label: "Notes", hint: "Free-form notes about the call", aliases: ["notes", "note", "summary", "details"] },
+  { key: "offer", label: "Offer name", hint: "Which offer/program was discussed", aliases: ["offer", "offer name", "product", "program"] },
+  { key: "lead", label: "Lead name", hint: "Name of the person on the call", aliases: ["lead", "lead name", "contact", "person"] },
+  { key: "lead_email", label: "Lead email", hint: "Their email address", aliases: ["lead email", "email", "contact email"] },
+  { key: "lovable_id", label: "Sync ID", hint: "Hidden ID we use to update the same Notion page next time (recommended)", aliases: ["lovable id", "sync id", "external id", "id", "uuid"] },
+];
+
+const LEAD_FIELDS: readonly FieldDef[] = [
+  { key: "name", label: "Name", hint: "The lead's name", aliases: ["name", "title", "contact", "lead"] },
+  { key: "email", label: "Email", hint: "Their email address", aliases: ["email", "e-mail"] },
+  { key: "phone", label: "Phone", hint: "Their phone number", aliases: ["phone", "mobile", "tel", "telephone"] },
+  { key: "first_touch_date", label: "First Touch Date", hint: "When they first came in", aliases: ["first touch date", "first touch", "created", "date added", "joined"] },
+  { key: "lead_source", label: "Lead Source", hint: "How they found you", aliases: ["lead source", "source", "channel"] },
+  { key: "status", label: "Status", hint: "New / Working / Closed / etc.", aliases: ["status", "stage", "state"] },
+  { key: "utm_source", label: "UTM Source", hint: "Marketing tracking — which platform", aliases: ["utm source", "utm_source", "source"] },
+  { key: "utm_medium", label: "UTM Medium", hint: "Marketing tracking — type of traffic", aliases: ["utm medium", "utm_medium", "medium"] },
+  { key: "utm_campaign", label: "UTM Campaign", hint: "Marketing tracking — campaign name", aliases: ["utm campaign", "utm_campaign", "campaign"] },
+  { key: "how_did_you_hear", label: "How they heard", hint: "Their answer to 'how did you hear about us'", aliases: ["how did you hear", "how heard", "referral", "referred by"] },
+  { key: "notes", label: "Notes", hint: "Free-form notes", aliases: ["notes", "note", "summary"] },
+  { key: "lovable_id", label: "Sync ID", hint: "Hidden ID we use to update the same Notion page next time (recommended)", aliases: ["lovable id", "sync id", "external id", "id", "uuid"] },
+];
+
+function normalize(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+// Score how well a Notion property name matches a Lovable field. Higher = better.
+function matchScore(field: FieldDef, propName: string): number {
+  const np = normalize(propName);
+  if (!np) return 0;
+  // Exact match on label or any alias
+  for (const alias of [field.label, ...field.aliases]) {
+    if (normalize(alias) === np) return 100;
+  }
+  // Substring containment
+  for (const alias of [field.label, ...field.aliases]) {
+    const na = normalize(alias);
+    if (np === na) return 100;
+    if (np.includes(na) || na.includes(np)) {
+      return Math.max(60, 100 - Math.abs(np.length - na.length));
+    }
+  }
+  return 0;
+}
+
+function autoMatchMap(
+  fields: readonly FieldDef[],
+  schema: Record<string, { name: string; type: string }>,
+): PropMap {
+  const props = Object.values(schema);
+  const map: PropMap = {};
+  const used = new Set<string>();
+  // Greedy: for each field, pick the highest-scoring unused prop above threshold.
+  for (const f of fields) {
+    let best: { name: string; type: string; score: number } | null = null;
+    for (const p of props) {
+      if (used.has(p.name)) continue;
+      const s = matchScore(f, p.name);
+      if (s > 0 && (!best || s > best.score)) best = { ...p, score: s };
+    }
+    if (best && best.score >= 60) {
+      map[f.key] = { name: best.name, type: best.type };
+      used.add(best.name);
+    }
+  }
+  return map;
+}
 
 type PropMap = Record<string, { name: string; type: string }>;
 
@@ -271,26 +321,28 @@ function ConnectedPanel(props: {
         </div>
       )}
 
+      <PlainEnglishHelp />
+
       <DbMappingSection
         title="Calls database"
-        subtitle="Maps each new discovery call from Lovable into a Notion page in this database."
+        subtitle="Each new discovery call in Lovable will become a page in this Notion database."
         databases={databases}
         selectedDbId={callsDb}
-        onSelectDb={setCallsDb}
+        onSelectDb={(id) => { setCallsDb(id); setCallsMap({}); }}
         schema={callsSchema}
-        fields={CALL_FIELDS as readonly { key: string; label: string }[]}
+        fields={CALL_FIELDS}
         map={callsMap}
         onMapChange={setCallsMap}
       />
 
       <DbMappingSection
-        title="Leads database"
-        subtitle="Maps new leads from Lovable into a Notion page in this database. (Optional — leave unset to skip lead mirroring.)"
+        title="Leads database (optional)"
+        subtitle="Each new lead in Lovable will become a page in this Notion database. Skip this section if you only want to sync calls."
         databases={databases}
         selectedDbId={leadsDb}
-        onSelectDb={setLeadsDb}
+        onSelectDb={(id) => { setLeadsDb(id); setLeadsMap({}); }}
         schema={leadsSchema}
-        fields={LEAD_FIELDS as readonly { key: string; label: string }[]}
+        fields={LEAD_FIELDS}
         map={leadsMap}
         onMapChange={setLeadsMap}
       />
@@ -317,6 +369,20 @@ function ConnectedPanel(props: {
   );
 }
 
+function PlainEnglishHelp() {
+  return (
+    <div className="rounded-lg border border-gold-soft bg-cream p-4 text-[12px] text-ink-soft leading-relaxed">
+      <div className="font-medium text-ink mb-1">How this works (in plain English)</div>
+      <ol className="list-decimal pl-5 space-y-1">
+        <li>Pick a Notion database below — that's <em>where</em> your calls/leads will land in Notion.</li>
+        <li>For each Lovable field on the left, tell us which column in your Notion database it should go into. (We'll auto-match the easy ones.)</li>
+        <li>Anything left as <strong>“— skip —”</strong> just won't be sent to Notion. That's fine.</li>
+        <li>Hit <strong>Save mapping</strong>, then <strong>Sync unsynced calls now</strong> to backfill.</li>
+      </ol>
+    </div>
+  );
+}
+
 function DbMappingSection(props: {
   title: string;
   subtitle: string;
@@ -324,13 +390,23 @@ function DbMappingSection(props: {
   selectedDbId: string;
   onSelectDb: (id: string) => void;
   schema: Record<string, { name: string; type: string }> | undefined;
-  fields: readonly { key: string; label: string }[];
+  fields: readonly FieldDef[];
   map: PropMap;
   onMapChange: (m: PropMap) => void;
 }) {
   const propEntries = useMemo(() => {
     if (!props.schema) return [] as { name: string; type: string }[];
     return Object.values(props.schema).sort((a, b) => a.name.localeCompare(b.name));
+  }, [props.schema]);
+
+  // Auto-match the first time a schema loads while the map is empty —
+  // saves the user from staring at 15 dropdowns full of "skip".
+  useEffect(() => {
+    if (props.schema && Object.keys(props.map).length === 0) {
+      const auto = autoMatchMap(props.fields, props.schema);
+      if (Object.keys(auto).length > 0) props.onMapChange(auto);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.schema]);
 
   function setField(fieldKey: string, propName: string) {
@@ -345,6 +421,21 @@ function DbMappingSection(props: {
     props.onMapChange(next);
   }
 
+  function runAutoMatch() {
+    if (!props.schema) return;
+    const auto = autoMatchMap(props.fields, props.schema);
+    props.onMapChange(auto);
+    const matched = Object.keys(auto).length;
+    toast.success(`Auto-matched ${matched} of ${props.fields.length} fields. Review and adjust below.`);
+  }
+
+  function clearAll() {
+    props.onMapChange({});
+  }
+
+  const mappedCount = Object.keys(props.map).length;
+  const totalFields = props.fields.length;
+
   return (
     <div className="rounded-lg border border-line-soft p-4">
       <div className="mb-3">
@@ -352,49 +443,82 @@ function DbMappingSection(props: {
         <div className="text-[11px] text-ink-muted">{props.subtitle}</div>
       </div>
 
+      <label className="block text-[11px] font-medium text-ink-soft mb-1">
+        1. Which Notion database?
+      </label>
       <select
         value={props.selectedDbId}
         onChange={(e) => props.onSelectDb(e.target.value)}
         className="w-full text-[12px] bg-cream-deep rounded px-3 py-2 border border-line-soft focus:border-gold outline-none mb-3"
       >
-        <option value="">— select a Notion database —</option>
+        <option value="">— pick one —</option>
         {props.databases.map((d) => (
           <option key={d.id} value={d.id}>{d.icon ? `${d.icon} ` : ""}{d.title}</option>
         ))}
       </select>
 
       {props.selectedDbId && !props.schema && (
-        <div className="text-[11px] text-ink-muted py-3 text-center bg-cream-deep rounded">Loading schema…</div>
+        <div className="text-[11px] text-ink-muted py-3 text-center bg-cream-deep rounded">Loading database columns…</div>
       )}
 
       {props.schema && (
-        <div className="space-y-1.5">
-          <div className="grid grid-cols-[180px_1fr] gap-2 text-[10px] uppercase tracking-wide text-ink-muted px-2">
-            <div>Lovable field</div>
-            <div>→ Notion property (type)</div>
+        <>
+          <div className="flex items-center justify-between mb-2 mt-1">
+            <label className="text-[11px] font-medium text-ink-soft">
+              2. Match each Lovable field to a Notion column
+              <span className="text-ink-muted font-normal ml-2">({mappedCount}/{totalFields} mapped)</span>
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={runAutoMatch}
+                className="rounded border border-gold-soft bg-cream text-ink px-2.5 py-1 text-[11px] hover:bg-gold/10"
+                title="Match Lovable fields to Notion columns by name"
+              >
+                ✨ Auto-match
+              </button>
+              <button
+                type="button"
+                onClick={clearAll}
+                disabled={mappedCount === 0}
+                className="rounded border border-line text-ink-soft px-2.5 py-1 text-[11px] hover:bg-cream-deep disabled:opacity-40"
+              >
+                Clear all
+              </button>
+            </div>
           </div>
-          {props.fields.map((f) => {
-            const current = props.map[f.key];
-            return (
-              <div key={f.key} className="grid grid-cols-[180px_1fr] gap-2 items-center">
-                <div className="text-[12px] text-ink">{f.label}</div>
-                <select
-                  value={current?.name ?? ""}
-                  onChange={(e) => setField(f.key, e.target.value)}
-                  className={cn(
-                    "text-[12px] rounded px-2 py-1.5 border outline-none",
-                    current ? "bg-cream border-gold-soft" : "bg-cream-deep border-line-soft",
-                  )}
-                >
-                  <option value="">— skip —</option>
-                  {propEntries.map((p) => (
-                    <option key={p.name} value={p.name}>{p.name} ({p.type})</option>
-                  ))}
-                </select>
-              </div>
-            );
-          })}
-        </div>
+
+          <div className="space-y-1.5">
+            <div className="grid grid-cols-[1fr_1fr] gap-3 text-[10px] uppercase tracking-wide text-ink-muted px-1 pb-1 border-b border-line-soft">
+              <div>Lovable field</div>
+              <div>Notion column</div>
+            </div>
+            {props.fields.map((f) => {
+              const current = props.map[f.key];
+              return (
+                <div key={f.key} className="grid grid-cols-[1fr_1fr] gap-3 items-start py-1">
+                  <div className="text-[12px] text-ink leading-tight pt-1.5">
+                    <div className="font-medium">{f.label}</div>
+                    <div className="text-[10.5px] text-ink-muted">{f.hint}</div>
+                  </div>
+                  <select
+                    value={current?.name ?? ""}
+                    onChange={(e) => setField(f.key, e.target.value)}
+                    className={cn(
+                      "text-[12px] rounded px-2 py-1.5 border outline-none w-full",
+                      current ? "bg-cream border-gold-soft" : "bg-cream-deep border-line-soft text-ink-muted",
+                    )}
+                  >
+                    <option value="">— don't sync this —</option>
+                    {propEntries.map((p) => (
+                      <option key={p.name} value={p.name}>{p.name} ({p.type})</option>
+                    ))}
+                  </select>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );
