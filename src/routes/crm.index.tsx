@@ -121,6 +121,28 @@ function CrmBoard() {
   const wonCount = filtered.filter((c) => /won/i.test(c.stage)).length;
   const activeCount = filtered.filter((c) => !/won|lost|no sale/i.test(c.stage)).length;
 
+  // Funnel conversion: cumulative count = contacts at this stage OR any downstream stage.
+  // (A contact in "Won" implicitly passed through "Lead In", "Call Booked", etc.)
+  // Lost / No Sale stages are excluded from the funnel math — they're terminal exits.
+  const isLostStage = (s: string) => /lost|no sale/i.test(s);
+  const funnelStages = stages.filter((s) => !isLostStage(s));
+  const stageIndex = new Map(funnelStages.map((s, i) => [s, i]));
+  const cumulative: Record<string, number> = {};
+  for (const s of funnelStages) {
+    const idx = stageIndex.get(s)!;
+    cumulative[s] = filtered.filter((c) => {
+      const ci = stageIndex.get(c.stage);
+      return ci != null && ci >= idx;
+    }).length;
+  }
+  // Conversion from this stage to the next stage in the funnel.
+  const conversionToNext: Record<string, number | null> = {};
+  for (let i = 0; i < funnelStages.length - 1; i++) {
+    const cur = funnelStages[i];
+    const nxt = funnelStages[i + 1];
+    conversionToNext[cur] = cumulative[cur] > 0 ? cumulative[nxt] / cumulative[cur] : null;
+  }
+
   const handleDrop = async (stage: string) => {
     setDragOverStage(null);
     if (!draggingId) return;
