@@ -248,12 +248,23 @@ export function useKajabiPurchases() {
   return useQuery({
     queryKey: ["kajabi_purchases"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("kajabi_purchases")
-        .select("*")
-        .order("purchased_at", { ascending: false, nullsFirst: false });
-      if (error) throw error;
-      return data ?? [];
+      // Page through the default 1k row cap so the full history is available.
+      const pageSize = 1000;
+      const all: any[] = [];
+      for (let page = 0; page < 50; page++) {
+        const from = page * pageSize;
+        const to = from + pageSize - 1;
+        const { data, error } = await supabase
+          .from("kajabi_purchases")
+          .select("*")
+          .order("purchased_at", { ascending: false, nullsFirst: false })
+          .range(from, to);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        all.push(...data);
+        if (data.length < pageSize) break;
+      }
+      return all;
     },
   });
 }
@@ -262,12 +273,22 @@ export function useKajabiFormSubmissions() {
   return useQuery({
     queryKey: ["kajabi_form_submissions"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("kajabi_form_submissions")
-        .select("*")
-        .order("submitted_at", { ascending: false, nullsFirst: false });
-      if (error) throw error;
-      return data ?? [];
+      const pageSize = 1000;
+      const all: any[] = [];
+      for (let page = 0; page < 50; page++) {
+        const from = page * pageSize;
+        const to = from + pageSize - 1;
+        const { data, error } = await supabase
+          .from("kajabi_form_submissions")
+          .select("*")
+          .order("submitted_at", { ascending: false, nullsFirst: false })
+          .range(from, to);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        all.push(...data);
+        if (data.length < pageSize) break;
+      }
+      return all;
     },
   });
 }
