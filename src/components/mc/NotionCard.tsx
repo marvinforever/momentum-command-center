@@ -375,7 +375,15 @@ function ConnectedPanel(props: {
           disabled={backfillM.isPending || !callsDb}
           className="rounded-lg border border-line text-ink px-4 py-2 text-[12px] hover:bg-cream-deep disabled:opacity-50"
         >
-          {backfillM.isPending ? "Syncing…" : "Sync unsynced calls now"}
+          {backfillM.isPending ? "Pushing…" : "Push Lovable → Notion"}
+        </button>
+        <button
+          onClick={() => importM.mutate()}
+          disabled={importM.isPending || !callsDb}
+          className="rounded-lg bg-ink px-4 py-2 text-[12px] font-medium text-white hover:bg-ink/90 transition-colors disabled:opacity-50"
+          title="Read every page in your Notion calls database and create/update matching rows in Lovable."
+        >
+          {importM.isPending ? "Importing…" : "Import Notion → Lovable"}
         </button>
       </div>
 
