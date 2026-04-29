@@ -208,6 +208,7 @@ function ConnectedPanel(props: {
   const fetchSchema = useServerFn(fetchNotionDatabaseSchema);
   const saveCfg = useServerFn(saveNotionConfig);
   const backfill = useServerFn(backfillCallsToNotion);
+  const importFromNotion = useServerFn(importCallsFromNotionFn);
   const buildAuth = useServerFn(buildNotionAuthUrl);
 
   const dbs = useQuery({
