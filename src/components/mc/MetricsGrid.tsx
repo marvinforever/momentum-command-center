@@ -141,8 +141,8 @@ function SectionGroup({
 }) {
   return (
     <>
-      <tr className="bg-cream-deep/60 border-b border-line-soft cursor-pointer" onClick={toggleSection}>
-        <td colSpan={visibleWeeks.length + 3} className="sticky left-0 px-4 py-2 text-[11px] uppercase tracking-[0.18em] text-gold font-medium">
+      <tr className="bg-gold border-b border-line-soft cursor-pointer hover:bg-gold/90 transition-colors" onClick={toggleSection}>
+        <td colSpan={visibleWeeks.length + 3} className="sticky left-0 bg-gold px-4 py-2 text-[11px] uppercase tracking-[0.18em] text-white font-semibold">
           <span className="inline-flex items-center gap-1.5">
             {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
             {section}
