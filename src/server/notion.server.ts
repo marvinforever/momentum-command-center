@@ -452,3 +452,227 @@ export async function mirrorLead(leadId: string): Promise<{
   }
 }
 
+
+// ---------- Notion → Lovable: read property values ----------
+function readProperty(prop: unknown): unknown {
+  if (!prop || typeof prop !== "object") return null;
+  const p = prop as { type?: string } & Record<string, unknown>;
+  switch (p.type) {
+    case "title":
+    case "rich_text": {
+      const arr = (p[p.type] as { plain_text?: string }[] | undefined) ?? [];
+      const txt = arr.map((t) => t.plain_text ?? "").join("").trim();
+      return txt || null;
+    }
+    case "number":
+      return (p.number as number | null) ?? null;
+    case "select": {
+      const s = p.select as { name?: string } | null;
+      return s?.name ?? null;
+    }
+    case "status": {
+      const s = p.status as { name?: string } | null;
+      return s?.name ?? null;
+    }
+    case "multi_select": {
+      const arr = (p.multi_select as { name?: string }[] | undefined) ?? [];
+      return arr.map((s) => s.name).filter(Boolean);
+    }
+    case "date": {
+      const d = p.date as { start?: string } | null;
+      return d?.start ?? null;
+    }
+    case "checkbox":
+      return Boolean(p.checkbox);
+    case "url":
+      return (p.url as string | null) ?? null;
+    case "email":
+      return (p.email as string | null) ?? null;
+    case "phone_number":
+      return (p.phone_number as string | null) ?? null;
+    case "people": {
+      const arr = (p.people as { name?: string }[] | undefined) ?? [];
+      return arr.map((u) => u.name).filter(Boolean).join(", ") || null;
+    }
+    case "formula": {
+      const f = p.formula as { type?: string } & Record<string, unknown>;
+      if (!f) return null;
+      return (f[f.type ?? ""] as unknown) ?? null;
+    }
+    default:
+      return null;
+  }
+}
+
+async function queryAllDatabasePages(
+  conn: NotionConnection,
+  databaseId: string,
+): Promise<Array<{ id: string; properties: Record<string, unknown>; last_edited_time?: string }>> {
+  const out: Array<{ id: string; properties: Record<string, unknown>; last_edited_time?: string }> = [];
+  let cursor: string | undefined;
+  do {
+    const body = (await notionFetch(conn, `/databases/${databaseId}/query`, {
+      method: "POST",
+      body: JSON.stringify({ page_size: 100, start_cursor: cursor }),
+    })) as { results?: unknown[]; has_more?: boolean; next_cursor?: string };
+    for (const r of body.results ?? []) {
+      const page = r as { id: string; properties?: Record<string, unknown>; last_edited_time?: string };
+      out.push({ id: page.id, properties: page.properties ?? {}, last_edited_time: page.last_edited_time });
+    }
+    cursor = body.has_more ? body.next_cursor : undefined;
+  } while (cursor);
+  return out;
+}
+
+// Coerce an arbitrary Notion-derived value to the right shape for a
+// discovery_calls column. Returns null if the value is empty/unusable.
+function coerceForCallColumn(field: string, value: unknown): unknown {
+  if (value === null || value === undefined || value === "") return null;
+  switch (field) {
+    case "fit_rating": {
+      const n = typeof value === "number" ? value : Number(value);
+      return Number.isFinite(n) ? Math.round(n) : null;
+    }
+    case "call_date":
+    case "fu_date": {
+      const s = String(value);
+      // Notion gives ISO date or datetime; store DATE
+      const m = /^(\d{4}-\d{2}-\d{2})/.exec(s);
+      return m ? m[1] : null;
+    }
+    case "follow_up_actions": {
+      if (Array.isArray(value)) return value.map(String);
+      return [String(value)];
+    }
+    default:
+      return typeof value === "string" ? value : String(value);
+  }
+}
+
+// ---------- Import calls FROM Notion INTO discovery_calls ----------
+export async function importCallsFromNotion(): Promise<{
+  ok: boolean;
+  fetched: number;
+  inserted: number;
+  updated: number;
+  skipped: number;
+  failed: number;
+  errors: string[];
+}> {
+  const conn = await getActiveConnection();
+  if (!conn || !conn.calls_database_id) {
+    return {
+      ok: false,
+      fetched: 0,
+      inserted: 0,
+      updated: 0,
+      skipped: 0,
+      failed: 0,
+      errors: ["Notion not connected or calls database not configured"],
+    };
+  }
+  const map = conn.calls_property_map ?? {};
+  // Ensure 'name' is mapped (required title)
+  if (!map.name?.name) {
+    return {
+      ok: false,
+      fetched: 0,
+      inserted: 0,
+      updated: 0,
+      skipped: 0,
+      failed: 0,
+      errors: ["The 'Name' field is not mapped — cannot import without a title."],
+    };
+  }
+
+  let pages: Awaited<ReturnType<typeof queryAllDatabasePages>>;
+  try {
+    pages = await queryAllDatabasePages(conn, conn.calls_database_id);
+  } catch (e) {
+    return {
+      ok: false,
+      fetched: 0,
+      inserted: 0,
+      updated: 0,
+      skipped: 0,
+      failed: 0,
+      errors: [e instanceof Error ? e.message : String(e)],
+    };
+  }
+
+  let inserted = 0;
+  let updated = 0;
+  let skipped = 0;
+  let failed = 0;
+  const errors: string[] = [];
+
+  for (const page of pages) {
+    try {
+      // Build a row from the mapping
+      const row: Record<string, unknown> = { notion_page_id: page.id };
+      for (const [field, meta] of Object.entries(map)) {
+        if (!meta?.name) continue;
+        const raw = readProperty(page.properties[meta.name]);
+        const coerced = coerceForCallColumn(field, raw);
+        if (coerced !== null) row[field] = coerced;
+      }
+      if (!row.name) {
+        skipped++;
+        continue;
+      }
+      row.notion_synced_at = new Date().toISOString();
+
+      // Look up existing by notion_page_id
+      const { data: existing } = await supabaseAdmin
+        .from("discovery_calls")
+        .select("id")
+        .eq("notion_page_id", page.id)
+        .maybeSingle();
+
+      if (existing) {
+        const { error: upErr } = await supabaseAdmin
+          .from("discovery_calls")
+          .update(row as never)
+          .eq("id", (existing as { id: string }).id);
+        if (upErr) throw new Error(upErr.message);
+        updated++;
+      } else {
+        const { error: insErr } = await supabaseAdmin
+          .from("discovery_calls")
+          .insert(row as never);
+        if (insErr) throw new Error(insErr.message);
+        inserted++;
+      }
+    } catch (e) {
+      failed++;
+      const msg = e instanceof Error ? e.message : String(e);
+      if (errors.length < 5) errors.push(msg);
+      await supabaseAdmin.from("notion_sync_log").insert({
+        resource_type: "discovery_call",
+        resource_id: null,
+        notion_page_id: page.id,
+        action: "import",
+        success: false,
+        error: msg,
+      });
+    }
+  }
+
+  await supabaseAdmin.from("notion_sync_log").insert({
+    resource_type: "discovery_call",
+    action: "import_batch",
+    success: failed === 0,
+    error: errors.length ? errors.join(" | ") : null,
+    payload: { fetched: pages.length, inserted, updated, skipped, failed },
+  });
+
+  return {
+    ok: true,
+    fetched: pages.length,
+    inserted,
+    updated,
+    skipped,
+    failed,
+    errors,
+  };
+}

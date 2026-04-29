@@ -9,6 +9,7 @@ import {
   getDatabaseSchema,
   mirrorDiscoveryCall,
   mirrorLead,
+  importCallsFromNotion,
 } from "@/server/notion.server";
 
 // ---------- Build the OAuth start URL ----------
@@ -144,6 +145,11 @@ export const backfillCallsToNotion = createServerFn({ method: "POST" }).handler(
     }
   }
   return { ok: true, synced, failed, errors };
+});
+
+// ---------- Import: pull calls FROM Notion INTO Lovable ----------
+export const importCallsFromNotionFn = createServerFn({ method: "POST" }).handler(async () => {
+  return importCallsFromNotion();
 });
 
 // ---------- Recent sync log ----------

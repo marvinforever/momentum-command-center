@@ -12,6 +12,7 @@ import {
   saveNotionConfig,
   disconnectNotion,
   backfillCallsToNotion,
+  importCallsFromNotionFn,
   getRecentNotionSyncLog,
 } from "@/server/notion.functions";
 
@@ -207,6 +208,7 @@ function ConnectedPanel(props: {
   const fetchSchema = useServerFn(fetchNotionDatabaseSchema);
   const saveCfg = useServerFn(saveNotionConfig);
   const backfill = useServerFn(backfillCallsToNotion);
+  const importFromNotion = useServerFn(importCallsFromNotionFn);
   const buildAuth = useServerFn(buildNotionAuthUrl);
 
   const dbs = useQuery({
@@ -263,6 +265,19 @@ function ConnectedPanel(props: {
       qc.invalidateQueries({ queryKey: ["notion_sync_log"] });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Backfill failed"),
+  });
+
+  const importM = useMutation({
+    mutationFn: async () => importFromNotion(),
+    onSuccess: (r) => {
+      if (!r.ok) toast.error(r.errors?.[0] ?? "Import failed");
+      else
+        toast.success(
+          `Imported from Notion — ${r.fetched} pages: ${r.inserted} new, ${r.updated} updated, ${r.skipped} skipped, ${r.failed} failed`,
+        );
+      qc.invalidateQueries({ queryKey: ["notion_sync_log"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Import failed"),
   });
 
   const databases = dbs.data?.databases ?? [];
@@ -360,7 +375,15 @@ function ConnectedPanel(props: {
           disabled={backfillM.isPending || !callsDb}
           className="rounded-lg border border-line text-ink px-4 py-2 text-[12px] hover:bg-cream-deep disabled:opacity-50"
         >
-          {backfillM.isPending ? "Syncing…" : "Sync unsynced calls now"}
+          {backfillM.isPending ? "Pushing…" : "Push Lovable → Notion"}
+        </button>
+        <button
+          onClick={() => importM.mutate()}
+          disabled={importM.isPending || !callsDb}
+          className="rounded-lg bg-ink px-4 py-2 text-[12px] font-medium text-white hover:bg-ink/90 transition-colors disabled:opacity-50"
+          title="Read every page in your Notion calls database and create/update matching rows in Lovable."
+        >
+          {importM.isPending ? "Importing…" : "Import Notion → Lovable"}
         </button>
       </div>
 
