@@ -372,20 +372,44 @@ function CrmBoard() {
 
       <div className="overflow-x-auto px-4 sm:px-6 lg:px-10 pb-10">
         <div className="flex gap-3 min-w-max">
-          {stages.map((stage) => {
+          {stages.map((stage, colIdx) => {
             const cards = byStage.get(stage) ?? [];
             const isOver = dragOverStage === stage;
+            // Funnel gradient: light cream → sage → gold → burgundy.
+            // Lost / No Sale columns get a muted neutral tint instead of being on the win-path.
+            const lost = /lost|no sale/i.test(stage);
+            const total = Math.max(stages.length - 1, 1);
+            const t = colIdx / total; // 0 → 1 across columns
+            const palette = [
+              { r: 0xEF, g: 0xE8, b: 0xDC }, // cream-deep
+              { r: 0xDC, g: 0xE7, b: 0xE1 }, // sage-bg
+              { r: 0xF4, g: 0xE8, b: 0xD2 }, // gold-bg
+              { r: 0xE3, g: 0xC8, b: 0x92 }, // gold-soft
+              { r: 0xC4, g: 0x92, b: 0x4A }, // gold
+            ];
+            const segs = palette.length - 1;
+            const pos = t * segs;
+            const i = Math.min(Math.floor(pos), segs - 1);
+            const f = pos - i;
+            const lerp = (a: number, b: number) => Math.round(a + (b - a) * f);
+            const top = palette[i], bot = palette[i + 1];
+            const startRgb = `rgb(${top.r}, ${top.g}, ${top.b})`;
+            const endRgb = `rgb(${lerp(top.r, bot.r)}, ${lerp(top.g, bot.g)}, ${lerp(top.b, bot.b)})`;
+            const colBg = lost
+              ? "linear-gradient(180deg, rgba(239,216,216,0.5), rgba(239,216,216,0.25))"
+              : `linear-gradient(180deg, ${startRgb}, ${endRgb})`;
             return (
               <div
                 key={stage}
                 onDragOver={(e) => { e.preventDefault(); if (dragOverStage !== stage) setDragOverStage(stage); }}
                 onDragLeave={() => setDragOverStage((s) => (s === stage ? null : s))}
                 onDrop={() => handleDrop(stage)}
+                style={{ background: isOver ? undefined : colBg }}
                 className={cn(
                   "w-[270px] shrink-0 rounded-lg border p-2 transition-colors",
                   isOver
-                    ? "bg-gold/10 border-gold"
-                    : "bg-cream-deep/40 border-line-soft",
+                    ? "bg-gold/20 border-gold"
+                    : "border-line-soft",
                 )}
               >
                 <div className="px-2 py-1.5 flex items-center justify-between">
