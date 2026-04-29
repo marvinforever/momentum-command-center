@@ -3,7 +3,9 @@ import { useState } from "react";
 import { PageShell } from "@/components/mc/PageShell";
 import { useClients } from "@/lib/queries-v2";
 import { previewMetricsCsv, importMetricsCsv } from "@/server/metrics_import.functions";
+import { runWeeklyRollupNow, getRecentRollupRuns } from "@/server/weekly_rollup.functions";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/import-metrics")({
@@ -15,6 +17,22 @@ function ImportMetricsPage() {
   const clientsQ = useClients();
   const previewFn = useServerFn(previewMetricsCsv);
   const importFn = useServerFn(importMetricsCsv);
+  const rollupFn = useServerFn(runWeeklyRollupNow);
+  const recentRollupsFn = useServerFn(getRecentRollupRuns);
+  const recentRollups = useQuery({ queryKey: ["weekly_rollup_runs"], queryFn: () => recentRollupsFn({ data: undefined as any }) });
+  const [rollupBusy, setRollupBusy] = useState(false);
+
+  const handleRollup = async () => {
+    setRollupBusy(true);
+    try {
+      const r = await rollupFn({ data: { weeksBack: 12 } });
+      toast.success(`Auto-fill complete: ${r.snapshotsWritten} values across ${r.metricsProcessed} metrics`);
+      recentRollups.refetch();
+    } catch (e: any) {
+      toast.error(e.message ?? "Auto-fill failed");
+    }
+    setRollupBusy(false);
+  };
 
   const [clientId, setClientId] = useState<string>("");
   const [csvText, setCsvText] = useState<string>("");
