@@ -1654,6 +1654,7 @@ export type Database = {
           section: string
           sort_order: number | null
           source: string | null
+          source_config: Json
           unit: string | null
           updated_at: string
         }
@@ -1669,6 +1670,7 @@ export type Database = {
           section: string
           sort_order?: number | null
           source?: string | null
+          source_config?: Json
           unit?: string | null
           updated_at?: string
         }
@@ -1684,6 +1686,7 @@ export type Database = {
           section?: string
           sort_order?: number | null
           source?: string | null
+          source_config?: Json
           unit?: string | null
           updated_at?: string
         }
@@ -1869,6 +1872,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      weekly_rollup_runs: {
+        Row: {
+          details: Json | null
+          error: string | null
+          finished_at: string | null
+          id: string
+          metrics_processed: number | null
+          snapshots_written: number | null
+          started_at: string
+          success: boolean | null
+          triggered_by: string | null
+          weeks_processed: number | null
+        }
+        Insert: {
+          details?: Json | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          metrics_processed?: number | null
+          snapshots_written?: number | null
+          started_at?: string
+          success?: boolean | null
+          triggered_by?: string | null
+          weeks_processed?: number | null
+        }
+        Update: {
+          details?: Json | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          metrics_processed?: number | null
+          snapshots_written?: number | null
+          started_at?: string
+          success?: boolean | null
+          triggered_by?: string | null
+          weeks_processed?: number | null
+        }
+        Relationships: []
       }
       youtube_channels: {
         Row: {
