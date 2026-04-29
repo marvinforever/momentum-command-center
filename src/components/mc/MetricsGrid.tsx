@@ -182,7 +182,14 @@ function MetricRow({
   return (
     <tr className="border-b border-line-soft hover:bg-cream-deep/40 transition-colors cursor-pointer" onClick={onOpen}>
       <td className="sticky left-0 bg-paper hover:bg-cream-deep/40 transition-colors px-4 py-2.5 text-[13px] text-ink border-r border-line-soft">
-        <div className="truncate max-w-[200px]" title={def.label}>{def.label}</div>
+        <div className="flex items-center gap-1.5 max-w-[200px]">
+          {def.source === "auto" && (
+            <span title="Auto-filled weekly from connected source" className="inline-flex shrink-0">
+              <Zap className="h-3 w-3 text-gold" fill="currentColor" />
+            </span>
+          )}
+          <span className="truncate" title={def.label}>{def.label}</span>
+        </div>
       </td>
       {visibleWeeks.map((w) => {
         const snap = idx.get(`${def.id}|${w}`);
