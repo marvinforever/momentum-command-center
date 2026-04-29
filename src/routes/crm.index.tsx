@@ -392,6 +392,14 @@ function CrmBoard() {
                   <span className="text-[11px] uppercase tracking-[0.16em] text-ink-soft font-medium">{stage}</span>
                   <span className="text-[11px] text-ink-muted tabular-nums">{cards.length}</span>
                 </div>
+                {conversionToNext[stage] != null && (
+                  <div
+                    className="px-2 pb-1.5 -mt-1 text-[10px] tracking-wide text-sage font-medium tabular-nums"
+                    title={`${cumulative[funnelStages[funnelStages.indexOf(stage) + 1]]} of ${cumulative[stage]} reached the next stage`}
+                  >
+                    → {Math.round((conversionToNext[stage] as number) * 100)}% to next
+                  </div>
+                )}
                 <div className="space-y-2 min-h-[100px]">
                   {cards.length === 0 && (
                     <div className="text-[11px] text-ink-muted/70 italic px-2 py-4 text-center">
@@ -401,29 +409,27 @@ function CrmBoard() {
                   {cards.map((c) => {
                     const overdue = c.next_followup_at && c.next_followup_at <= new Date().toISOString().slice(0, 10);
                     return (
-                      <Link
+                      <div
                         key={c.id}
-                        to="/crm/$id"
-                        params={{ id: c.id }}
-                        preload="intent"
-                        title="Click to open · Drag handle to move"
+                        draggable
+                        onDragStart={(e) => {
+                          e.stopPropagation();
+                          e.dataTransfer.effectAllowed = "move";
+                          // Required in Firefox to actually start a drag
+                          try { e.dataTransfer.setData("text/plain", c.id); } catch {}
+                          setDraggingId(c.id);
+                        }}
+                        onDragEnd={() => { setDraggingId(null); setDragOverStage(null); }}
+                        onClick={() => navigate({ to: "/crm/$id", params: { id: c.id } })}
+                        title="Click to open · Drag anywhere on the card to move"
                         className={cn(
-                          "group block bg-paper border border-line-soft border-l-2 rounded-md p-2.5 cursor-pointer hover:border-gold hover:shadow-sm transition-all",
+                          "group block bg-paper border border-line-soft border-l-2 rounded-md p-2.5 cursor-grab active:cursor-grabbing hover:border-gold hover:shadow-sm transition-all select-none",
                           stageAccent(stage),
                           draggingId === c.id && "opacity-40",
                         )}
                       >
                         <div className="flex items-start gap-1.5">
-                          <div
-                            draggable
-                            onDragStart={(e) => { e.stopPropagation(); setDraggingId(c.id); }}
-                            onDragEnd={(e) => { e.stopPropagation(); setDraggingId(null); setDragOverStage(null); }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="cursor-grab active:cursor-grabbing shrink-0 mt-1 opacity-40 group-hover:opacity-100 transition-opacity"
-                            title="Drag to move"
-                          >
-                            <GripVertical className="h-3 w-3 text-ink-muted" />
-                          </div>
+                          <GripVertical className="h-3 w-3 text-ink-muted shrink-0 mt-1 opacity-40 group-hover:opacity-100 transition-opacity" />
                           <span
                             className={cn(
                               "mt-1.5 inline-block h-1.5 w-1.5 rounded-full shrink-0",
@@ -450,7 +456,7 @@ function CrmBoard() {
                             </span>
                           )}
                         </div>
-                      </Link>
+                      </div>
                     );
                   })}
                 </div>
