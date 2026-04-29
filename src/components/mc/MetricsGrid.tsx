@@ -5,7 +5,7 @@ import {
   groupBySection, buildSnapshotIndex, uniqueWeeks,
 } from "@/lib/metrics-format";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
-import { ChevronDown, ChevronRight, Pencil, X, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { ChevronDown, ChevronRight, Pencil, X, TrendingUp, TrendingDown, Minus, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 export function MetricsGrid() {
