@@ -142,7 +142,7 @@ function SectionGroup({
   return (
     <>
       <tr className="bg-cream-deep/60 border-b border-line-soft cursor-pointer" onClick={toggleSection}>
-        <td colSpan={visibleWeeks.length + 3} className="sticky left-0 px-4 py-2 text-[11px] uppercase tracking-[0.18em] text-ink-soft font-medium">
+        <td colSpan={visibleWeeks.length + 3} className="sticky left-0 px-4 py-2 text-[11px] uppercase tracking-[0.18em] text-gold font-medium">
           <span className="inline-flex items-center gap-1.5">
             {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
             {section}
