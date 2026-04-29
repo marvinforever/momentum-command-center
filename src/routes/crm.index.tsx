@@ -53,6 +53,7 @@ const DATA_SOURCES = [
 ];
 
 function CrmBoard() {
+  const navigate = useNavigate();
   const contactsQ = useContacts();
   const campaignsQ = useCampaigns();
   const updateStage = useUpdateContactStage();
