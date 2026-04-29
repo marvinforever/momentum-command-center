@@ -115,6 +115,8 @@ function ImportMetricsPage() {
       </div>
 
       <div className="mc-card p-5 space-y-4 max-w-3xl">
+        <div>
+          <label className="label-eyebrow block mb-1">Client</label>
           <select value={clientId} onChange={(e) => setClientId(e.target.value)} className="w-full px-3 py-2 border border-line rounded text-sm">
             <option value="">— select —</option>
             {(clientsQ.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
