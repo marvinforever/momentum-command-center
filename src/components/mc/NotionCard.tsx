@@ -15,39 +15,89 @@ import {
   getRecentNotionSyncLog,
 } from "@/server/notion.functions";
 
-// Lovable fields available for mapping. The admin picks which Notion property each maps to.
-const CALL_FIELDS = [
-  { key: "name", label: "Name" },
-  { key: "call_date", label: "Call Date" },
-  { key: "fu_date", label: "Follow-up Date" },
-  { key: "call_type", label: "Call Type" },
-  { key: "status", label: "Status" },
-  { key: "fit_rating", label: "Fit Rating" },
-  { key: "lead_source", label: "Lead Source" },
-  { key: "location", label: "Location" },
-  { key: "role_position", label: "Role / Position" },
-  { key: "follow_up_actions", label: "Follow-up Actions (multi)" },
-  { key: "notes", label: "Notes" },
-  { key: "offer", label: "Offer name" },
-  { key: "lead", label: "Lead name" },
-  { key: "lead_email", label: "Lead email" },
-  { key: "lovable_id", label: "Lovable ID (sync key)" },
-] as const;
+// Lovable fields available for mapping. `hint` is a plain-English explanation
+// shown in the UI; `aliases` are alternative names we'll auto-match against
+// the Notion property names (case/punctuation-insensitive).
+type FieldDef = { key: string; label: string; hint: string; aliases: string[] };
 
-const LEAD_FIELDS = [
-  { key: "name", label: "Name" },
-  { key: "email", label: "Email" },
-  { key: "phone", label: "Phone" },
-  { key: "first_touch_date", label: "First Touch Date" },
-  { key: "lead_source", label: "Lead Source" },
-  { key: "status", label: "Status" },
-  { key: "utm_source", label: "UTM Source" },
-  { key: "utm_medium", label: "UTM Medium" },
-  { key: "utm_campaign", label: "UTM Campaign" },
-  { key: "how_did_you_hear", label: "How they heard" },
-  { key: "notes", label: "Notes" },
-  { key: "lovable_id", label: "Lovable ID (sync key)" },
-] as const;
+const CALL_FIELDS: readonly FieldDef[] = [
+  { key: "name", label: "Name", hint: "Title of the call (usually the lead's name)", aliases: ["name", "title", "call", "lead"] },
+  { key: "call_date", label: "Call Date", hint: "When the call happened", aliases: ["call date", "date", "meeting date", "scheduled", "when"] },
+  { key: "fu_date", label: "Follow-up Date", hint: "When to follow up next", aliases: ["follow up date", "followup", "fu date", "next followup", "next touch"] },
+  { key: "call_type", label: "Call Type", hint: "e.g. Discovery, Sales, Strategy", aliases: ["call type", "type", "meeting type"] },
+  { key: "status", label: "Status", hint: "Pending / Done / No-show / etc.", aliases: ["status", "state", "stage"] },
+  { key: "fit_rating", label: "Fit Rating", hint: "Score from 1–5 of how good a fit", aliases: ["fit rating", "fit", "rating", "score", "quality"] },
+  { key: "lead_source", label: "Lead Source", hint: "How they found you", aliases: ["lead source", "source", "channel", "where from"] },
+  { key: "location", label: "Location", hint: "City / country / region", aliases: ["location", "city", "country", "region", "where"] },
+  { key: "role_position", label: "Role / Position", hint: "Their job title", aliases: ["role", "position", "job", "title", "role / position"] },
+  { key: "follow_up_actions", label: "Follow-up Actions", hint: "Checklist of next steps (multi-select)", aliases: ["follow up actions", "followup actions", "actions", "next steps", "todo", "to-do"] },
+  { key: "notes", label: "Notes", hint: "Free-form notes about the call", aliases: ["notes", "note", "summary", "details"] },
+  { key: "offer", label: "Offer name", hint: "Which offer/program was discussed", aliases: ["offer", "offer name", "product", "program"] },
+  { key: "lead", label: "Lead name", hint: "Name of the person on the call", aliases: ["lead", "lead name", "contact", "person"] },
+  { key: "lead_email", label: "Lead email", hint: "Their email address", aliases: ["lead email", "email", "contact email"] },
+  { key: "lovable_id", label: "Sync ID", hint: "Hidden ID we use to update the same Notion page next time (recommended)", aliases: ["lovable id", "sync id", "external id", "id", "uuid"] },
+];
+
+const LEAD_FIELDS: readonly FieldDef[] = [
+  { key: "name", label: "Name", hint: "The lead's name", aliases: ["name", "title", "contact", "lead"] },
+  { key: "email", label: "Email", hint: "Their email address", aliases: ["email", "e-mail"] },
+  { key: "phone", label: "Phone", hint: "Their phone number", aliases: ["phone", "mobile", "tel", "telephone"] },
+  { key: "first_touch_date", label: "First Touch Date", hint: "When they first came in", aliases: ["first touch date", "first touch", "created", "date added", "joined"] },
+  { key: "lead_source", label: "Lead Source", hint: "How they found you", aliases: ["lead source", "source", "channel"] },
+  { key: "status", label: "Status", hint: "New / Working / Closed / etc.", aliases: ["status", "stage", "state"] },
+  { key: "utm_source", label: "UTM Source", hint: "Marketing tracking — which platform", aliases: ["utm source", "utm_source", "source"] },
+  { key: "utm_medium", label: "UTM Medium", hint: "Marketing tracking — type of traffic", aliases: ["utm medium", "utm_medium", "medium"] },
+  { key: "utm_campaign", label: "UTM Campaign", hint: "Marketing tracking — campaign name", aliases: ["utm campaign", "utm_campaign", "campaign"] },
+  { key: "how_did_you_hear", label: "How they heard", hint: "Their answer to 'how did you hear about us'", aliases: ["how did you hear", "how heard", "referral", "referred by"] },
+  { key: "notes", label: "Notes", hint: "Free-form notes", aliases: ["notes", "note", "summary"] },
+  { key: "lovable_id", label: "Sync ID", hint: "Hidden ID we use to update the same Notion page next time (recommended)", aliases: ["lovable id", "sync id", "external id", "id", "uuid"] },
+];
+
+function normalize(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+// Score how well a Notion property name matches a Lovable field. Higher = better.
+function matchScore(field: FieldDef, propName: string): number {
+  const np = normalize(propName);
+  if (!np) return 0;
+  // Exact match on label or any alias
+  for (const alias of [field.label, ...field.aliases]) {
+    if (normalize(alias) === np) return 100;
+  }
+  // Substring containment
+  for (const alias of [field.label, ...field.aliases]) {
+    const na = normalize(alias);
+    if (np === na) return 100;
+    if (np.includes(na) || na.includes(np)) {
+      return Math.max(60, 100 - Math.abs(np.length - na.length));
+    }
+  }
+  return 0;
+}
+
+function autoMatchMap(
+  fields: readonly FieldDef[],
+  schema: Record<string, { name: string; type: string }>,
+): PropMap {
+  const props = Object.values(schema);
+  const map: PropMap = {};
+  const used = new Set<string>();
+  // Greedy: for each field, pick the highest-scoring unused prop above threshold.
+  for (const f of fields) {
+    let best: { name: string; type: string; score: number } | null = null;
+    for (const p of props) {
+      if (used.has(p.name)) continue;
+      const s = matchScore(f, p.name);
+      if (s > 0 && (!best || s > best.score)) best = { ...p, score: s };
+    }
+    if (best && best.score >= 60) {
+      map[f.key] = { name: best.name, type: best.type };
+      used.add(best.name);
+    }
+  }
+  return map;
+}
 
 type PropMap = Record<string, { name: string; type: string }>;
 
