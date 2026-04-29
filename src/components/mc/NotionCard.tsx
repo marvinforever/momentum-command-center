@@ -369,6 +369,20 @@ function ConnectedPanel(props: {
   );
 }
 
+function PlainEnglishHelp() {
+  return (
+    <div className="rounded-lg border border-gold-soft bg-cream p-4 text-[12px] text-ink-soft leading-relaxed">
+      <div className="font-medium text-ink mb-1">How this works (in plain English)</div>
+      <ol className="list-decimal pl-5 space-y-1">
+        <li>Pick a Notion database below — that's <em>where</em> your calls/leads will land in Notion.</li>
+        <li>For each Lovable field on the left, tell us which column in your Notion database it should go into. (We'll auto-match the easy ones.)</li>
+        <li>Anything left as <strong>“— skip —”</strong> just won't be sent to Notion. That's fine.</li>
+        <li>Hit <strong>Save mapping</strong>, then <strong>Sync unsynced calls now</strong> to backfill.</li>
+      </ol>
+    </div>
+  );
+}
+
 function DbMappingSection(props: {
   title: string;
   subtitle: string;
@@ -376,13 +390,23 @@ function DbMappingSection(props: {
   selectedDbId: string;
   onSelectDb: (id: string) => void;
   schema: Record<string, { name: string; type: string }> | undefined;
-  fields: readonly { key: string; label: string }[];
+  fields: readonly FieldDef[];
   map: PropMap;
   onMapChange: (m: PropMap) => void;
 }) {
   const propEntries = useMemo(() => {
     if (!props.schema) return [] as { name: string; type: string }[];
     return Object.values(props.schema).sort((a, b) => a.name.localeCompare(b.name));
+  }, [props.schema]);
+
+  // Auto-match the first time a schema loads while the map is empty —
+  // saves the user from staring at 15 dropdowns full of "skip".
+  useEffect(() => {
+    if (props.schema && Object.keys(props.map).length === 0) {
+      const auto = autoMatchMap(props.fields, props.schema);
+      if (Object.keys(auto).length > 0) props.onMapChange(auto);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.schema]);
 
   function setField(fieldKey: string, propName: string) {
@@ -397,6 +421,21 @@ function DbMappingSection(props: {
     props.onMapChange(next);
   }
 
+  function runAutoMatch() {
+    if (!props.schema) return;
+    const auto = autoMatchMap(props.fields, props.schema);
+    props.onMapChange(auto);
+    const matched = Object.keys(auto).length;
+    toast.success(`Auto-matched ${matched} of ${props.fields.length} fields. Review and adjust below.`);
+  }
+
+  function clearAll() {
+    props.onMapChange({});
+  }
+
+  const mappedCount = Object.keys(props.map).length;
+  const totalFields = props.fields.length;
+
   return (
     <div className="rounded-lg border border-line-soft p-4">
       <div className="mb-3">
@@ -404,49 +443,82 @@ function DbMappingSection(props: {
         <div className="text-[11px] text-ink-muted">{props.subtitle}</div>
       </div>
 
+      <label className="block text-[11px] font-medium text-ink-soft mb-1">
+        1. Which Notion database?
+      </label>
       <select
         value={props.selectedDbId}
         onChange={(e) => props.onSelectDb(e.target.value)}
         className="w-full text-[12px] bg-cream-deep rounded px-3 py-2 border border-line-soft focus:border-gold outline-none mb-3"
       >
-        <option value="">— select a Notion database —</option>
+        <option value="">— pick one —</option>
         {props.databases.map((d) => (
           <option key={d.id} value={d.id}>{d.icon ? `${d.icon} ` : ""}{d.title}</option>
         ))}
       </select>
 
       {props.selectedDbId && !props.schema && (
-        <div className="text-[11px] text-ink-muted py-3 text-center bg-cream-deep rounded">Loading schema…</div>
+        <div className="text-[11px] text-ink-muted py-3 text-center bg-cream-deep rounded">Loading database columns…</div>
       )}
 
       {props.schema && (
-        <div className="space-y-1.5">
-          <div className="grid grid-cols-[180px_1fr] gap-2 text-[10px] uppercase tracking-wide text-ink-muted px-2">
-            <div>Lovable field</div>
-            <div>→ Notion property (type)</div>
+        <>
+          <div className="flex items-center justify-between mb-2 mt-1">
+            <label className="text-[11px] font-medium text-ink-soft">
+              2. Match each Lovable field to a Notion column
+              <span className="text-ink-muted font-normal ml-2">({mappedCount}/{totalFields} mapped)</span>
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={runAutoMatch}
+                className="rounded border border-gold-soft bg-cream text-ink px-2.5 py-1 text-[11px] hover:bg-gold/10"
+                title="Match Lovable fields to Notion columns by name"
+              >
+                ✨ Auto-match
+              </button>
+              <button
+                type="button"
+                onClick={clearAll}
+                disabled={mappedCount === 0}
+                className="rounded border border-line text-ink-soft px-2.5 py-1 text-[11px] hover:bg-cream-deep disabled:opacity-40"
+              >
+                Clear all
+              </button>
+            </div>
           </div>
-          {props.fields.map((f) => {
-            const current = props.map[f.key];
-            return (
-              <div key={f.key} className="grid grid-cols-[180px_1fr] gap-2 items-center">
-                <div className="text-[12px] text-ink">{f.label}</div>
-                <select
-                  value={current?.name ?? ""}
-                  onChange={(e) => setField(f.key, e.target.value)}
-                  className={cn(
-                    "text-[12px] rounded px-2 py-1.5 border outline-none",
-                    current ? "bg-cream border-gold-soft" : "bg-cream-deep border-line-soft",
-                  )}
-                >
-                  <option value="">— skip —</option>
-                  {propEntries.map((p) => (
-                    <option key={p.name} value={p.name}>{p.name} ({p.type})</option>
-                  ))}
-                </select>
-              </div>
-            );
-          })}
-        </div>
+
+          <div className="space-y-1.5">
+            <div className="grid grid-cols-[1fr_1fr] gap-3 text-[10px] uppercase tracking-wide text-ink-muted px-1 pb-1 border-b border-line-soft">
+              <div>Lovable field</div>
+              <div>Notion column</div>
+            </div>
+            {props.fields.map((f) => {
+              const current = props.map[f.key];
+              return (
+                <div key={f.key} className="grid grid-cols-[1fr_1fr] gap-3 items-start py-1">
+                  <div className="text-[12px] text-ink leading-tight pt-1.5">
+                    <div className="font-medium">{f.label}</div>
+                    <div className="text-[10.5px] text-ink-muted">{f.hint}</div>
+                  </div>
+                  <select
+                    value={current?.name ?? ""}
+                    onChange={(e) => setField(f.key, e.target.value)}
+                    className={cn(
+                      "text-[12px] rounded px-2 py-1.5 border outline-none w-full",
+                      current ? "bg-cream border-gold-soft" : "bg-cream-deep border-line-soft text-ink-muted",
+                    )}
+                  >
+                    <option value="">— don't sync this —</option>
+                    {propEntries.map((p) => (
+                      <option key={p.name} value={p.name}>{p.name} ({p.type})</option>
+                    ))}
+                  </select>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );
