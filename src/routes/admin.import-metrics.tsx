@@ -76,9 +76,45 @@ function ImportMetricsPage() {
         </p>
       </div>
 
+      {/* Auto-fill panel */}
+      <div className="mc-card p-5 space-y-3 max-w-3xl mb-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="serif text-xl text-ink">Auto-fill from connected sources</h2>
+            <p className="text-[12px] text-ink-muted mt-1">
+              Pulls live values from YouTube, Captivate, LinkedIn, Kajabi & discovery calls into every metric marked <strong>auto</strong>. Runs every Sunday at 11pm UTC; click to run now.
+            </p>
+          </div>
+          <button
+            onClick={handleRollup}
+            disabled={rollupBusy}
+            className="px-3 py-2 bg-ink text-cream rounded text-sm whitespace-nowrap disabled:opacity-50"
+          >
+            {rollupBusy ? "Running…" : "Run auto-fill now"}
+          </button>
+        </div>
+        {(recentRollups.data ?? []).length > 0 && (
+          <div className="border-t border-line-soft pt-3">
+            <div className="label-eyebrow mb-1">Recent runs</div>
+            <ul className="text-[12px] text-ink-soft space-y-0.5">
+              {(recentRollups.data ?? []).slice(0, 5).map((r: any) => (
+                <li key={r.id} className="flex items-center gap-2 tabular-nums">
+                  <span className={r.success ? "text-sage" : r.success === false ? "text-burgundy" : "text-ink-muted"}>
+                    {r.success ? "✓" : r.success === false ? "✗" : "…"}
+                  </span>
+                  <span>{new Date(r.started_at).toLocaleString()}</span>
+                  <span className="text-ink-muted">·</span>
+                  <span>{r.snapshots_written ?? 0} values</span>
+                  <span className="text-ink-muted">· {r.triggered_by}</span>
+                  {r.error && <span className="text-burgundy ml-2">{r.error}</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
       <div className="mc-card p-5 space-y-4 max-w-3xl">
-        <div>
-          <label className="label-eyebrow block mb-1">Client</label>
           <select value={clientId} onChange={(e) => setClientId(e.target.value)} className="w-full px-3 py-2 border border-line rounded text-sm">
             <option value="">— select —</option>
             {(clientsQ.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
