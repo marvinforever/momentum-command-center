@@ -12,6 +12,7 @@ import {
   saveNotionConfig,
   disconnectNotion,
   backfillCallsToNotion,
+  importCallsFromNotionFn,
   getRecentNotionSyncLog,
 } from "@/server/notion.functions";
 
