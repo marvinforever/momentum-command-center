@@ -32,6 +32,7 @@ import { Route as ApiPublicZapierLeadRouteImport } from './routes/api/public/zap
 import { Route as ApiPublicKajabiSyncRouteImport } from './routes/api/public/kajabi-sync'
 import { Route as ApiPublicCaptivateSyncRouteImport } from './routes/api/public/captivate-sync'
 import { Route as ApiPublicNotionCallbackRouteImport } from './routes/api/public/notion.callback'
+import { Route as ApiPublicHooksWeeklyRollupRouteImport } from './routes/api/public/hooks/weekly-rollup'
 import { Route as ApiPublicHooksMetaSyncRouteImport } from './routes/api/public/hooks/meta-sync'
 import { Route as ApiPublicHooksCampaignIngestRouteImport } from './routes/api/public/hooks/campaign-ingest'
 import { Route as ApiPublicHooksCalendlyRouteImport } from './routes/api/public/hooks/calendly'
@@ -152,6 +153,12 @@ const ApiPublicNotionCallbackRoute = ApiPublicNotionCallbackRouteImport.update({
   path: '/api/public/notion/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksWeeklyRollupRoute =
+  ApiPublicHooksWeeklyRollupRouteImport.update({
+    id: '/api/public/hooks/weekly-rollup',
+    path: '/api/public/hooks/weekly-rollup',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksMetaSyncRoute = ApiPublicHooksMetaSyncRouteImport.update({
   id: '/api/public/hooks/meta-sync',
   path: '/api/public/hooks/meta-sync',
@@ -201,6 +208,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/calendly': typeof ApiPublicHooksCalendlyRoute
   '/api/public/hooks/campaign-ingest': typeof ApiPublicHooksCampaignIngestRoute
   '/api/public/hooks/meta-sync': typeof ApiPublicHooksMetaSyncRoute
+  '/api/public/hooks/weekly-rollup': typeof ApiPublicHooksWeeklyRollupRoute
   '/api/public/notion/callback': typeof ApiPublicNotionCallbackRoute
   '/api/public/hooks/campaign-lead/$token': typeof ApiPublicHooksCampaignLeadTokenRoute
 }
@@ -229,6 +237,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/calendly': typeof ApiPublicHooksCalendlyRoute
   '/api/public/hooks/campaign-ingest': typeof ApiPublicHooksCampaignIngestRoute
   '/api/public/hooks/meta-sync': typeof ApiPublicHooksMetaSyncRoute
+  '/api/public/hooks/weekly-rollup': typeof ApiPublicHooksWeeklyRollupRoute
   '/api/public/notion/callback': typeof ApiPublicNotionCallbackRoute
   '/api/public/hooks/campaign-lead/$token': typeof ApiPublicHooksCampaignLeadTokenRoute
 }
@@ -259,6 +268,7 @@ export interface FileRoutesById {
   '/api/public/hooks/calendly': typeof ApiPublicHooksCalendlyRoute
   '/api/public/hooks/campaign-ingest': typeof ApiPublicHooksCampaignIngestRoute
   '/api/public/hooks/meta-sync': typeof ApiPublicHooksMetaSyncRoute
+  '/api/public/hooks/weekly-rollup': typeof ApiPublicHooksWeeklyRollupRoute
   '/api/public/notion/callback': typeof ApiPublicNotionCallbackRoute
   '/api/public/hooks/campaign-lead/$token': typeof ApiPublicHooksCampaignLeadTokenRoute
 }
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/calendly'
     | '/api/public/hooks/campaign-ingest'
     | '/api/public/hooks/meta-sync'
+    | '/api/public/hooks/weekly-rollup'
     | '/api/public/notion/callback'
     | '/api/public/hooks/campaign-lead/$token'
   fileRoutesByTo: FileRoutesByTo
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/calendly'
     | '/api/public/hooks/campaign-ingest'
     | '/api/public/hooks/meta-sync'
+    | '/api/public/hooks/weekly-rollup'
     | '/api/public/notion/callback'
     | '/api/public/hooks/campaign-lead/$token'
   id:
@@ -347,6 +359,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/calendly'
     | '/api/public/hooks/campaign-ingest'
     | '/api/public/hooks/meta-sync'
+    | '/api/public/hooks/weekly-rollup'
     | '/api/public/notion/callback'
     | '/api/public/hooks/campaign-lead/$token'
   fileRoutesById: FileRoutesById
@@ -373,6 +386,7 @@ export interface RootRouteChildren {
   ApiPublicHooksCalendlyRoute: typeof ApiPublicHooksCalendlyRoute
   ApiPublicHooksCampaignIngestRoute: typeof ApiPublicHooksCampaignIngestRoute
   ApiPublicHooksMetaSyncRoute: typeof ApiPublicHooksMetaSyncRoute
+  ApiPublicHooksWeeklyRollupRoute: typeof ApiPublicHooksWeeklyRollupRoute
   ApiPublicNotionCallbackRoute: typeof ApiPublicNotionCallbackRoute
   ApiPublicHooksCampaignLeadTokenRoute: typeof ApiPublicHooksCampaignLeadTokenRoute
 }
@@ -540,6 +554,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicNotionCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/weekly-rollup': {
+      id: '/api/public/hooks/weekly-rollup'
+      path: '/api/public/hooks/weekly-rollup'
+      fullPath: '/api/public/hooks/weekly-rollup'
+      preLoaderRoute: typeof ApiPublicHooksWeeklyRollupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/meta-sync': {
       id: '/api/public/hooks/meta-sync'
       path: '/api/public/hooks/meta-sync'
@@ -617,6 +638,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksCalendlyRoute: ApiPublicHooksCalendlyRoute,
   ApiPublicHooksCampaignIngestRoute: ApiPublicHooksCampaignIngestRoute,
   ApiPublicHooksMetaSyncRoute: ApiPublicHooksMetaSyncRoute,
+  ApiPublicHooksWeeklyRollupRoute: ApiPublicHooksWeeklyRollupRoute,
   ApiPublicNotionCallbackRoute: ApiPublicNotionCallbackRoute,
   ApiPublicHooksCampaignLeadTokenRoute: ApiPublicHooksCampaignLeadTokenRoute,
 }

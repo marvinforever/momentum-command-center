@@ -37,6 +37,7 @@ export type MetricDef = {
   unit: string | null;
   format: string | null;
   source: string | null;
+  source_config: Record<string, any> | null;
   sort_order: number | null;
   description: string | null;
   active: boolean;
