@@ -147,6 +147,11 @@ export const backfillCallsToNotion = createServerFn({ method: "POST" }).handler(
   return { ok: true, synced, failed, errors };
 });
 
+// ---------- Import: pull calls FROM Notion INTO Lovable ----------
+export const importCallsFromNotionFn = createServerFn({ method: "POST" }).handler(async () => {
+  return importCallsFromNotion();
+});
+
 // ---------- Recent sync log ----------
 export const getRecentNotionSyncLog = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
