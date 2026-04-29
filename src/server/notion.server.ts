@@ -606,6 +606,14 @@ export async function importCallsFromNotion(): Promise<{
   let failed = 0;
   const errors: string[] = [];
 
+  // Find the title property name from the page (Notion always has exactly one)
+  const findTitlePropName = (props: Record<string, unknown>): string | null => {
+    for (const [k, v] of Object.entries(props)) {
+      if (v && typeof v === "object" && (v as { type?: string }).type === "title") return k;
+    }
+    return null;
+  };
+
   for (const page of pages) {
     try {
       // Build a row from the mapping
@@ -616,11 +624,48 @@ export async function importCallsFromNotion(): Promise<{
         const coerced = coerceForCallColumn(field, raw);
         if (coerced !== null) row[field] = coerced;
       }
+
+      // Always derive `name` (NOT NULL) from the Notion title property,
+      // regardless of how the user mapped fields.
+      if (!row.name) {
+        const titleProp = findTitlePropName(page.properties);
+        const titleVal = titleProp ? readProperty(page.properties[titleProp]) : null;
+        if (titleVal) row.name = String(titleVal);
+      }
       if (!row.name) {
         skipped++;
         continue;
       }
       row.notion_synced_at = new Date().toISOString();
+
+      // ----- CRM mirror: upsert a contact for this call -----
+      const contactPayload: Record<string, unknown> = {
+        name: row.name,
+        source: "Notion",
+        external_source: "notion",
+        external_id: page.id,
+        stage: (row.status as string) || "Call Booked",
+        last_touch_at: new Date().toISOString(),
+      };
+      if (row.lead_source) contactPayload.notes_summary = `Lead source: ${row.lead_source}`;
+      // Try to match an existing contact by external_id first, then by name
+      const { data: existingContact } = await supabaseAdmin
+        .from("contacts")
+        .select("id")
+        .eq("external_source", "notion")
+        .eq("external_id", page.id)
+        .maybeSingle();
+      let contactId: string | null = (existingContact as { id?: string } | null)?.id ?? null;
+      if (contactId) {
+        await supabaseAdmin.from("contacts").update(contactPayload as never).eq("id", contactId);
+      } else {
+        const { data: ins } = await supabaseAdmin
+          .from("contacts")
+          .insert(contactPayload as never)
+          .select("id")
+          .maybeSingle();
+        contactId = (ins as { id?: string } | null)?.id ?? null;
+      }
 
       // Look up existing by notion_page_id
       const { data: existing } = await supabaseAdmin
