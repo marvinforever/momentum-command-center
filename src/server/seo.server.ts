@@ -186,6 +186,8 @@ Return as JSON array of strings: ["seed phrase 1", "seed phrase 2", ...]`
       }
     });
 
+    console.log(`[seo] Total suggestions collected: ${allSuggestions.size}`);
+
     // 3. For top 5 candidates, do a YouTube search for competition signals (costs quota)
     const candidates = Array.from(allSuggestions.entries())
       .sort((a, b) => a[1].rank - b[1].rank)
