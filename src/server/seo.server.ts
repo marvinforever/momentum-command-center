@@ -68,12 +68,32 @@ async function callClaude(systemPrompt: string, userPrompt: string): Promise<str
 // ---------- YouTube Autocomplete (free, no quota) ----------
 async function fetchAutocomplete(seed: string): Promise<string[]> {
   try {
+    // Try YouTube-specific autocomplete first
+    const ytUrl = `https://clients1.google.com/complete/search?client=youtube&ds=yt&q=${encodeURIComponent(seed)}`;
+    const res = await fetch(ytUrl, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+    });
+    if (res.ok) {
+      const text = await res.text();
+      // Response is JSONP: window.google.ac.h([...])
+      const match = text.match(/\[.*\]/s);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        // Format: [query, [[suggestion, 0, [512,433]], ...], ...]
+        if (Array.isArray(parsed[1])) {
+          return parsed[1].map((item: any) => item[0]).filter(Boolean);
+        }
+      }
+    }
+
+    // Fallback: suggestqueries endpoint
     const url = `https://suggestqueries.google.com/complete/search?client=firefox&ds=yt&q=${encodeURIComponent(seed)}`;
-    const res = await fetch(url);
-    if (!res.ok) return [];
-    const data = await res.json() as any;
+    const res2 = await fetch(url);
+    if (!res2.ok) return [];
+    const data = await res2.json() as any;
     return (data[1] as string[]) ?? [];
-  } catch {
+  } catch (err) {
+    console.log(`[seo] Autocomplete failed for "${seed}": ${(err as any).message}`);
     return [];
   }
 }
@@ -115,6 +135,8 @@ export async function runKeywordResearch(params: {
   optimizationRunId?: string;
 }): Promise<{ keywords: any[]; error?: string }> {
   try {
+    console.log(`[seo] Starting keyword research for video ${params.youtubeVideoId}`);
+
     // Load video
     const { data: video } = await supabaseAdmin
       .from("youtube_videos")
@@ -122,6 +144,8 @@ export async function runKeywordResearch(params: {
       .eq("id", params.youtubeVideoId)
       .single();
     if (!video) return { keywords: [], error: "Video not found" };
+
+    console.log(`[seo] Video: "${video.current_title}"`);
 
     // Load transcript
     const { data: transcript } = await supabaseAdmin
@@ -133,6 +157,8 @@ export async function runKeywordResearch(params: {
     const transcriptText = transcript?.transcript_text?.slice(0, 3000) ?? "";
     const title = video.current_title ?? "";
     const description = (video.current_description ?? "").slice(0, 500);
+
+    console.log(`[seo] Transcript length: ${transcriptText.length}, Title: "${title}", Desc length: ${description.length}`);
 
     // 1. Extract topic seeds via Claude
     const seedResponse = await callClaude(
@@ -147,6 +173,8 @@ Transcript excerpt: ${transcriptText.slice(0, 2000)}
 Return as JSON array of strings: ["seed phrase 1", "seed phrase 2", ...]`
     );
 
+    console.log(`[seo] Claude seed response: ${seedResponse.slice(0, 200)}`);
+
     let seeds: string[] = [];
     try {
       const match = seedResponse.match(/\[[\s\S]*?\]/);
@@ -155,10 +183,13 @@ Return as JSON array of strings: ["seed phrase 1", "seed phrase 2", ...]`
       seeds = [title.split(" ").slice(0, 4).join(" ")];
     }
 
+    console.log(`[seo] Extracted ${seeds.length} seeds: ${JSON.stringify(seeds)}`)
+
     // 2. YouTube autocomplete for each seed (free, unlimited)
     const allSuggestions = new Map<string, { source: string; rank: number }>();
     for (const seed of seeds.slice(0, 7)) {
       const suggestions = await fetchAutocomplete(seed);
+      console.log(`[seo] Autocomplete for "${seed}": ${suggestions.length} suggestions`);
       suggestions.forEach((s, i) => {
         const key = s.toLowerCase().trim();
         if (!allSuggestions.has(key)) {
@@ -174,6 +205,8 @@ Return as JSON array of strings: ["seed phrase 1", "seed phrase 2", ...]`
         allSuggestions.set(key, { source: "transcript_extract", rank: 5 });
       }
     });
+
+    console.log(`[seo] Total suggestions collected: ${allSuggestions.size}`);
 
     // 3. For top 5 candidates, do a YouTube search for competition signals (costs quota)
     const candidates = Array.from(allSuggestions.entries())

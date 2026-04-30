@@ -660,84 +660,166 @@ export async function buildAuditQueue(brandId?: string): Promise<{ queued: numbe
 
 // ---------- Transcript fetch ----------
 export async function fetchTranscript(youtubeVideoId: string, externalVideoId: string): Promise<{ success: boolean; error?: string }> {
-  // Use YouTube's timedtext API (community captions)
+  console.log(`[transcript] Starting fetch for video ${externalVideoId} (internal: ${youtubeVideoId})`);
   try {
-    const url = `https://www.youtube.com/watch?v=${externalVideoId}`;
-    const pageRes = await fetch(url);
+    const apiKey = process.env.YOUTUBE_API_KEY;
+
+    // --- Strategy 1: YouTube Data API captions list → download ---
+    if (apiKey) {
+      console.log("[transcript] Trying YouTube Data API captions...");
+      const listUrl = `https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId=${externalVideoId}&key=${apiKey}`;
+      const listRes = await fetch(listUrl);
+      if (listRes.ok) {
+        const listData = await listRes.json() as any;
+        const items = listData.items ?? [];
+        console.log(`[transcript] Found ${items.length} caption tracks`);
+
+        // Prefer English ASR or manual
+        const enTrack = items.find((t: any) =>
+          (t.snippet?.language === "en" || t.snippet?.language === "en-US") &&
+          t.snippet?.trackKind !== "community"
+        ) ?? items.find((t: any) =>
+          t.snippet?.language?.startsWith("en")
+        ) ?? items[0];
+
+        if (enTrack) {
+          console.log(`[transcript] Using track: ${enTrack.snippet?.language} (${enTrack.snippet?.trackKind})`);
+        }
+      }
+    }
+
+    // --- Strategy 2: YouTube timedtext endpoint (works without OAuth) ---
+    console.log("[transcript] Trying timedtext endpoint...");
+    const timedtextUrl = `https://www.youtube.com/api/timedtext?v=${externalVideoId}&lang=en&fmt=json3`;
+    const ttRes = await fetch(timedtextUrl, {
+      headers: { "Accept-Language": "en-US,en;q=0.9" },
+    });
+
+    if (ttRes.ok) {
+      const ttData = await ttRes.json() as any;
+      const events = ttData.events ?? [];
+      if (events.length > 0) {
+        const text = events
+          .filter((e: any) => e.segs)
+          .map((e: any) => e.segs.map((s: any) => s.utf8 ?? "").join(""))
+          .join(" ")
+          .replace(/\n/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+
+        if (text && text.length > 20) {
+          console.log(`[transcript] Got ${text.length} chars from timedtext`);
+          await supabaseAdmin.from("video_transcripts").upsert({
+            youtube_video_id: youtubeVideoId,
+            transcript_text: text,
+            language: "en",
+            segments: events.slice(0, 500),
+          }, { onConflict: "youtube_video_id" });
+          return { success: true };
+        }
+      }
+    }
+
+    // --- Strategy 3: Try auto-generated captions (asr=1) ---
+    console.log("[transcript] Trying auto-generated captions...");
+    const asrUrl = `https://www.youtube.com/api/timedtext?v=${externalVideoId}&lang=en&kind=asr&fmt=json3`;
+    const asrRes = await fetch(asrUrl, {
+      headers: { "Accept-Language": "en-US,en;q=0.9" },
+    });
+
+    if (asrRes.ok) {
+      try {
+        const asrData = await asrRes.json() as any;
+        const events = asrData.events ?? [];
+        if (events.length > 0) {
+          const text = events
+            .filter((e: any) => e.segs)
+            .map((e: any) => e.segs.map((s: any) => s.utf8 ?? "").join(""))
+            .join(" ")
+            .replace(/\n/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+
+          if (text && text.length > 20) {
+            console.log(`[transcript] Got ${text.length} chars from ASR`);
+            await supabaseAdmin.from("video_transcripts").upsert({
+              youtube_video_id: youtubeVideoId,
+              transcript_text: text,
+              language: "en",
+              segments: events.slice(0, 500),
+            }, { onConflict: "youtube_video_id" });
+            return { success: true };
+          }
+        }
+      } catch {
+        console.log("[transcript] ASR response was not valid JSON");
+      }
+    }
+
+    // --- Strategy 4: Scrape the watch page (last resort) ---
+    console.log("[transcript] Trying watch page scrape as last resort...");
+    const pageRes = await fetch(`https://www.youtube.com/watch?v=${externalVideoId}`, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+    });
     const html = await pageRes.text();
+    console.log(`[transcript] Watch page HTML length: ${html.length}`);
 
-    // Extract caption track URL from page source
     const captionMatch = html.match(/"captionTracks":\[(.*?)\]/);
-    if (!captionMatch) {
-      // No captions available — store empty
-      await supabaseAdmin.from("video_transcripts").upsert({
-        youtube_video_id: youtubeVideoId,
-        transcript_text: "(No captions available for this video)",
-        language: "en",
-      }, { onConflict: "youtube_video_id" });
-      return { success: true };
+    if (captionMatch) {
+      const trackData = `[${captionMatch[1]}]`;
+      let captionUrl = "";
+      try {
+        const tracks = JSON.parse(trackData);
+        console.log(`[transcript] Found ${tracks.length} caption tracks in page`);
+        const enTrack = tracks.find((t: any) => t.languageCode === "en" || t.vssId?.startsWith(".en"));
+        if (enTrack?.baseUrl) captionUrl = enTrack.baseUrl;
+      } catch {
+        const urlMatch = captionMatch[1].match(/"baseUrl":"(.*?)"/);
+        if (urlMatch) captionUrl = urlMatch[1].replace(/\\u0026/g, "&");
+      }
+
+      if (captionUrl) {
+        const captionRes = await fetch(captionUrl + "&fmt=json3");
+        if (captionRes.ok) {
+          const captionData = await captionRes.json() as any;
+          const events = captionData.events ?? [];
+          const text = events
+            .filter((e: any) => e.segs)
+            .map((e: any) => e.segs.map((s: any) => s.utf8 ?? "").join(""))
+            .join(" ")
+            .replace(/\n/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+
+          if (text && text.length > 20) {
+            console.log(`[transcript] Got ${text.length} chars from page scrape`);
+            await supabaseAdmin.from("video_transcripts").upsert({
+              youtube_video_id: youtubeVideoId,
+              transcript_text: text,
+              language: "en",
+              segments: events.slice(0, 500),
+            }, { onConflict: "youtube_video_id" });
+            return { success: true };
+          }
+        }
+      }
+    } else {
+      console.log("[transcript] No captionTracks found in page HTML");
     }
 
-    // Try to find English caption URL
-    const trackData = `[${captionMatch[1]}]`;
-    let captionUrl = "";
-    try {
-      const tracks = JSON.parse(trackData);
-      const enTrack = tracks.find((t: any) => t.languageCode === "en" || t.vssId?.startsWith(".en"));
-      if (enTrack?.baseUrl) captionUrl = enTrack.baseUrl;
-    } catch {
-      // Fallback: regex extract
-      const urlMatch = captionMatch[1].match(/"baseUrl":"(.*?)"/);
-      if (urlMatch) captionUrl = urlMatch[1].replace(/\\u0026/g, "&");
-    }
-
-    if (!captionUrl) {
-      await supabaseAdmin.from("video_transcripts").upsert({
-        youtube_video_id: youtubeVideoId,
-        transcript_text: "(No English captions found)",
-        language: "en",
-      }, { onConflict: "youtube_video_id" });
-      return { success: true };
-    }
-
-    // Fetch the transcript XML
-    const captionRes = await fetch(captionUrl + "&fmt=json3");
-    if (captionRes.ok) {
-      const captionData = await captionRes.json() as any;
-      const events = captionData.events ?? [];
-      const text = events
-        .filter((e: any) => e.segs)
-        .map((e: any) => e.segs.map((s: any) => s.utf8 ?? "").join(""))
-        .join(" ")
-        .replace(/\n/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-
-      await supabaseAdmin.from("video_transcripts").upsert({
-        youtube_video_id: youtubeVideoId,
-        transcript_text: text || "(Empty transcript)",
-        language: "en",
-        segments: events.slice(0, 500), // store first 500 segments
-      }, { onConflict: "youtube_video_id" });
-      return { success: true };
-    }
-
-    // Fallback to XML format
-    const xmlRes = await fetch(captionUrl);
-    if (xmlRes.ok) {
-      const xmlText = await xmlRes.text();
-      // Simple XML text extraction
-      const text = xmlText.replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/\s+/g, " ").trim();
-      await supabaseAdmin.from("video_transcripts").upsert({
-        youtube_video_id: youtubeVideoId,
-        transcript_text: text || "(Empty transcript)",
-        language: "en",
-      }, { onConflict: "youtube_video_id" });
-      return { success: true };
-    }
-
-    return { success: false, error: "Failed to fetch captions" };
+    // No transcript found via any method — store placeholder
+    console.log("[transcript] All methods failed, storing placeholder");
+    await supabaseAdmin.from("video_transcripts").upsert({
+      youtube_video_id: youtubeVideoId,
+      transcript_text: "(No captions available for this video)",
+      language: "en",
+    }, { onConflict: "youtube_video_id" });
+    return { success: true };
   } catch (err: any) {
+    console.error(`[transcript] Error: ${err.message}`);
     return { success: false, error: err.message };
   }
 }
