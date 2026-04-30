@@ -664,7 +664,41 @@ export async function fetchTranscript(youtubeVideoId: string, externalVideoId: s
   try {
     const apiKey = process.env.YOUTUBE_API_KEY;
 
-    // --- Strategy 1: YouTube Data API captions list → download ---
+    // --- Strategy 0: Fetch real video metadata if title is placeholder ---
+    if (apiKey) {
+      try {
+        const metaUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${externalVideoId}&key=${apiKey}`;
+        const metaRes = await fetch(metaUrl);
+        if (metaRes.ok) {
+          const metaData = await metaRes.json() as any;
+          const item = metaData.items?.[0];
+          if (item) {
+            const snippet = item.snippet ?? {};
+            const stats = item.statistics ?? {};
+            const updateFields: Record<string, any> = {};
+            
+            // Always update with real data from YouTube
+            if (snippet.title) updateFields.current_title = snippet.title;
+            if (snippet.description) updateFields.current_description = snippet.description;
+            if (snippet.tags) updateFields.current_tags = snippet.tags;
+            if (snippet.thumbnails?.high?.url) updateFields.current_thumbnail_url = snippet.thumbnails.high.url;
+            if (stats.viewCount) updateFields.views = parseInt(stats.viewCount) || 0;
+            if (stats.likeCount) updateFields.likes = parseInt(stats.likeCount) || 0;
+            if (stats.commentCount) updateFields.comments = parseInt(stats.commentCount) || 0;
+            if (snippet.publishedAt) updateFields.published_at = snippet.publishedAt;
+            
+            if (Object.keys(updateFields).length > 0) {
+              console.log(`[transcript] Updating video metadata: title="${updateFields.current_title?.slice(0, 50)}"`);
+              await supabaseAdmin.from("youtube_videos").update(updateFields as any).eq("id", youtubeVideoId);
+            }
+          }
+        }
+      } catch (e) {
+        console.log(`[transcript] Metadata fetch failed: ${(e as any).message}`);
+      }
+    }
+
+    // --- Strategy 1: YouTube Data API captions list (info only, download needs OAuth) ---
     if (apiKey) {
       console.log("[transcript] Trying YouTube Data API captions...");
       const listUrl = `https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId=${externalVideoId}&key=${apiKey}`;
@@ -673,51 +707,48 @@ export async function fetchTranscript(youtubeVideoId: string, externalVideoId: s
         const listData = await listRes.json() as any;
         const items = listData.items ?? [];
         console.log(`[transcript] Found ${items.length} caption tracks`);
-
-        // Prefer English ASR or manual
-        const enTrack = items.find((t: any) =>
-          (t.snippet?.language === "en" || t.snippet?.language === "en-US") &&
-          t.snippet?.trackKind !== "community"
-        ) ?? items.find((t: any) =>
-          t.snippet?.language?.startsWith("en")
-        ) ?? items[0];
-
-        if (enTrack) {
-          console.log(`[transcript] Using track: ${enTrack.snippet?.language} (${enTrack.snippet?.trackKind})`);
-        }
       }
     }
 
     // --- Strategy 2: YouTube timedtext endpoint (works without OAuth) ---
     console.log("[transcript] Trying timedtext endpoint...");
     const timedtextUrl = `https://www.youtube.com/api/timedtext?v=${externalVideoId}&lang=en&fmt=json3`;
-    const ttRes = await fetch(timedtextUrl, {
-      headers: { "Accept-Language": "en-US,en;q=0.9" },
-    });
+    try {
+      const ttRes = await fetch(timedtextUrl, {
+        headers: { "Accept-Language": "en-US,en;q=0.9" },
+      });
 
-    if (ttRes.ok) {
-      const ttData = await ttRes.json() as any;
-      const events = ttData.events ?? [];
-      if (events.length > 0) {
-        const text = events
-          .filter((e: any) => e.segs)
-          .map((e: any) => e.segs.map((s: any) => s.utf8 ?? "").join(""))
-          .join(" ")
-          .replace(/\n/g, " ")
-          .replace(/\s+/g, " ")
-          .trim();
+      if (ttRes.ok) {
+        const ttText = await ttRes.text();
+        if (ttText && ttText.startsWith("{")) {
+          const ttData = JSON.parse(ttText);
+          const events = ttData.events ?? [];
+          if (events.length > 0) {
+            const text = events
+              .filter((e: any) => e.segs)
+              .map((e: any) => e.segs.map((s: any) => s.utf8 ?? "").join(""))
+              .join(" ")
+              .replace(/\n/g, " ")
+              .replace(/\s+/g, " ")
+              .trim();
 
-        if (text && text.length > 20) {
-          console.log(`[transcript] Got ${text.length} chars from timedtext`);
-          await supabaseAdmin.from("video_transcripts").upsert({
-            youtube_video_id: youtubeVideoId,
-            transcript_text: text,
-            language: "en",
-            segments: events.slice(0, 500),
-          }, { onConflict: "youtube_video_id" });
-          return { success: true };
+            if (text && text.length > 20) {
+              console.log(`[transcript] Got ${text.length} chars from timedtext`);
+              await supabaseAdmin.from("video_transcripts").upsert({
+                youtube_video_id: youtubeVideoId,
+                transcript_text: text,
+                language: "en",
+                segments: events.slice(0, 500),
+              }, { onConflict: "youtube_video_id" });
+              return { success: true };
+            }
+          }
+        } else {
+          console.log(`[transcript] timedtext response not JSON (length: ${ttText.length})`);
         }
       }
+    } catch (e) {
+      console.log(`[transcript] timedtext failed: ${(e as any).message}`);
     }
 
     // --- Strategy 3: Try auto-generated captions (asr=1) ---
