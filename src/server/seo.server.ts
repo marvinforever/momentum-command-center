@@ -285,7 +285,7 @@ export async function runSeoScore(params: {
     }
 
     const lowerTitle = title.toLowerCase();
-    if (targetKeywords.some(kw => lowerTitle.includes(kw))) { titleScore += 20; }
+    if (targetKeywords.some((kw: string) => lowerTitle.includes(kw))) { titleScore += 20; }
     else if (targetKeywords.length > 0) {
       issues.push({ severity: "high", message: "Target keyword missing from title", fix: `Include your primary keyword "${targetKeywords[0]}" naturally in the title.` });
     }
@@ -309,7 +309,7 @@ export async function runSeoScore(params: {
     }
 
     const descFirst25 = description.slice(0, 25).toLowerCase();
-    if (targetKeywords.some(kw => descFirst25.includes(kw))) descScore += 25;
+    if (targetKeywords.some((kw: string) => descFirst25.includes(kw))) descScore += 25;
     else if (targetKeywords.length > 0) {
       issues.push({ severity: "medium", message: "Target keyword not in first 25 chars of description", fix: `Start description with "${targetKeywords[0]}" for SEO.` });
     }
@@ -319,7 +319,7 @@ export async function runSeoScore(params: {
     if (/#\w+/.test(description)) descScore += 10; // hashtags
     if ((description.match(/\n\n/g) ?? []).length >= 2) descScore += 10; // paragraphs
     // Keyword density
-    const kwCount = targetKeywords.reduce((sum, kw) => sum + (description.toLowerCase().split(kw).length - 1), 0);
+    const kwCount = targetKeywords.reduce((sum: number, kw: string) => sum + (description.toLowerCase().split(kw).length - 1), 0);
     if (kwCount >= 3 && kwCount <= 5) descScore += 10;
     descScore = Math.min(100, Math.max(0, descScore));
 
@@ -339,7 +339,7 @@ export async function runSeoScore(params: {
     const longTags = tags.filter(t => t.split(" ").length > 2).length;
     if (shortTags > 0 && longTags > 0) tagsScore += 20;
 
-    if (targetKeywords.some(kw => tags.some(t => t.toLowerCase().includes(kw)))) tagsScore += 25;
+    if (targetKeywords.some((kw: string) => tags.some(t => t.toLowerCase().includes(kw)))) tagsScore += 25;
     else if (targetKeywords.length > 0) {
       issues.push({ severity: "medium", message: "Target keyword not in tags", fix: `Add "${targetKeywords[0]}" as a tag.` });
     }
@@ -390,9 +390,9 @@ export async function runSeoScore(params: {
     // --- Keyword Alignment ---
     let keywordScore = 0;
     if (targetKeywords.length > 0) {
-      const titleHas = targetKeywords.some(kw => lowerTitle.includes(kw));
-      const descHas = targetKeywords.some(kw => description.toLowerCase().includes(kw));
-      const tagsHas = targetKeywords.some(kw => tags.some(t => t.toLowerCase().includes(kw)));
+      const titleHas = targetKeywords.some((kw: string) => lowerTitle.includes(kw));
+      const descHas = targetKeywords.some((kw: string) => description.toLowerCase().includes(kw));
+      const tagsHas = targetKeywords.some((kw: string) => tags.some(t => t.toLowerCase().includes(kw)));
       if (titleHas) keywordScore += 35;
       if (descHas) keywordScore += 35;
       if (tagsHas) keywordScore += 30;
@@ -590,18 +590,18 @@ export function predictSeoScore(params: {
   if (outputType === "title") {
     const len = content.length;
     if (len >= 60 && len <= 70) predicted += 5;
-    if (targetKeywords.some(kw => lower.includes(kw.toLowerCase()))) predicted += 15;
+    if (targetKeywords.some((kw: string) => lower.includes(kw.toLowerCase()))) predicted += 15;
     if (/\d/.test(content)) predicted += 5;
     if (/^(who|what|when|where|why|how)\b/i.test(content)) predicted += 3;
   } else if (outputType === "description") {
     if (content.length >= 250) predicted += 10;
-    if (targetKeywords.some(kw => lower.slice(0, 25).includes(kw.toLowerCase()))) predicted += 15;
+    if (targetKeywords.some((kw: string) => lower.slice(0, 25).includes(kw.toLowerCase()))) predicted += 15;
     if (/\d+:\d{2}/.test(content)) predicted += 8;
     if (/https?:\/\//.test(content)) predicted += 5;
   } else if (outputType === "tags") {
     const tagArr = content.split(",").map(t => t.trim());
     if (tagArr.length >= 5 && tagArr.length <= 15) predicted += 10;
-    if (targetKeywords.some(kw => tagArr.some(t => t.toLowerCase().includes(kw.toLowerCase())))) predicted += 15;
+    if (targetKeywords.some((kw: string) => tagArr.some(t => t.toLowerCase().includes(kw.toLowerCase())))) predicted += 15;
   }
 
   return Math.min(100, Math.max(0, Math.round(predicted)));
