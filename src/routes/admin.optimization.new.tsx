@@ -828,3 +828,42 @@ function predictClientSeoScore(outputType: string, content: string, targetKeywor
   }
   return Math.min(100, Math.max(0, Math.round(predicted)));
 }
+
+function DescriptionComponents({ contentJson }: { contentJson: any }) {
+  const [show, setShow] = useState(false);
+  if (!contentJson) return null;
+
+  return (
+    <div className="mt-2">
+      <button
+        type="button"
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShow(!show); }}
+        className="text-[11px] text-gold hover:text-gold/80 font-medium transition-colors"
+      >
+        {show ? "▾ Hide components" : "▸ Show components"}
+      </button>
+      {show && (
+        <div className="mt-2 space-y-2 text-[11px] border-t border-line pt-2">
+          {contentJson.hook_line && (
+            <div><span className="text-ink-muted font-medium">Hook line:</span> <span className="text-ink">{contentJson.hook_line}</span></div>
+          )}
+          {contentJson.body && (
+            <div><span className="text-ink-muted font-medium">Body:</span> <span className="text-ink">{contentJson.body.slice(0, 200)}…</span></div>
+          )}
+          {contentJson.timestamps?.length > 0 && (
+            <div>
+              <span className="text-ink-muted font-medium">Timestamps:</span>
+              <div className="ml-2 text-ink">{contentJson.timestamps.map((t: any, i: number) => <div key={i}>{t.time} — {t.label}</div>)}</div>
+            </div>
+          )}
+          {contentJson.cta_block && (
+            <div><span className="text-ink-muted font-medium">CTA:</span> <span className="text-ink">{contentJson.cta_block}</span></div>
+          )}
+          {contentJson.hashtags?.length > 0 && (
+            <div><span className="text-ink-muted font-medium">Hashtags:</span> <span className="text-ink">{contentJson.hashtags.map((h: string) => `#${h}`).join(" ")}</span></div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
