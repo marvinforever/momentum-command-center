@@ -87,7 +87,7 @@ export const Route = createFileRoute("/api/public/hooks/performance-snapshot")({
             if (Object.keys(updates).length > 0) {
               await supabaseAdmin
                 .from("optimization_performance")
-                .update(updates)
+                .update(updates as any)
                 .eq("id", perf.id);
               updated++;
             }
