@@ -117,11 +117,17 @@ function BrandsPage() {
       {/* Voice profile editor */}
       {profile && <VoiceProfileEditor profile={profile} onSave={() => qc.invalidateQueries({ queryKey: ["brand-voice-profile"] })} />}
 
+      {/* Description template editor */}
+      {profile && <DescriptionTemplateEditor profile={profile} onSave={() => qc.invalidateQueries({ queryKey: ["brand-voice-profile"] })} />}
+
+      {/* Resource links editor */}
+      {selectedBrandId && <ResourceLinksEditor brandId={selectedBrandId} />}
+
       {/* Bootstrap button */}
       <MCCard className="p-5 mb-4">
         <h3 className="serif text-[18px] text-ink mb-2">Bootstrap from Existing Data</h3>
         <p className="text-[13px] text-ink-muted mb-4">
-          Pull top-performing LinkedIn posts and YouTube titles to seed approved examples. This gives the AI a head start on understanding {selectedBrand?.name}'s voice.
+          Pull top-performing LinkedIn posts and YouTube titles to seed approved examples.
         </p>
         <button onClick={handleBootstrap} className="rounded-lg bg-gold px-6 py-2.5 text-[13px] font-medium text-white hover:bg-gold/90 transition-colors">
           Bootstrap from Existing Data
