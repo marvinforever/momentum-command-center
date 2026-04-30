@@ -115,6 +115,8 @@ export async function runKeywordResearch(params: {
   optimizationRunId?: string;
 }): Promise<{ keywords: any[]; error?: string }> {
   try {
+    console.log(`[seo] Starting keyword research for video ${params.youtubeVideoId}`);
+
     // Load video
     const { data: video } = await supabaseAdmin
       .from("youtube_videos")
@@ -122,6 +124,8 @@ export async function runKeywordResearch(params: {
       .eq("id", params.youtubeVideoId)
       .single();
     if (!video) return { keywords: [], error: "Video not found" };
+
+    console.log(`[seo] Video: "${video.current_title}"`);
 
     // Load transcript
     const { data: transcript } = await supabaseAdmin
@@ -133,6 +137,8 @@ export async function runKeywordResearch(params: {
     const transcriptText = transcript?.transcript_text?.slice(0, 3000) ?? "";
     const title = video.current_title ?? "";
     const description = (video.current_description ?? "").slice(0, 500);
+
+    console.log(`[seo] Transcript length: ${transcriptText.length}, Title: "${title}", Desc length: ${description.length}`);
 
     // 1. Extract topic seeds via Claude
     const seedResponse = await callClaude(
@@ -147,6 +153,8 @@ Transcript excerpt: ${transcriptText.slice(0, 2000)}
 Return as JSON array of strings: ["seed phrase 1", "seed phrase 2", ...]`
     );
 
+    console.log(`[seo] Claude seed response: ${seedResponse.slice(0, 200)}`);
+
     let seeds: string[] = [];
     try {
       const match = seedResponse.match(/\[[\s\S]*?\]/);
@@ -154,6 +162,8 @@ Return as JSON array of strings: ["seed phrase 1", "seed phrase 2", ...]`
     } catch {
       seeds = [title.split(" ").slice(0, 4).join(" ")];
     }
+
+    console.log(`[seo] Extracted ${seeds.length} seeds: ${JSON.stringify(seeds)}`)
 
     // 2. YouTube autocomplete for each seed (free, unlimited)
     const allSuggestions = new Map<string, { source: string; rank: number }>();
