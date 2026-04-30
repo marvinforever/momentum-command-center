@@ -1,6 +1,6 @@
 /**
  * YouTube Optimization Engine — server-only helpers.
- * Calls Anthropic Claude for content generation and Replicate for thumbnail images.
+ * Uses Lovable AI Gateway for content generation and image thumbnails.
  * NEVER import this from client code.
  */
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -31,43 +31,45 @@ interface VideoContext {
 
 type OutputType = "title" | "description" | "tags" | "pinned_comment" | "hook" | "thumbnail_concept" | "thumbnail_text" | "hashtags";
 
-// ---------- Anthropic helpers ----------
-async function callClaude(systemPrompt: string, userPrompt: string): Promise<{ text: string; inputTokens: number; outputTokens: number }> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
+// ---------- Lovable AI Gateway helpers ----------
+const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+async function callClaude(systemPrompt: string, userPrompt: string): Promise<{ text: string; inputTokens: number; outputTokens: number }> {
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
+
+  const res = await fetch(AI_GATEWAY_URL, {
     method: "POST",
     headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4096,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userPrompt }],
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
     }),
   });
 
   if (!res.ok) {
     const errText = await res.text();
-    throw new Error(`Claude API error ${res.status}: ${errText}`);
+    throw new Error(`AI Gateway error ${res.status}: ${errText}`);
   }
 
   const data = await res.json() as any;
-  const text = data.content?.[0]?.text ?? "";
+  const text = data.choices?.[0]?.message?.content ?? "";
   return {
     text,
-    inputTokens: data.usage?.input_tokens ?? 0,
-    outputTokens: data.usage?.output_tokens ?? 0,
+    inputTokens: data.usage?.prompt_tokens ?? 0,
+    outputTokens: data.usage?.completion_tokens ?? 0,
   };
 }
 
 function computeCost(inputTokens: number, outputTokens: number): number {
-  // Claude Sonnet 4 pricing: $3/M input, $15/M output
-  return (inputTokens * 3 + outputTokens * 15) / 1_000_000;
+  // Approximate cost tracking (Lovable AI usage-based)
+  return (inputTokens + outputTokens) / 1_000_000 * 0.5;
 }
 
 // ---------- Brand voice loader ----------
@@ -366,71 +368,54 @@ Return as JSON array: [{"prompt": "...", "text_overlay": "...", "layout_notes": 
   }
 
   let generated = 0;
-  const replicateToken = process.env.REPLICATE_API_TOKEN;
+  const lovableKey = process.env.LOVABLE_API_KEY;
 
   for (let i = 0; i < Math.min(concepts.length, 3); i++) {
     const concept = concepts[i];
     let imageUrl: string | null = null;
     let costUsd = 0;
 
-    if (replicateToken) {
+    if (lovableKey) {
       try {
-        // Call Replicate Flux Pro
-        const predictionRes = await fetch("https://api.replicate.com/v1/predictions", {
+        // Use Lovable AI Gateway image generation model
+        const imgRes = await fetch(AI_GATEWAY_URL, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${replicateToken}`,
+            Authorization: `Bearer ${lovableKey}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            version: "black-forest-labs/flux-1.1-pro",
-            input: {
-              prompt: concept.prompt,
-              width: 1280,
-              height: 720,
-              num_outputs: 1,
-              aspect_ratio: "16:9",
-            },
+            model: "google/gemini-3-pro-image-preview",
+            messages: [
+              { role: "user", content: `Generate a YouTube thumbnail image (1280x720, 16:9 aspect ratio). ${concept.prompt}` },
+            ],
           }),
         });
 
-        if (predictionRes.ok) {
-          const prediction = await predictionRes.json() as any;
-          // Poll for completion
-          let attempts = 0;
-          let finalPrediction = prediction;
-          while (finalPrediction.status !== "succeeded" && finalPrediction.status !== "failed" && attempts < 60) {
-            await new Promise(r => setTimeout(r, 2000));
-            const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
-              headers: { Authorization: `Bearer ${replicateToken}` },
-            });
-            finalPrediction = await pollRes.json();
-            attempts++;
-          }
+        if (imgRes.ok) {
+          const imgData = await imgRes.json() as any;
+          // Check for inline image data in the response
+          const content = imgData.choices?.[0]?.message?.content;
+          const inlineImage = imgData.choices?.[0]?.message?.inline_images?.[0];
 
-          if (finalPrediction.status === "succeeded" && finalPrediction.output) {
-            const outputUrl = Array.isArray(finalPrediction.output) ? finalPrediction.output[0] : finalPrediction.output;
+          if (inlineImage?.data) {
+            // Upload base64 image to Supabase storage
+            const buffer = Uint8Array.from(atob(inlineImage.data), c => c.charCodeAt(0));
+            const storagePath = `${params.brandId}/${params.youtubeVideoId}/${Date.now()}_v${i + 1}.png`;
 
-            // Download and upload to Supabase storage
-            const imgRes = await fetch(outputUrl);
-            if (imgRes.ok) {
-              const imgBuffer = await imgRes.arrayBuffer();
-              const storagePath = `${params.brandId}/${params.youtubeVideoId}/${Date.now()}_v${i + 1}.jpg`;
+            const { error: uploadErr } = await supabaseAdmin.storage
+              .from("thumbnails")
+              .upload(storagePath, buffer, { contentType: "image/png", upsert: true });
 
-              const { error: uploadErr } = await supabaseAdmin.storage
-                .from("thumbnails")
-                .upload(storagePath, imgBuffer, { contentType: "image/jpeg", upsert: true });
-
-              if (!uploadErr) {
-                const { data: pubUrl } = supabaseAdmin.storage.from("thumbnails").getPublicUrl(storagePath);
-                imageUrl = pubUrl.publicUrl;
-                costUsd = 0.05; // approximate Flux Pro cost
-              }
+            if (!uploadErr) {
+              const { data: pubUrl } = supabaseAdmin.storage.from("thumbnails").getPublicUrl(storagePath);
+              imageUrl = pubUrl.publicUrl;
+              costUsd = 0.02;
             }
           }
         }
       } catch (err) {
-        console.error(`Replicate error for thumbnail ${i + 1}:`, err);
+        console.error(`AI image generation error for thumbnail ${i + 1}:`, err);
       }
     }
 
@@ -440,9 +425,9 @@ Return as JSON array: [{"prompt": "...", "text_overlay": "...", "layout_notes": 
       brand_id: params.brandId,
       variant_index: i + 1,
       prompt: concept.prompt,
-      generation_model: replicateToken ? "flux-1.1-pro" : "none",
+      generation_model: lovableKey ? "gemini-3-pro-image-preview" : "none",
       image_url: imageUrl,
-      storage_path: imageUrl ? `thumbnails/${params.brandId}/${params.youtubeVideoId}/${Date.now()}_v${i + 1}.jpg` : null,
+      storage_path: imageUrl ? `thumbnails/${params.brandId}/${params.youtubeVideoId}/${Date.now()}_v${i + 1}.png` : null,
       text_overlay: concept.text_overlay,
       layout_notes: concept.layout_notes,
       cost_usd: costUsd,
