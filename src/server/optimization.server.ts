@@ -1,6 +1,6 @@
 /**
  * YouTube Optimization Engine — server-only helpers.
- * Uses Lovable AI Gateway for content generation and image thumbnails.
+ * Uses Anthropic Claude for content generation and Lovable AI for thumbnail images.
  * NEVER import this from client code.
  */
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
