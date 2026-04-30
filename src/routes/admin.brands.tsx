@@ -237,3 +237,111 @@ function VoiceProfileEditor({ profile, onSave }: { profile: any; onSave: () => v
     </MCCard>
   );
 }
+
+function DescriptionTemplateEditor({ profile, onSave }: { profile: any; onSave: () => void }) {
+  const [template, setTemplate] = useState((profile as any).description_template ?? "");
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("brand_voice_profiles").update({
+        description_template: template,
+      } as any).eq("id", profile.id);
+      if (error) throw error;
+      toast.success("Description template updated.");
+      onSave();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <MCCard className="p-5 mb-4">
+      <h3 className="serif text-[18px] text-ink mb-2">Description Template</h3>
+      <p className="text-[12px] text-ink-muted mb-3">Tokens: {"{HOOK_LINE}"}, {"{BODY}"}, {"{TIMESTAMPS}"}, {"{CTA_BLOCK}"}, {"{RESOURCE_LINKS}"}, {"{HASHTAGS}"}</p>
+      <textarea className={inputCls + " min-h-[200px] font-mono text-[12px]"} value={template} onChange={(e) => setTemplate(e.target.value)} />
+      <div className="flex justify-end mt-3">
+        <button onClick={handleSave} disabled={saving} className="rounded-lg bg-gold px-6 py-2.5 text-[13px] font-medium text-white hover:bg-gold/90 transition-colors disabled:opacity-60">
+          {saving ? "Saving…" : "Save Template"}
+        </button>
+      </div>
+    </MCCard>
+  );
+}
+
+function ResourceLinksEditor({ brandId }: { brandId: string }) {
+  const qc = useQueryClient();
+  const [newLabel, setNewLabel] = useState("");
+  const [newUrl, setNewUrl] = useState("");
+  const [newCategory, setNewCategory] = useState("other");
+
+  const { data: links = [] } = useQuery({
+    queryKey: ["brand-resource-links", brandId],
+    queryFn: async () => {
+      const { data } = await (supabase as any).from("brand_resource_links").select("*").eq("brand_id", brandId).order("display_order");
+      return data ?? [];
+    },
+    enabled: !!brandId,
+  });
+
+  async function addLink() {
+    if (!newLabel.trim() || !newUrl.trim()) return;
+    const { error } = await (supabase as any).from("brand_resource_links").insert({
+      brand_id: brandId,
+      link_label: newLabel.trim(),
+      url: newUrl.trim(),
+      category: newCategory,
+      display_order: links.length + 1,
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Link added");
+    setNewLabel(""); setNewUrl(""); setNewCategory("other");
+    qc.invalidateQueries({ queryKey: ["brand-resource-links", brandId] });
+  }
+
+  async function removeLink(id: string) {
+    await (supabase as any).from("brand_resource_links").delete().eq("id", id);
+    qc.invalidateQueries({ queryKey: ["brand-resource-links", brandId] });
+    toast.success("Link removed");
+  }
+
+  async function toggleActive(id: string, current: boolean) {
+    await (supabase as any).from("brand_resource_links").update({ is_active: !current }).eq("id", id);
+    qc.invalidateQueries({ queryKey: ["brand-resource-links", brandId] });
+  }
+
+  return (
+    <MCCard className="p-5 mb-4">
+      <h3 className="serif text-[18px] text-ink mb-3">Resource Links & CTAs</h3>
+      <p className="text-[12px] text-ink-muted mb-3">These appear in every generated description.</p>
+
+      <div className="space-y-2 mb-4">
+        {links.map((l: any) => (
+          <div key={l.id} className="flex items-center gap-2 p-2 rounded-lg bg-cream border border-line">
+            <input type="checkbox" checked={l.is_active} onChange={() => toggleActive(l.id, l.is_active)} className="accent-gold" />
+            <span className="mc-tag text-[10px]">{l.category}</span>
+            <span className="text-[13px] text-ink flex-1">{l.link_label}</span>
+            <span className="text-[11px] text-ink-muted truncate max-w-[200px]">{l.url}</span>
+            <button onClick={() => removeLink(l.id)} className="text-[11px] text-burgundy hover:text-burgundy/80">✕</button>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-2">
+        <input className={inputCls} placeholder="Label" value={newLabel} onChange={(e) => setNewLabel(e.target.value)} />
+        <input className={inputCls} placeholder="URL" value={newUrl} onChange={(e) => setNewUrl(e.target.value)} />
+        <select className={inputCls + " max-w-[120px]"} value={newCategory} onChange={(e) => setNewCategory(e.target.value)}>
+          <option value="lead_magnet">Lead Magnet</option>
+          <option value="offer">Offer</option>
+          <option value="social">Social</option>
+          <option value="main_site">Main Site</option>
+          <option value="other">Other</option>
+        </select>
+        <button onClick={addLink} className="rounded-lg bg-gold px-4 py-2 text-[13px] font-medium text-white hover:bg-gold/90 transition-colors whitespace-nowrap">Add</button>
+      </div>
+    </MCCard>
+  );
+}
