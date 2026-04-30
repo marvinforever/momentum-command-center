@@ -1,6 +1,6 @@
 /**
  * YouTube Optimization Engine — server-only helpers.
- * Uses Lovable AI Gateway for content generation and image thumbnails.
+ * Uses Anthropic Claude for content generation and Lovable AI for thumbnail images.
  * NEVER import this from client code.
  */
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -31,45 +31,43 @@ interface VideoContext {
 
 type OutputType = "title" | "description" | "tags" | "pinned_comment" | "hook" | "thumbnail_concept" | "thumbnail_text" | "hashtags";
 
-// ---------- Lovable AI Gateway helpers ----------
-const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-
+// ---------- Anthropic Claude helpers ----------
 async function callClaude(systemPrompt: string, userPrompt: string): Promise<{ text: string; inputTokens: number; outputTokens: number }> {
-  const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
 
-  const res = await fetch(AI_GATEWAY_URL, {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
     },
     body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userPrompt }],
     }),
   });
 
   if (!res.ok) {
     const errText = await res.text();
-    throw new Error(`AI Gateway error ${res.status}: ${errText}`);
+    throw new Error(`Claude API error ${res.status}: ${errText}`);
   }
 
   const data = await res.json() as any;
-  const text = data.choices?.[0]?.message?.content ?? "";
+  const text = data.content?.[0]?.text ?? "";
   return {
     text,
-    inputTokens: data.usage?.prompt_tokens ?? 0,
-    outputTokens: data.usage?.completion_tokens ?? 0,
+    inputTokens: data.usage?.input_tokens ?? 0,
+    outputTokens: data.usage?.output_tokens ?? 0,
   };
 }
 
 function computeCost(inputTokens: number, outputTokens: number): number {
-  // Approximate cost tracking (Lovable AI usage-based)
-  return (inputTokens + outputTokens) / 1_000_000 * 0.5;
+  // Claude Sonnet 4 pricing: $3/M input, $15/M output
+  return (inputTokens * 3 + outputTokens * 15) / 1_000_000;
 }
 
 // ---------- Brand voice loader ----------
@@ -378,7 +376,7 @@ Return as JSON array: [{"prompt": "...", "text_overlay": "...", "layout_notes": 
     if (lovableKey) {
       try {
         // Use Lovable AI Gateway image generation model
-        const imgRes = await fetch(AI_GATEWAY_URL, {
+        const imgRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${lovableKey}`,
