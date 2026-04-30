@@ -304,6 +304,86 @@ function NewOptimizationPage() {
     outputsByType[o.output_type].push(o);
   }
 
+  function copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text).then(() => {
+      toast.success("Copied. Paste into YouTube.");
+    }).catch(() => {
+      toast.error("Failed to copy");
+    });
+  }
+
+  async function downloadImage(url: string, filename: string) {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+      toast.success("Thumbnail downloaded");
+    } catch {
+      toast.error("Failed to download");
+    }
+  }
+
+  function copyEntirePackage() {
+    const getSelected = (type: string) => outputs.find((o: any) => o.id === selections[type])?.content ?? "";
+    const selectedThumb = thumbnails[0];
+    const targetKwStr = keywords.filter((k: any) => k.is_target || selectedKeywordIds.includes(k.id)).map((k: any) => k.keyword).join(", ");
+
+    const separator = "═══════════════════════════════════════";
+    const pkg = [
+      separator,
+      "TITLE:",
+      getSelected("title"),
+      "",
+      separator,
+      "DESCRIPTION:",
+      getSelected("description"),
+      "",
+      separator,
+      "TAGS (paste into YouTube tag field):",
+      getSelected("tags"),
+      "",
+      separator,
+      "PINNED COMMENT (post after publishing):",
+      getSelected("pinned_comment"),
+      "",
+      separator,
+      "HOOK (first 3 seconds):",
+      getSelected("hook"),
+      "",
+      separator,
+      selectedThumb?.image_url ? `THUMBNAIL: download from ${selectedThumb.image_url}` : "THUMBNAIL: (none generated)",
+      selectedThumb?.text_overlay ? `THUMBNAIL TEXT OVERLAY: ${selectedThumb.text_overlay}` : "",
+      "",
+      separator,
+      "TARGET KEYWORDS (for reference):",
+      targetKwStr || "(none selected)",
+      "",
+      separator,
+      "PUBLISH CHECKLIST:",
+      "☐ Title pasted in YouTube",
+      "☐ Description pasted (with timestamps verified)",
+      "☐ Tags pasted",
+      "☐ Thumbnail uploaded",
+      "☐ Pinned comment posted after publish",
+      "☐ End screen elements reviewed",
+      "☐ Cards added (optional)",
+      "☐ Captions enabled",
+      separator,
+    ].join("\n");
+
+    navigator.clipboard.writeText(pkg).then(() => {
+      toast.success("Full package copied. Paste into YouTube Studio one section at a time.");
+    }).catch(() => {
+      toast.error("Failed to copy");
+    });
+  }
+
   const STEPS = [
     { n: 1, label: "Brand" },
     { n: 2, label: "Video" },
