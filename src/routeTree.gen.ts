@@ -38,6 +38,7 @@ import { Route as AdminOptimizationReviewRouteImport } from './routes/admin.opti
 import { Route as AdminOptimizationQueueRouteImport } from './routes/admin.optimization.queue'
 import { Route as AdminOptimizationPublishedRouteImport } from './routes/admin.optimization.published'
 import { Route as AdminOptimizationNewRouteImport } from './routes/admin.optimization.new'
+import { Route as AdminOptimizationKeywordsRouteImport } from './routes/admin.optimization.keywords'
 import { Route as ApiPublicNotionCallbackRouteImport } from './routes/api/public/notion.callback'
 import { Route as ApiPublicHooksWeeklyRollupRouteImport } from './routes/api/public/hooks/weekly-rollup'
 import { Route as ApiPublicHooksPerformanceSnapshotRouteImport } from './routes/api/public/hooks/performance-snapshot'
@@ -193,6 +194,12 @@ const AdminOptimizationNewRoute = AdminOptimizationNewRouteImport.update({
   path: '/new',
   getParentRoute: () => AdminOptimizationRoute,
 } as any)
+const AdminOptimizationKeywordsRoute =
+  AdminOptimizationKeywordsRouteImport.update({
+    id: '/keywords',
+    path: '/keywords',
+    getParentRoute: () => AdminOptimizationRoute,
+  } as any)
 const ApiPublicNotionCallbackRoute = ApiPublicNotionCallbackRouteImport.update({
   id: '/api/public/notion/callback',
   path: '/api/public/notion/callback',
@@ -262,6 +269,7 @@ export interface FileRoutesByFullPath {
   '/crm/$id': typeof CrmIdRoute
   '/campaigns/': typeof CampaignsIndexRoute
   '/crm/': typeof CrmIndexRoute
+  '/admin/optimization/keywords': typeof AdminOptimizationKeywordsRoute
   '/admin/optimization/new': typeof AdminOptimizationNewRoute
   '/admin/optimization/published': typeof AdminOptimizationPublishedRoute
   '/admin/optimization/queue': typeof AdminOptimizationQueueRoute
@@ -300,6 +308,7 @@ export interface FileRoutesByTo {
   '/crm/$id': typeof CrmIdRoute
   '/campaigns': typeof CampaignsIndexRoute
   '/crm': typeof CrmIndexRoute
+  '/admin/optimization/keywords': typeof AdminOptimizationKeywordsRoute
   '/admin/optimization/new': typeof AdminOptimizationNewRoute
   '/admin/optimization/published': typeof AdminOptimizationPublishedRoute
   '/admin/optimization/queue': typeof AdminOptimizationQueueRoute
@@ -340,6 +349,7 @@ export interface FileRoutesById {
   '/crm/$id': typeof CrmIdRoute
   '/campaigns/': typeof CampaignsIndexRoute
   '/crm/': typeof CrmIndexRoute
+  '/admin/optimization/keywords': typeof AdminOptimizationKeywordsRoute
   '/admin/optimization/new': typeof AdminOptimizationNewRoute
   '/admin/optimization/published': typeof AdminOptimizationPublishedRoute
   '/admin/optimization/queue': typeof AdminOptimizationQueueRoute
@@ -381,6 +391,7 @@ export interface FileRouteTypes {
     | '/crm/$id'
     | '/campaigns/'
     | '/crm/'
+    | '/admin/optimization/keywords'
     | '/admin/optimization/new'
     | '/admin/optimization/published'
     | '/admin/optimization/queue'
@@ -419,6 +430,7 @@ export interface FileRouteTypes {
     | '/crm/$id'
     | '/campaigns'
     | '/crm'
+    | '/admin/optimization/keywords'
     | '/admin/optimization/new'
     | '/admin/optimization/published'
     | '/admin/optimization/queue'
@@ -458,6 +470,7 @@ export interface FileRouteTypes {
     | '/crm/$id'
     | '/campaigns/'
     | '/crm/'
+    | '/admin/optimization/keywords'
     | '/admin/optimization/new'
     | '/admin/optimization/published'
     | '/admin/optimization/queue'
@@ -710,6 +723,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOptimizationNewRouteImport
       parentRoute: typeof AdminOptimizationRoute
     }
+    '/admin/optimization/keywords': {
+      id: '/admin/optimization/keywords'
+      path: '/keywords'
+      fullPath: '/admin/optimization/keywords'
+      preLoaderRoute: typeof AdminOptimizationKeywordsRouteImport
+      parentRoute: typeof AdminOptimizationRoute
+    }
     '/api/public/notion/callback': {
       id: '/api/public/notion/callback'
       path: '/api/public/notion/callback'
@@ -770,6 +790,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminOptimizationRouteChildren {
+  AdminOptimizationKeywordsRoute: typeof AdminOptimizationKeywordsRoute
   AdminOptimizationNewRoute: typeof AdminOptimizationNewRoute
   AdminOptimizationPublishedRoute: typeof AdminOptimizationPublishedRoute
   AdminOptimizationQueueRoute: typeof AdminOptimizationQueueRoute
@@ -777,6 +798,7 @@ interface AdminOptimizationRouteChildren {
 }
 
 const AdminOptimizationRouteChildren: AdminOptimizationRouteChildren = {
+  AdminOptimizationKeywordsRoute: AdminOptimizationKeywordsRoute,
   AdminOptimizationNewRoute: AdminOptimizationNewRoute,
   AdminOptimizationPublishedRoute: AdminOptimizationPublishedRoute,
   AdminOptimizationQueueRoute: AdminOptimizationQueueRoute,

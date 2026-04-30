@@ -114,6 +114,9 @@ function OptimizationDashboard() {
         <Link to="/admin/optimization/queue" className="rounded-lg border border-line bg-paper px-6 py-2.5 text-[13px] font-medium text-ink hover:bg-cream-deep transition-colors">
           View Audit Queue
         </Link>
+        <Link to="/admin/optimization/keywords" className="rounded-lg border border-line bg-paper px-6 py-2.5 text-[13px] font-medium text-ink hover:bg-cream-deep transition-colors">
+          Keyword Tracking
+        </Link>
         <Link to="/admin/brands" className="rounded-lg border border-line bg-paper px-6 py-2.5 text-[13px] font-medium text-ink hover:bg-cream-deep transition-colors">
           Manage Brand Voices
         </Link>

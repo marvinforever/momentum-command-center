@@ -1155,6 +1155,41 @@ export type Database = {
         }
         Relationships: []
       }
+      keyword_rankings: {
+        Row: {
+          checked_at: string | null
+          id: string
+          keyword: string
+          rank_position: number | null
+          total_results_estimated: number | null
+          youtube_video_id: string
+        }
+        Insert: {
+          checked_at?: string | null
+          id?: string
+          keyword: string
+          rank_position?: number | null
+          total_results_estimated?: number | null
+          youtube_video_id: string
+        }
+        Update: {
+          checked_at?: string | null
+          id?: string
+          keyword?: string
+          rank_position?: number | null
+          total_results_estimated?: number | null
+          youtube_video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "keyword_rankings_youtube_video_id_fkey"
+            columns: ["youtube_video_id"]
+            isOneToOne: false
+            referencedRelation: "youtube_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_content: {
         Row: {
           content_id: string
@@ -2289,6 +2324,152 @@ export type Database = {
           },
         ]
       }
+      seo_competitor_videos: {
+        Row: {
+          channel_id: string | null
+          channel_name: string | null
+          comments: number | null
+          competitor_youtube_video_id: string
+          description_excerpt: string | null
+          description_length: number | null
+          duration_seconds: number | null
+          fetched_at: string | null
+          id: string
+          likes: number | null
+          optimization_run_id: string | null
+          publish_date: string | null
+          rank_position: number | null
+          raw: Json | null
+          tag_count: number | null
+          tags: Json | null
+          target_keyword: string
+          thumbnail_url: string | null
+          title: string | null
+          title_contains_number: boolean | null
+          title_length: number | null
+          title_starts_with_question: boolean | null
+          views: number | null
+        }
+        Insert: {
+          channel_id?: string | null
+          channel_name?: string | null
+          comments?: number | null
+          competitor_youtube_video_id: string
+          description_excerpt?: string | null
+          description_length?: number | null
+          duration_seconds?: number | null
+          fetched_at?: string | null
+          id?: string
+          likes?: number | null
+          optimization_run_id?: string | null
+          publish_date?: string | null
+          rank_position?: number | null
+          raw?: Json | null
+          tag_count?: number | null
+          tags?: Json | null
+          target_keyword: string
+          thumbnail_url?: string | null
+          title?: string | null
+          title_contains_number?: boolean | null
+          title_length?: number | null
+          title_starts_with_question?: boolean | null
+          views?: number | null
+        }
+        Update: {
+          channel_id?: string | null
+          channel_name?: string | null
+          comments?: number | null
+          competitor_youtube_video_id?: string
+          description_excerpt?: string | null
+          description_length?: number | null
+          duration_seconds?: number | null
+          fetched_at?: string | null
+          id?: string
+          likes?: number | null
+          optimization_run_id?: string | null
+          publish_date?: string | null
+          rank_position?: number | null
+          raw?: Json | null
+          tag_count?: number | null
+          tags?: Json | null
+          target_keyword?: string
+          thumbnail_url?: string | null
+          title?: string | null
+          title_contains_number?: boolean | null
+          title_length?: number | null
+          title_starts_with_question?: boolean | null
+          views?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_competitor_videos_optimization_run_id_fkey"
+            columns: ["optimization_run_id"]
+            isOneToOne: false
+            referencedRelation: "optimization_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_keyword_research: {
+        Row: {
+          competition_score: number | null
+          created_at: string | null
+          id: string
+          is_target: boolean | null
+          keyword: string
+          optimization_run_id: string | null
+          rank_position_at_optimization: number | null
+          raw: Json | null
+          relevance_score: number | null
+          search_volume_estimate: number | null
+          source: string | null
+          youtube_video_id: string | null
+        }
+        Insert: {
+          competition_score?: number | null
+          created_at?: string | null
+          id?: string
+          is_target?: boolean | null
+          keyword: string
+          optimization_run_id?: string | null
+          rank_position_at_optimization?: number | null
+          raw?: Json | null
+          relevance_score?: number | null
+          search_volume_estimate?: number | null
+          source?: string | null
+          youtube_video_id?: string | null
+        }
+        Update: {
+          competition_score?: number | null
+          created_at?: string | null
+          id?: string
+          is_target?: boolean | null
+          keyword?: string
+          optimization_run_id?: string | null
+          rank_position_at_optimization?: number | null
+          raw?: Json | null
+          relevance_score?: number | null
+          search_volume_estimate?: number | null
+          source?: string | null
+          youtube_video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_keyword_research_optimization_run_id_fkey"
+            columns: ["optimization_run_id"]
+            isOneToOne: false
+            referencedRelation: "optimization_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_keyword_research_youtube_video_id_fkey"
+            columns: ["youtube_video_id"]
+            isOneToOne: false
+            referencedRelation: "youtube_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       thumbnail_generations: {
         Row: {
           brand_id: string | null
@@ -2358,6 +2539,72 @@ export type Database = {
           },
           {
             foreignKeyName: "thumbnail_generations_youtube_video_id_fkey"
+            columns: ["youtube_video_id"]
+            isOneToOne: false
+            referencedRelation: "youtube_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_seo_scores: {
+        Row: {
+          description_score: number | null
+          engagement_signals_score: number | null
+          id: string
+          issues: Json | null
+          keyword_alignment_score: number | null
+          metadata_completeness_score: number | null
+          optimization_run_id: string | null
+          overall_score: number | null
+          raw: Json | null
+          scored_at: string | null
+          tags_score: number | null
+          thumbnail_score: number | null
+          title_score: number | null
+          youtube_video_id: string
+        }
+        Insert: {
+          description_score?: number | null
+          engagement_signals_score?: number | null
+          id?: string
+          issues?: Json | null
+          keyword_alignment_score?: number | null
+          metadata_completeness_score?: number | null
+          optimization_run_id?: string | null
+          overall_score?: number | null
+          raw?: Json | null
+          scored_at?: string | null
+          tags_score?: number | null
+          thumbnail_score?: number | null
+          title_score?: number | null
+          youtube_video_id: string
+        }
+        Update: {
+          description_score?: number | null
+          engagement_signals_score?: number | null
+          id?: string
+          issues?: Json | null
+          keyword_alignment_score?: number | null
+          metadata_completeness_score?: number | null
+          optimization_run_id?: string | null
+          overall_score?: number | null
+          raw?: Json | null
+          scored_at?: string | null
+          tags_score?: number | null
+          thumbnail_score?: number | null
+          title_score?: number | null
+          youtube_video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_seo_scores_optimization_run_id_fkey"
+            columns: ["optimization_run_id"]
+            isOneToOne: false
+            referencedRelation: "optimization_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_seo_scores_youtube_video_id_fkey"
             columns: ["youtube_video_id"]
             isOneToOne: false
             referencedRelation: "youtube_videos"

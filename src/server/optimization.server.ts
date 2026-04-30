@@ -186,8 +186,61 @@ export async function runOptimizationGenerate(params: {
   try {
     const transcript = transcriptRow?.transcript_text?.slice(0, 3000) ?? "(No transcript available)";
 
+    // --- Load SEO research context ---
+    const sb = supabaseAdmin as any;
+    let seoContext = "";
+    let targetKeywords: string[] = [];
+    let currentSeoScore = 0;
+
+    const { data: seoKws } = await sb
+      .from("seo_keyword_research")
+      .select("keyword, search_volume_estimate, competition_score, relevance_score, is_target")
+      .eq("youtube_video_id", params.youtubeVideoId)
+      .order("relevance_score", { ascending: false })
+      .limit(10);
+
+    if (seoKws?.length) {
+      const targets = seoKws.filter((k: any) => k.is_target);
+      const topKws = targets.length > 0 ? targets : seoKws.slice(0, 5);
+      targetKeywords = topKws.map((k: any) => k.keyword);
+      seoContext += `\nTARGET KEYWORDS (sorted by priority):\n`;
+      for (const k of topKws) {
+        seoContext += `- "${k.keyword}" (volume: ${k.search_volume_estimate ?? "?"}, competition: ${k.competition_score ?? "?"}, relevance: ${k.relevance_score ?? "?"})\n`;
+      }
+    }
+
+    const { data: seoScores } = await sb
+      .from("video_seo_scores")
+      .select("overall_score, issues")
+      .eq("youtube_video_id", params.youtubeVideoId)
+      .order("scored_at", { ascending: false })
+      .limit(1);
+
+    if (seoScores?.length) {
+      currentSeoScore = seoScores[0].overall_score ?? 0;
+      if (seoScores[0].issues?.length) {
+        seoContext += `\nCURRENT SEO ISSUES TO FIX:\n`;
+        for (const issue of seoScores[0].issues.slice(0, 8)) {
+          seoContext += `- [${issue.severity}] ${issue.message} → Fix: ${issue.fix}\n`;
+        }
+      }
+    }
+
+    const { data: compPatterns } = await sb
+      .from("seo_competitor_videos")
+      .select("title_length, title_starts_with_question, title_contains_number, description_length, tag_count")
+      .eq("optimization_run_id", run.id)
+      .limit(30);
+
+    if (compPatterns?.length > 3) {
+      const avgTitleLen = Math.round(compPatterns.reduce((s: number, c: any) => s + (c.title_length ?? 0), 0) / compPatterns.length);
+      const questionPct = Math.round(compPatterns.filter((c: any) => c.title_starts_with_question).length / compPatterns.length * 100);
+      const numberPct = Math.round(compPatterns.filter((c: any) => c.title_contains_number).length / compPatterns.length * 100);
+      seoContext += `\nCOMPETITOR PATTERNS:\n- Average title length: ${avgTitleLen} chars\n- ${questionPct}% start with a question\n- ${numberPct}% include a number\n`;
+    }
+
     for (const outputType of params.outputTypes) {
-      if (outputType === "thumbnail_concept" || outputType === "thumbnail_text") continue; // handled separately
+      if (outputType === "thumbnail_concept" || outputType === "thumbnail_text") continue;
 
       const systemPrompt = `You are a YouTube content optimization expert working for the brand "${brand?.name ?? "Unknown"}".
 You generate high-quality, brand-aligned ${outputType}s for YouTube videos.
@@ -217,13 +270,13 @@ ${transcript}
 CURRENT TITLE: ${video.current_title ?? "(none)"}
 CURRENT DESCRIPTION: ${(video.current_description ?? "(none)").slice(0, 500)}
 CURRENT TAGS: ${JSON.stringify(video.current_tags ?? [])}
-
+${seoContext}
 Generate 5 options for ${outputType}. For each, provide:
 - The ${outputType} itself (key: "content")
 - A one-sentence rationale (key: "rationale")
 - Self-assessed scores 0-100 (keys: "brand_voice_score", "human_sounding_score", "approval_likelihood_score", "seo_score")
 - Any guardrail warnings as string array (key: "warnings")
-
+${targetKeywords.length > 0 ? `\nIMPORTANT: Naturally include the top 2 target keywords: "${targetKeywords.slice(0, 2).join('", "')}". Address the SEO issues listed above.` : ""}
 ${outputType === "tags" ? 'For tags, "content" should be a comma-separated list of tags.' : ""}
 ${outputType === "description" ? "Description should be 150-300 words. Include relevant keywords naturally. End with a clear call-to-action." : ""}
 ${outputType === "title" ? "Title should be under 70 characters. Engaging but not clickbait." : ""}
@@ -492,6 +545,23 @@ export async function buildAuditQueue(brandId?: string): Promise<{ queued: numbe
     if (!v.last_optimized_at && v.published_at && Date.now() - new Date(v.published_at).getTime() > 90 * 86400000) {
       score *= 1.3;
       reasons.push("Never optimized, older than 90 days");
+    }
+
+    // SEO score multiplier: low SEO score + high impressions = high priority
+    const { data: seoRow } = await (supabaseAdmin as any)
+      .from("video_seo_scores")
+      .select("overall_score")
+      .eq("youtube_video_id", v.id)
+      .order("scored_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (seoRow?.overall_score != null) {
+      const seoMultiplier = 1 + (100 - seoRow.overall_score) / 100;
+      score *= seoMultiplier;
+      if (seoRow.overall_score < 50) {
+        reasons.push(`Low SEO score (${seoRow.overall_score})`);
+      }
     }
 
     if (reasons.length > 0) {
