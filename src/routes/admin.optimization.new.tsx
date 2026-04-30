@@ -180,7 +180,8 @@ function NewOptimizationPage() {
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success(`Found ${result.keywords.length} keyword candidates`);
+        const seedInfo = result.seedCount ? ` from ${result.seedCount} topic seeds` : "";
+        toast.success(`Found ${result.keywords.length} keyword candidates${seedInfo}`);
         qc.invalidateQueries({ queryKey: ["seo-keywords", videoId] });
       }
     } catch (err: any) {
