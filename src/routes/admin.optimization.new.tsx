@@ -304,6 +304,86 @@ function NewOptimizationPage() {
     outputsByType[o.output_type].push(o);
   }
 
+  function copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text).then(() => {
+      toast.success("Copied. Paste into YouTube.");
+    }).catch(() => {
+      toast.error("Failed to copy");
+    });
+  }
+
+  async function downloadImage(url: string, filename: string) {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+      toast.success("Thumbnail downloaded");
+    } catch {
+      toast.error("Failed to download");
+    }
+  }
+
+  function copyEntirePackage() {
+    const getSelected = (type: string) => outputs.find((o: any) => o.id === selections[type])?.content ?? "";
+    const selectedThumb = thumbnails[0];
+    const targetKwStr = keywords.filter((k: any) => k.is_target || selectedKeywordIds.includes(k.id)).map((k: any) => k.keyword).join(", ");
+
+    const separator = "═══════════════════════════════════════";
+    const pkg = [
+      separator,
+      "TITLE:",
+      getSelected("title"),
+      "",
+      separator,
+      "DESCRIPTION:",
+      getSelected("description"),
+      "",
+      separator,
+      "TAGS (paste into YouTube tag field):",
+      getSelected("tags"),
+      "",
+      separator,
+      "PINNED COMMENT (post after publishing):",
+      getSelected("pinned_comment"),
+      "",
+      separator,
+      "HOOK (first 3 seconds):",
+      getSelected("hook"),
+      "",
+      separator,
+      selectedThumb?.image_url ? `THUMBNAIL: download from ${selectedThumb.image_url}` : "THUMBNAIL: (none generated)",
+      selectedThumb?.text_overlay ? `THUMBNAIL TEXT OVERLAY: ${selectedThumb.text_overlay}` : "",
+      "",
+      separator,
+      "TARGET KEYWORDS (for reference):",
+      targetKwStr || "(none selected)",
+      "",
+      separator,
+      "PUBLISH CHECKLIST:",
+      "☐ Title pasted in YouTube",
+      "☐ Description pasted (with timestamps verified)",
+      "☐ Tags pasted",
+      "☐ Thumbnail uploaded",
+      "☐ Pinned comment posted after publish",
+      "☐ End screen elements reviewed",
+      "☐ Cards added (optional)",
+      "☐ Captions enabled",
+      separator,
+    ].join("\n");
+
+    navigator.clipboard.writeText(pkg).then(() => {
+      toast.success("Full package copied. Paste into YouTube Studio one section at a time.");
+    }).catch(() => {
+      toast.error("Failed to copy");
+    });
+  }
+
   const STEPS = [
     { n: 1, label: "Brand" },
     { n: 2, label: "Video" },
@@ -576,22 +656,37 @@ function NewOptimizationPage() {
               <h3 className="serif text-[18px] text-ink mb-3 capitalize">{type.replace(/_/g, " ")} Options</h3>
               <div className="space-y-3">
                 {variants.map((v: any) => {
-                  // Predict SEO delta
                   const currentOverall = seoScore?.overall_score ?? 0;
                   const predicted = predictClientSeoScore(type, v.content ?? "", keywords.filter((k: any) => k.is_target).map((k: any) => k.keyword), currentOverall);
 
                   return (
-                    <label key={v.id} className={cn("block p-4 rounded-lg border cursor-pointer transition-colors", selections[type] === v.id ? "border-gold bg-gold-bg" : "border-line bg-cream hover:bg-cream-deep")}>
+                    <label key={v.id} className={cn("block p-4 rounded-lg border cursor-pointer transition-colors relative", selections[type] === v.id ? "border-gold bg-gold-bg" : "border-line bg-cream hover:bg-cream-deep")}>
+                      {/* Copy button */}
+                      <button
+                        type="button"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); copyToClipboard(v.content ?? ""); }}
+                        className="absolute top-3 right-3 rounded-md bg-gold/90 px-2.5 py-1 text-[11px] font-medium text-white hover:bg-gold transition-colors z-10"
+                      >
+                        Copy
+                      </button>
                       <div className="flex items-start gap-3">
                         <input type="radio" name={`select-${type}`} checked={selections[type] === v.id} onChange={() => setSelections(prev => ({ ...prev, [type]: v.id }))} className="mt-1 accent-gold" />
-                        <div className="flex-1">
-                          <p className="text-[13px] text-ink whitespace-pre-wrap">{v.content}</p>
+                        <div className="flex-1 pr-16">
+                          {/* Content display */}
+                          <div className="text-[13px] text-ink whitespace-pre-wrap leading-relaxed font-mono bg-paper/50 rounded p-3 border border-line/50">
+                            {v.content}
+                          </div>
                           <p className="text-[11px] text-ink-muted mt-2 italic">{v.rationale}</p>
+
+                          {/* Component toggle for descriptions */}
+                          {type === "description" && v.content_json && (
+                            <DescriptionComponents contentJson={v.content_json} />
+                          )}
 
                           {/* SEO delta */}
                           {currentOverall > 0 && (
                             <div className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium">
-                              <span className="text-ink-muted">SEO:</span>
+                              <span className="text-ink-muted">Predicted SEO:</span>
                               <span className={currentOverall < predicted ? "text-sage" : "text-ink-muted"}>
                                 {currentOverall} → {predicted}
                               </span>
@@ -634,9 +729,19 @@ function NewOptimizationPage() {
                     ) : (
                       <div className="w-full aspect-video bg-cream-deep flex items-center justify-center text-ink-muted text-[12px]">No image</div>
                     )}
-                    <div className="p-3">
-                      <p className="text-[13px] text-ink font-medium">{t.text_overlay ?? "(no overlay)"}</p>
-                      <p className="text-[11px] text-ink-muted mt-1">{t.layout_notes}</p>
+                    <div className="p-3 flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-[13px] text-ink font-medium">{t.text_overlay ?? "(no overlay)"}</p>
+                        <p className="text-[11px] text-ink-muted mt-1">{t.layout_notes}</p>
+                      </div>
+                      {t.image_url && (
+                        <button
+                          onClick={() => downloadImage(t.image_url, `thumbnail_v${t.variant_index}.png`)}
+                          className="rounded-md bg-gold/90 px-2.5 py-1 text-[11px] font-medium text-white hover:bg-gold transition-colors whitespace-nowrap"
+                        >
+                          Download
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -663,7 +768,16 @@ function NewOptimizationPage() {
             </MCCard>
           )}
 
-          <div className="flex gap-3 mb-8">
+          {/* Action buttons */}
+          <div className="flex flex-wrap gap-3 mb-8">
+            {Object.keys(selections).length > 0 && (
+              <button
+                onClick={() => copyEntirePackage()}
+                className="rounded-lg bg-ink px-6 py-2.5 text-[13px] font-medium text-white hover:bg-ink/90 transition-colors"
+              >
+                📋 Copy Entire Optimized Package
+              </button>
+            )}
             <button onClick={handleSaveDraft} className="rounded-lg bg-gold px-6 py-2.5 text-[13px] font-medium text-white hover:bg-gold/90 transition-colors">Save as Draft</button>
             <Link to="/admin/optimization" className="rounded-lg border border-line bg-paper px-6 py-2.5 text-[13px] font-medium text-ink hover:bg-cream-deep transition-colors">Back to Dashboard</Link>
           </div>
@@ -713,4 +827,43 @@ function predictClientSeoScore(outputType: string, content: string, targetKeywor
     if (targetKeywords.some(kw => tagArr.some(t => t.toLowerCase().includes(kw.toLowerCase())))) predicted += 15;
   }
   return Math.min(100, Math.max(0, Math.round(predicted)));
+}
+
+function DescriptionComponents({ contentJson }: { contentJson: any }) {
+  const [show, setShow] = useState(false);
+  if (!contentJson) return null;
+
+  return (
+    <div className="mt-2">
+      <button
+        type="button"
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShow(!show); }}
+        className="text-[11px] text-gold hover:text-gold/80 font-medium transition-colors"
+      >
+        {show ? "▾ Hide components" : "▸ Show components"}
+      </button>
+      {show && (
+        <div className="mt-2 space-y-2 text-[11px] border-t border-line pt-2">
+          {contentJson.hook_line && (
+            <div><span className="text-ink-muted font-medium">Hook line:</span> <span className="text-ink">{contentJson.hook_line}</span></div>
+          )}
+          {contentJson.body && (
+            <div><span className="text-ink-muted font-medium">Body:</span> <span className="text-ink">{contentJson.body.slice(0, 200)}…</span></div>
+          )}
+          {contentJson.timestamps?.length > 0 && (
+            <div>
+              <span className="text-ink-muted font-medium">Timestamps:</span>
+              <div className="ml-2 text-ink">{contentJson.timestamps.map((t: any, i: number) => <div key={i}>{t.time} — {t.label}</div>)}</div>
+            </div>
+          )}
+          {contentJson.cta_block && (
+            <div><span className="text-ink-muted font-medium">CTA:</span> <span className="text-ink">{contentJson.cta_block}</span></div>
+          )}
+          {contentJson.hashtags?.length > 0 && (
+            <div><span className="text-ink-muted font-medium">Hashtags:</span> <span className="text-ink">{contentJson.hashtags.map((h: string) => `#${h}`).join(" ")}</span></div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
