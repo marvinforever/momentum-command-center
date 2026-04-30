@@ -368,71 +368,54 @@ Return as JSON array: [{"prompt": "...", "text_overlay": "...", "layout_notes": 
   }
 
   let generated = 0;
-  const replicateToken = process.env.REPLICATE_API_TOKEN;
+  const lovableKey = process.env.LOVABLE_API_KEY;
 
   for (let i = 0; i < Math.min(concepts.length, 3); i++) {
     const concept = concepts[i];
     let imageUrl: string | null = null;
     let costUsd = 0;
 
-    if (replicateToken) {
+    if (lovableKey) {
       try {
-        // Call Replicate Flux Pro
-        const predictionRes = await fetch("https://api.replicate.com/v1/predictions", {
+        // Use Lovable AI Gateway image generation model
+        const imgRes = await fetch(AI_GATEWAY_URL, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${replicateToken}`,
+            Authorization: `Bearer ${lovableKey}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            version: "black-forest-labs/flux-1.1-pro",
-            input: {
-              prompt: concept.prompt,
-              width: 1280,
-              height: 720,
-              num_outputs: 1,
-              aspect_ratio: "16:9",
-            },
+            model: "google/gemini-3-pro-image-preview",
+            messages: [
+              { role: "user", content: `Generate a YouTube thumbnail image (1280x720, 16:9 aspect ratio). ${concept.prompt}` },
+            ],
           }),
         });
 
-        if (predictionRes.ok) {
-          const prediction = await predictionRes.json() as any;
-          // Poll for completion
-          let attempts = 0;
-          let finalPrediction = prediction;
-          while (finalPrediction.status !== "succeeded" && finalPrediction.status !== "failed" && attempts < 60) {
-            await new Promise(r => setTimeout(r, 2000));
-            const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
-              headers: { Authorization: `Bearer ${replicateToken}` },
-            });
-            finalPrediction = await pollRes.json();
-            attempts++;
-          }
+        if (imgRes.ok) {
+          const imgData = await imgRes.json() as any;
+          // Check for inline image data in the response
+          const content = imgData.choices?.[0]?.message?.content;
+          const inlineImage = imgData.choices?.[0]?.message?.inline_images?.[0];
 
-          if (finalPrediction.status === "succeeded" && finalPrediction.output) {
-            const outputUrl = Array.isArray(finalPrediction.output) ? finalPrediction.output[0] : finalPrediction.output;
+          if (inlineImage?.data) {
+            // Upload base64 image to Supabase storage
+            const buffer = Uint8Array.from(atob(inlineImage.data), c => c.charCodeAt(0));
+            const storagePath = `${params.brandId}/${params.youtubeVideoId}/${Date.now()}_v${i + 1}.png`;
 
-            // Download and upload to Supabase storage
-            const imgRes = await fetch(outputUrl);
-            if (imgRes.ok) {
-              const imgBuffer = await imgRes.arrayBuffer();
-              const storagePath = `${params.brandId}/${params.youtubeVideoId}/${Date.now()}_v${i + 1}.jpg`;
+            const { error: uploadErr } = await supabaseAdmin.storage
+              .from("thumbnails")
+              .upload(storagePath, buffer, { contentType: "image/png", upsert: true });
 
-              const { error: uploadErr } = await supabaseAdmin.storage
-                .from("thumbnails")
-                .upload(storagePath, imgBuffer, { contentType: "image/jpeg", upsert: true });
-
-              if (!uploadErr) {
-                const { data: pubUrl } = supabaseAdmin.storage.from("thumbnails").getPublicUrl(storagePath);
-                imageUrl = pubUrl.publicUrl;
-                costUsd = 0.05; // approximate Flux Pro cost
-              }
+            if (!uploadErr) {
+              const { data: pubUrl } = supabaseAdmin.storage.from("thumbnails").getPublicUrl(storagePath);
+              imageUrl = pubUrl.publicUrl;
+              costUsd = 0.02;
             }
           }
         }
       } catch (err) {
-        console.error(`Replicate error for thumbnail ${i + 1}:`, err);
+        console.error(`AI image generation error for thumbnail ${i + 1}:`, err);
       }
     }
 
@@ -442,9 +425,9 @@ Return as JSON array: [{"prompt": "...", "text_overlay": "...", "layout_notes": 
       brand_id: params.brandId,
       variant_index: i + 1,
       prompt: concept.prompt,
-      generation_model: replicateToken ? "flux-1.1-pro" : "none",
+      generation_model: lovableKey ? "gemini-3-pro-image-preview" : "none",
       image_url: imageUrl,
-      storage_path: imageUrl ? `thumbnails/${params.brandId}/${params.youtubeVideoId}/${Date.now()}_v${i + 1}.jpg` : null,
+      storage_path: imageUrl ? `thumbnails/${params.brandId}/${params.youtubeVideoId}/${Date.now()}_v${i + 1}.png` : null,
       text_overlay: concept.text_overlay,
       layout_notes: concept.layout_notes,
       cost_usd: costUsd,
