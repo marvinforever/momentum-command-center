@@ -239,12 +239,65 @@ export async function runOptimizationGenerate(params: {
       seoContext += `\nCOMPETITOR PATTERNS:\n- Average title length: ${avgTitleLen} chars\n- ${questionPct}% start with a question\n- ${numberPct}% include a number\n`;
     }
 
+    // --- Load brand resource links & description template ---
+    const { data: resourceLinks } = await (sb as any)
+      .from("brand_resource_links")
+      .select("link_label, url, category")
+      .eq("brand_id", params.brandId)
+      .eq("is_active", true)
+      .order("display_order");
+
+    const { data: voiceProfile } = await sb
+      .from("brand_voice_profiles")
+      .select("description_template")
+      .eq("brand_id", params.brandId)
+      .limit(1)
+      .maybeSingle();
+
+    const descTemplate = (voiceProfile as any)?.description_template ?? `{HOOK_LINE}\n\n{BODY}\n\n📌 In this video:\n{TIMESTAMPS}\n\n{CTA_BLOCK}\n\n🔗 Resources:\n{RESOURCE_LINKS}\n\n{HASHTAGS}`;
+
+    // Load transcript segments for timestamps
+    const { data: transcriptFull } = await supabaseAdmin
+      .from("video_transcripts")
+      .select("segments")
+      .eq("youtube_video_id", params.youtubeVideoId)
+      .maybeSingle();
+
+    const hasSegments = transcriptFull?.segments && Array.isArray(transcriptFull.segments) && transcriptFull.segments.length > 10;
+
+    // Build resource links string
+    const resourceLinksStr = (resourceLinks ?? []).map((l: any) => `• ${l.link_label}: ${l.url}`).join("\n");
+    const primaryCta = (resourceLinks ?? []).find((l: any) => l.category === "offer");
+
     for (const outputType of params.outputTypes) {
       if (outputType === "thumbnail_concept" || outputType === "thumbnail_text") continue;
 
       const systemPrompt = `You are a YouTube content optimization expert working for the brand "${brand?.name ?? "Unknown"}".
 You generate high-quality, brand-aligned ${outputType}s for YouTube videos.
 You MUST return valid JSON only. No preamble, no explanation outside JSON.`;
+
+      let typeInstructions = "";
+      if (outputType === "description") {
+        typeInstructions = `Generate a PASTE-READY YouTube description with these components:
+- "hook_line": One compelling line (≤120 chars) containing the primary target keyword. This is the first thing viewers see.
+- "body": 2-3 paragraphs (150-250 words) woven with target keywords, in brand voice. No markdown formatting.
+- "timestamps": An array of 5-8 chapter timestamps. Format each as {"time": "0:00", "label": "Chapter title"}.${hasSegments ? " Use real segment data to infer topic changes." : " Generate plausible timestamps based on typical video structure (mark as drafts)."}
+- "cta_block": A single warm sentence + CTA.${primaryCta ? ` Include: ${primaryCta.url}` : ""}
+- "hashtags": Array of 3-5 hashtags from target keywords (just the words, I'll add #).
+- "rationale": One-sentence rationale.
+- "brand_voice_score", "human_sounding_score", "approval_likelihood_score", "seo_score": 0-100
+- "warnings": string array
+
+Return as JSON array of 3 options: [{"hook_line": "...", "body": "...", "timestamps": [{"time":"0:00","label":"..."}], "cta_block": "...", "hashtags": ["word1","word2"], "rationale": "...", "brand_voice_score": N, ...}]`;
+      } else if (outputType === "tags") {
+        typeInstructions = `For tags, "content" should be a comma-separated list of 8-15 tags ready to paste into YouTube's tag field. Mix broad and long-tail. Include target keywords and brand name.`;
+      } else if (outputType === "title") {
+        typeInstructions = `Title should be under 70 characters. Engaging but not clickbait.`;
+      } else if (outputType === "pinned_comment") {
+        typeInstructions = `Write a warm, engaging pinned comment that drives discussion. 2-4 sentences. Ready to paste as-is.`;
+      } else if (outputType === "hook") {
+        typeInstructions = `Write the first 3 sentences/hook of the video that grabs attention in the first 5 seconds.`;
+      }
 
       const userPrompt = `BRAND VOICE:
 ${voice.voice_summary}
@@ -271,19 +324,9 @@ CURRENT TITLE: ${video.current_title ?? "(none)"}
 CURRENT DESCRIPTION: ${(video.current_description ?? "(none)").slice(0, 500)}
 CURRENT TAGS: ${JSON.stringify(video.current_tags ?? [])}
 ${seoContext}
-Generate 5 options for ${outputType}. For each, provide:
-- The ${outputType} itself (key: "content")
-- A one-sentence rationale (key: "rationale")
-- Self-assessed scores 0-100 (keys: "brand_voice_score", "human_sounding_score", "approval_likelihood_score", "seo_score")
-- Any guardrail warnings as string array (key: "warnings")
+${typeInstructions}
 ${targetKeywords.length > 0 ? `\nIMPORTANT: Naturally include the top 2 target keywords: "${targetKeywords.slice(0, 2).join('", "')}". Address the SEO issues listed above.` : ""}
-${outputType === "tags" ? 'For tags, "content" should be a comma-separated list of tags.' : ""}
-${outputType === "description" ? "Description should be 150-300 words. Include relevant keywords naturally. End with a clear call-to-action." : ""}
-${outputType === "title" ? "Title should be under 70 characters. Engaging but not clickbait." : ""}
-${outputType === "pinned_comment" ? "Write a warm, engaging pinned comment that drives discussion. 2-4 sentences." : ""}
-${outputType === "hook" ? "Write the first 3 sentences/hook of the video that grabs attention in the first 5 seconds." : ""}
-
-Return as JSON array: [{"content": "...", "rationale": "...", "brand_voice_score": N, "human_sounding_score": N, "approval_likelihood_score": N, "seo_score": N, "warnings": []}]`;
+${outputType !== "description" ? `\nGenerate 5 options. Return as JSON array: [{"content": "...", "rationale": "...", "brand_voice_score": N, "human_sounding_score": N, "approval_likelihood_score": N, "seo_score": N, "warnings": []}]` : ""}`;
 
       const result = await callClaude(systemPrompt, userPrompt);
       totalCost += computeCost(result.inputTokens, result.outputTokens);
@@ -293,7 +336,6 @@ Return as JSON array: [{"content": "...", "rationale": "...", "brand_voice_score
       // Parse JSON from Claude response
       let variants: any[] = [];
       try {
-        // Try to extract JSON array from the response
         const jsonMatch = result.text.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
           variants = JSON.parse(jsonMatch[0]);
@@ -303,14 +345,44 @@ Return as JSON array: [{"content": "...", "rationale": "...", "brand_voice_score
         continue;
       }
 
+      // For descriptions, assemble the paste-ready string
+      if (outputType === "description") {
+        for (const v of variants) {
+          const hookLine = v.hook_line ?? "";
+          const body = v.body ?? v.content ?? "";
+          const timestamps = (v.timestamps ?? []).map((t: any) => `${t.time} — ${t.label}`).join("\n");
+          const ctaBlock = v.cta_block ?? "";
+          const hashtags = (v.hashtags ?? []).map((h: string) => `#${h.replace(/^#/, "")}`).join(" ");
+
+          const assembled = descTemplate
+            .replace("{HOOK_LINE}", hookLine)
+            .replace("{BODY}", body)
+            .replace("{TIMESTAMPS}", timestamps || "(timestamps to be added)")
+            .replace("{CTA_BLOCK}", ctaBlock)
+            .replace("{RESOURCE_LINKS}", resourceLinksStr || "(no resource links)")
+            .replace("{HASHTAGS}", hashtags);
+
+          v.content = assembled;
+          v.content_json = {
+            hook_line: hookLine,
+            body,
+            timestamps: v.timestamps ?? [],
+            cta_block: ctaBlock,
+            resource_links: (resourceLinks ?? []).map((l: any) => ({ label: l.link_label, url: l.url })),
+            hashtags: v.hashtags ?? [],
+            assembled_full_text: assembled,
+          };
+        }
+      }
+
       // Run guardrails and re-score, then take top 3
       const scored = variants.map((v: any) => {
-        const guardrails = runGuardrails(v.content ?? "", voice.banned_phrases);
+        const content = v.content ?? "";
+        const guardrails = runGuardrails(content, voice.banned_phrases);
         return {
           ...v,
           passed_guardrails: guardrails.passed,
           guardrail_warnings: [...(v.warnings ?? []), ...guardrails.warnings],
-          // Composite score for ranking
           composite: (
             (v.brand_voice_score ?? 50) * 0.35 +
             (v.human_sounding_score ?? 50) * 0.20 +
@@ -331,7 +403,7 @@ Return as JSON array: [{"content": "...", "rationale": "...", "brand_voice_score
           output_type: outputType,
           variant_index: i + 1,
           content: v.content ?? "",
-          content_json: outputType === "tags" ? { tags: (v.content ?? "").split(",").map((t: string) => t.trim()) } : null,
+          content_json: v.content_json ?? (outputType === "tags" ? { tags: (v.content ?? "").split(",").map((t: string) => t.trim()) } : null),
           rationale: v.rationale ?? "",
           brand_voice_score: v.brand_voice_score ?? null,
           human_sounding_score: v.human_sounding_score ?? null,
