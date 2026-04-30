@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as YoutubeRouteImport } from './routes/youtube'
 import { Route as WidgetsRouteImport } from './routes/widgets'
+import { Route as OptimizationRouteImport } from './routes/optimization'
 import { Route as MetaRouteImport } from './routes/meta'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LinkedinRouteImport } from './routes/linkedin'
@@ -54,6 +55,11 @@ const YoutubeRoute = YoutubeRouteImport.update({
 const WidgetsRoute = WidgetsRouteImport.update({
   id: '/widgets',
   path: '/widgets',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OptimizationRoute = OptimizationRouteImport.update({
+  id: '/optimization',
+  path: '/optimization',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MetaRoute = MetaRouteImport.update({
@@ -245,6 +251,7 @@ export interface FileRoutesByFullPath {
   '/linkedin': typeof LinkedinRoute
   '/login': typeof LoginRoute
   '/meta': typeof MetaRoute
+  '/optimization': typeof OptimizationRoute
   '/widgets': typeof WidgetsRoute
   '/youtube': typeof YoutubeRoute
   '/admin/brands': typeof AdminBrandsRoute
@@ -282,6 +289,7 @@ export interface FileRoutesByTo {
   '/linkedin': typeof LinkedinRoute
   '/login': typeof LoginRoute
   '/meta': typeof MetaRoute
+  '/optimization': typeof OptimizationRoute
   '/widgets': typeof WidgetsRoute
   '/youtube': typeof YoutubeRoute
   '/admin/brands': typeof AdminBrandsRoute
@@ -321,6 +329,7 @@ export interface FileRoutesById {
   '/linkedin': typeof LinkedinRoute
   '/login': typeof LoginRoute
   '/meta': typeof MetaRoute
+  '/optimization': typeof OptimizationRoute
   '/widgets': typeof WidgetsRoute
   '/youtube': typeof YoutubeRoute
   '/admin/brands': typeof AdminBrandsRoute
@@ -361,6 +370,7 @@ export interface FileRouteTypes {
     | '/linkedin'
     | '/login'
     | '/meta'
+    | '/optimization'
     | '/widgets'
     | '/youtube'
     | '/admin/brands'
@@ -398,6 +408,7 @@ export interface FileRouteTypes {
     | '/linkedin'
     | '/login'
     | '/meta'
+    | '/optimization'
     | '/widgets'
     | '/youtube'
     | '/admin/brands'
@@ -436,6 +447,7 @@ export interface FileRouteTypes {
     | '/linkedin'
     | '/login'
     | '/meta'
+    | '/optimization'
     | '/widgets'
     | '/youtube'
     | '/admin/brands'
@@ -475,6 +487,7 @@ export interface RootRouteChildren {
   LinkedinRoute: typeof LinkedinRoute
   LoginRoute: typeof LoginRoute
   MetaRoute: typeof MetaRoute
+  OptimizationRoute: typeof OptimizationRoute
   WidgetsRoute: typeof WidgetsRoute
   YoutubeRoute: typeof YoutubeRoute
   CampaignsIdRoute: typeof CampaignsIdRoute
@@ -506,6 +519,13 @@ declare module '@tanstack/react-router' {
       path: '/widgets'
       fullPath: '/widgets'
       preLoaderRoute: typeof WidgetsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/optimization': {
+      id: '/optimization'
+      path: '/optimization'
+      fullPath: '/optimization'
+      preLoaderRoute: typeof OptimizationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/meta': {
@@ -806,6 +826,7 @@ const rootRouteChildren: RootRouteChildren = {
   LinkedinRoute: LinkedinRoute,
   LoginRoute: LoginRoute,
   MetaRoute: MetaRoute,
+  OptimizationRoute: OptimizationRoute,
   WidgetsRoute: WidgetsRoute,
   YoutubeRoute: YoutubeRoute,
   CampaignsIdRoute: CampaignsIdRoute,
