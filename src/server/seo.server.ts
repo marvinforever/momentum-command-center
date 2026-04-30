@@ -226,7 +226,7 @@ Return as JSON array of strings: ["seed phrase 1", "seed phrase 2", ...]`
 
     // Insert
     for (const kw of top30) {
-      await supabaseAdmin.from("seo_keyword_research").insert({
+      await (supabaseAdmin as any).from("seo_keyword_research").insert({
         youtube_video_id: params.youtubeVideoId,
         optimization_run_id: params.optimizationRunId ?? null,
         keyword: kw.keyword,
@@ -426,7 +426,7 @@ export async function runSeoScore(params: {
       issues,
     };
 
-    await supabaseAdmin.from("video_seo_scores").insert(scoreRow);
+    await (supabaseAdmin as any).from("video_seo_scores").insert(scoreRow);
 
     return { score: scoreRow };
   } catch (err: any) {
@@ -484,7 +484,7 @@ export async function runCompetitorAnalysis(params: {
         };
 
         allCompetitors.push(comp);
-        await supabaseAdmin.from("seo_competitor_videos").insert(comp);
+        await (supabaseAdmin as any).from("seo_competitor_videos").insert(comp);
       }
     }
 
