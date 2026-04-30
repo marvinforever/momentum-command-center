@@ -129,11 +129,62 @@ async function youtubeVideoDetails(videoIds: string[]): Promise<any[]> {
   return data.items ?? [];
 }
 
+// ---------- Metadata seed extraction helpers ----------
+const STOPWORDS = new Set([
+  "a","an","the","and","or","but","in","on","at","to","for","of","with","by",
+  "from","up","about","into","through","during","before","after","above","below",
+  "between","out","off","over","under","again","further","then","once","here",
+  "there","when","where","why","how","all","both","each","few","more","most",
+  "other","some","such","no","nor","not","only","own","same","so","than","too",
+  "very","s","t","can","will","just","don","should","now","i","me","my","you",
+  "your","he","she","it","we","they","is","are","was","were","be","been","being",
+  "have","has","had","do","does","did","this","that","these","those",
+]);
+
+function extractMetadataSeeds(title: string, tags: string[], description: string): string[] {
+  const seeds = new Set<string>();
+
+  // 1. Sliding window on title: 2-word and 3-word phrases
+  const titleWords = title.toLowerCase().replace(/[^\w\s]/g, "").split(/\s+/).filter(w => w.length > 1);
+  for (let w = 2; w <= 3; w++) {
+    for (let i = 0; i <= titleWords.length - w; i++) {
+      const phrase = titleWords.slice(i, i + w).join(" ");
+      if (!phrase.split(" ").every(word => STOPWORDS.has(word))) {
+        seeds.add(phrase);
+      }
+    }
+  }
+  // Also add the full title (capped at 4 words) as a seed
+  if (titleWords.length >= 2) {
+    seeds.add(titleWords.slice(0, 4).join(" "));
+  }
+
+  // 2. Each tag is a seed
+  for (const tag of tags) {
+    const t = tag.toLowerCase().trim();
+    if (t.length > 1) seeds.add(t);
+  }
+
+  // 3. Noun phrases from first 200 chars of description
+  const descChunk = description.slice(0, 200).toLowerCase().replace(/[^\w\s]/g, "");
+  const descWords = descChunk.split(/\s+/).filter(w => w.length > 2 && !STOPWORDS.has(w));
+  // Build 2-word phrases from remaining content words
+  for (let i = 0; i < descWords.length - 1; i++) {
+    seeds.add(`${descWords[i]} ${descWords[i + 1]}`);
+  }
+  // Add individual strong words
+  for (const w of descWords) {
+    if (w.length >= 5) seeds.add(w);
+  }
+
+  return [...seeds].slice(0, 15);
+}
+
 // ---------- KEYWORD RESEARCH ----------
 export async function runKeywordResearch(params: {
   youtubeVideoId: string;
   optimizationRunId?: string;
-}): Promise<{ keywords: any[]; error?: string }> {
+}): Promise<{ keywords: any[]; seedCount?: number; error?: string }> {
   try {
     console.log(`[seo] Starting keyword research for video ${params.youtubeVideoId}`);
 
@@ -157,33 +208,63 @@ export async function runKeywordResearch(params: {
     const transcriptText = transcript?.transcript_text?.slice(0, 3000) ?? "";
     const title = video.current_title ?? "";
     const description = (video.current_description ?? "").slice(0, 500);
+    const currentTags = (video.current_tags as string[]) ?? [];
 
-    console.log(`[seo] Transcript length: ${transcriptText.length}, Title: "${title}", Desc length: ${description.length}`);
+    console.log(`[seo] Transcript length: ${transcriptText.length}, Title: "${title}", Desc length: ${description.length}, Tags: ${currentTags.length}`);
 
-    // 1. Extract topic seeds via Claude
-    const seedResponse = await callClaude(
-      "You extract core topic seeds from YouTube video content. Return JSON only.",
-      `Extract 5-7 short topic seed phrases (2-4 words each) from this video content.
+    // --- Layer 1: Metadata seeds (synchronous, always works) ---
+    const metadataSeeds = extractMetadataSeeds(title, currentTags, description);
+    console.log(`[seo] Metadata seeds (${metadataSeeds.length}):`, metadataSeeds);
+
+    // --- Layer 2: Claude enrichment (optional, may fail) ---
+    let claudeSeeds: string[] = [];
+    if (transcriptText.length > 0) {
+      try {
+        const seedResponse = await callClaude(
+          "You extract core topic seeds from YouTube video content. Respond with ONLY a valid JSON array. No prose, no markdown code fences, no explanation.",
+          `Extract 5-7 short topic seed phrases (2-4 words each) from this video content.
 These should be searchable topics someone might type into YouTube.
 
 Title: ${title}
 Description: ${description}
 Transcript excerpt: ${transcriptText.slice(0, 2000)}
 
-Return as JSON array of strings: ["seed phrase 1", "seed phrase 2", ...]`
-    );
+Respond with ONLY a valid JSON array. No prose, no markdown code fences, no explanation. Example: ["phrase one", "phrase two"]`
+        );
 
-    console.log(`[seo] Claude seed response: ${seedResponse.slice(0, 200)}`);
+        console.log(`[seo] Claude seed response: ${seedResponse.slice(0, 200)}`);
 
-    let seeds: string[] = [];
-    try {
-      const match = seedResponse.match(/\[[\s\S]*?\]/);
-      if (match) seeds = JSON.parse(match[0]);
-    } catch {
-      seeds = [title.split(" ").slice(0, 4).join(" ")];
+        // Tolerant parsing: try multiple regex patterns
+        let parsed: string[] | null = null;
+        const patterns = [/\[[\s\S]*\]/, /\[.*\]/s, /\[.*?\]/];
+        for (const pat of patterns) {
+          if (parsed) break;
+          try {
+            const m = seedResponse.match(pat);
+            if (m) {
+              const arr = JSON.parse(m[0]);
+              if (Array.isArray(arr) && arr.every((x: any) => typeof x === "string")) {
+                parsed = arr;
+              }
+            }
+          } catch { /* try next pattern */ }
+        }
+        claudeSeeds = (parsed ?? []).map((s: string) => s.toLowerCase().trim()).filter(Boolean);
+        console.log(`[seo] Claude seeds (${claudeSeeds.length}):`, claudeSeeds);
+      } catch (err: any) {
+        console.log(`[seo] Claude seed extraction failed, using metadata-only seeds: ${err.message}`);
+      }
+    } else {
+      console.log("[seo] No transcript available, using metadata-only seeds.");
     }
 
-    console.log(`[seo] Extracted ${seeds.length} seeds: ${JSON.stringify(seeds)}`)
+    // --- Combine seeds ---
+    const seeds = [...new Set([...metadataSeeds, ...claudeSeeds])].slice(0, 12);
+    console.log(`[seo] Final seeds (${seeds.length}):`, seeds);
+
+    if (seeds.length === 0) {
+      return { keywords: [], seedCount: 0, error: "Could not extract topic seeds. Add tags or description to the video first." };
+    }
 
     // 2. YouTube autocomplete for each seed (free, unlimited)
     const allSuggestions = new Map<string, { source: string; rank: number }>();
@@ -198,13 +279,18 @@ Return as JSON array of strings: ["seed phrase 1", "seed phrase 2", ...]`
       });
     }
 
-    // Also add transcript-extracted seeds
+    // Also add seeds themselves as candidates
     seeds.forEach((s) => {
       const key = s.toLowerCase().trim();
       if (!allSuggestions.has(key)) {
-        allSuggestions.set(key, { source: "transcript_extract", rank: 5 });
+        allSuggestions.set(key, { source: "metadata_seed", rank: 5 });
       }
     });
+
+    // Fallback: if autocomplete returned nothing, use metadata seeds as candidates
+    if (allSuggestions.size <= seeds.length) {
+      console.log("[seo] Autocomplete returned no extra results; using metadata seeds as candidates.");
+    }
 
     console.log(`[seo] Total suggestions collected: ${allSuggestions.size}`);
 
@@ -273,6 +359,7 @@ Return as JSON array of strings: ["seed phrase 1", "seed phrase 2", ...]`
 
     return {
       keywords: top30.map(({ _composite, ...rest }) => rest),
+      seedCount: seeds.length,
     };
   } catch (err: any) {
     return { keywords: [], error: err.message };
