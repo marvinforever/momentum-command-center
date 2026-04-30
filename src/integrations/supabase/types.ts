@@ -129,6 +129,47 @@ export type Database = {
           },
         ]
       }
+      brand_resource_links: {
+        Row: {
+          brand_id: string
+          category: string | null
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          link_label: string
+          url: string
+        }
+        Insert: {
+          brand_id: string
+          category?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          link_label: string
+          url: string
+        }
+        Update: {
+          brand_id?: string
+          category?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          link_label?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_resource_links_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brand_voice_profiles: {
         Row: {
           approved_description_examples: Json | null
@@ -139,6 +180,7 @@ export type Database = {
           brand_id: string
           brand_promises: string | null
           created_at: string | null
+          description_template: string | null
           id: string
           preferred_cta_styles: Json | null
           rejected_title_examples: Json | null
@@ -158,6 +200,7 @@ export type Database = {
           brand_id: string
           brand_promises?: string | null
           created_at?: string | null
+          description_template?: string | null
           id?: string
           preferred_cta_styles?: Json | null
           rejected_title_examples?: Json | null
@@ -177,6 +220,7 @@ export type Database = {
           brand_id?: string
           brand_promises?: string | null
           created_at?: string | null
+          description_template?: string | null
           id?: string
           preferred_cta_styles?: Json | null
           rejected_title_examples?: Json | null
