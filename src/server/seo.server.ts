@@ -169,6 +169,7 @@ Return as JSON array of strings: ["seed phrase 1", "seed phrase 2", ...]`
     const allSuggestions = new Map<string, { source: string; rank: number }>();
     for (const seed of seeds.slice(0, 7)) {
       const suggestions = await fetchAutocomplete(seed);
+      console.log(`[seo] Autocomplete for "${seed}": ${suggestions.length} suggestions`);
       suggestions.forEach((s, i) => {
         const key = s.toLowerCase().trim();
         if (!allSuggestions.has(key)) {
