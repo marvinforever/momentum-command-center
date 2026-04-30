@@ -1,6 +1,6 @@
 /**
  * YouTube Optimization Engine — server-only helpers.
- * Calls Anthropic Claude for content generation and Replicate for thumbnail images.
+ * Uses Lovable AI Gateway for content generation and image thumbnails.
  * NEVER import this from client code.
  */
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -31,43 +31,45 @@ interface VideoContext {
 
 type OutputType = "title" | "description" | "tags" | "pinned_comment" | "hook" | "thumbnail_concept" | "thumbnail_text" | "hashtags";
 
-// ---------- Anthropic helpers ----------
-async function callClaude(systemPrompt: string, userPrompt: string): Promise<{ text: string; inputTokens: number; outputTokens: number }> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
+// ---------- Lovable AI Gateway helpers ----------
+const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+async function callClaude(systemPrompt: string, userPrompt: string): Promise<{ text: string; inputTokens: number; outputTokens: number }> {
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
+
+  const res = await fetch(AI_GATEWAY_URL, {
     method: "POST",
     headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4096,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userPrompt }],
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
     }),
   });
 
   if (!res.ok) {
     const errText = await res.text();
-    throw new Error(`Claude API error ${res.status}: ${errText}`);
+    throw new Error(`AI Gateway error ${res.status}: ${errText}`);
   }
 
   const data = await res.json() as any;
-  const text = data.content?.[0]?.text ?? "";
+  const text = data.choices?.[0]?.message?.content ?? "";
   return {
     text,
-    inputTokens: data.usage?.input_tokens ?? 0,
-    outputTokens: data.usage?.output_tokens ?? 0,
+    inputTokens: data.usage?.prompt_tokens ?? 0,
+    outputTokens: data.usage?.completion_tokens ?? 0,
   };
 }
 
 function computeCost(inputTokens: number, outputTokens: number): number {
-  // Claude Sonnet 4 pricing: $3/M input, $15/M output
-  return (inputTokens * 3 + outputTokens * 15) / 1_000_000;
+  // Approximate cost tracking (Lovable AI usage-based)
+  return (inputTokens + outputTokens) / 1_000_000 * 0.5;
 }
 
 // ---------- Brand voice loader ----------
