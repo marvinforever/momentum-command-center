@@ -560,7 +560,7 @@ export async function runKeywordRankingCheck(params: {
       const results = await youtubeSearch(t.keyword, 50);
       const rankPos = results.findIndex((r: any) => r.id?.videoId === externalId);
 
-      await supabaseAdmin.from("keyword_rankings").insert({
+      await (supabaseAdmin as any).from("keyword_rankings").insert({
         youtube_video_id: t.youtube_video_id,
         keyword: t.keyword,
         rank_position: rankPos >= 0 ? rankPos + 1 : null,
