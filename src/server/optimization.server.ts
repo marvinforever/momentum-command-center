@@ -691,33 +691,42 @@ export async function fetchTranscript(youtubeVideoId: string, externalVideoId: s
     // --- Strategy 2: YouTube timedtext endpoint (works without OAuth) ---
     console.log("[transcript] Trying timedtext endpoint...");
     const timedtextUrl = `https://www.youtube.com/api/timedtext?v=${externalVideoId}&lang=en&fmt=json3`;
-    const ttRes = await fetch(timedtextUrl, {
-      headers: { "Accept-Language": "en-US,en;q=0.9" },
-    });
+    try {
+      const ttRes = await fetch(timedtextUrl, {
+        headers: { "Accept-Language": "en-US,en;q=0.9" },
+      });
 
-    if (ttRes.ok) {
-      const ttData = await ttRes.json() as any;
-      const events = ttData.events ?? [];
-      if (events.length > 0) {
-        const text = events
-          .filter((e: any) => e.segs)
-          .map((e: any) => e.segs.map((s: any) => s.utf8 ?? "").join(""))
-          .join(" ")
-          .replace(/\n/g, " ")
-          .replace(/\s+/g, " ")
-          .trim();
+      if (ttRes.ok) {
+        const ttText = await ttRes.text();
+        if (ttText && ttText.startsWith("{")) {
+          const ttData = JSON.parse(ttText);
+          const events = ttData.events ?? [];
+          if (events.length > 0) {
+            const text = events
+              .filter((e: any) => e.segs)
+              .map((e: any) => e.segs.map((s: any) => s.utf8 ?? "").join(""))
+              .join(" ")
+              .replace(/\n/g, " ")
+              .replace(/\s+/g, " ")
+              .trim();
 
-        if (text && text.length > 20) {
-          console.log(`[transcript] Got ${text.length} chars from timedtext`);
-          await supabaseAdmin.from("video_transcripts").upsert({
-            youtube_video_id: youtubeVideoId,
-            transcript_text: text,
-            language: "en",
-            segments: events.slice(0, 500),
-          }, { onConflict: "youtube_video_id" });
-          return { success: true };
+            if (text && text.length > 20) {
+              console.log(`[transcript] Got ${text.length} chars from timedtext`);
+              await supabaseAdmin.from("video_transcripts").upsert({
+                youtube_video_id: youtubeVideoId,
+                transcript_text: text,
+                language: "en",
+                segments: events.slice(0, 500),
+              }, { onConflict: "youtube_video_id" });
+              return { success: true };
+            }
+          }
+        } else {
+          console.log(`[transcript] timedtext response not JSON (length: ${ttText.length})`);
         }
       }
+    } catch (e) {
+      console.log(`[transcript] timedtext failed: ${(e as any).message}`);
     }
 
     // --- Strategy 3: Try auto-generated captions (asr=1) ---
