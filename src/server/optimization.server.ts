@@ -689,7 +689,7 @@ export async function fetchTranscript(youtubeVideoId: string, externalVideoId: s
             
             if (Object.keys(updateFields).length > 0) {
               console.log(`[transcript] Updating video metadata: title="${updateFields.current_title?.slice(0, 50)}"`);
-              await supabaseAdmin.from("youtube_videos").update(updateFields).eq("id", youtubeVideoId);
+              await supabaseAdmin.from("youtube_videos").update(updateFields as any).eq("id", youtubeVideoId);
             }
           }
         }
