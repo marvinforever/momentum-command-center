@@ -68,12 +68,32 @@ async function callClaude(systemPrompt: string, userPrompt: string): Promise<str
 // ---------- YouTube Autocomplete (free, no quota) ----------
 async function fetchAutocomplete(seed: string): Promise<string[]> {
   try {
+    // Try YouTube-specific autocomplete first
+    const ytUrl = `https://clients1.google.com/complete/search?client=youtube&ds=yt&q=${encodeURIComponent(seed)}`;
+    const res = await fetch(ytUrl, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+    });
+    if (res.ok) {
+      const text = await res.text();
+      // Response is JSONP: window.google.ac.h([...])
+      const match = text.match(/\[.*\]/s);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        // Format: [query, [[suggestion, 0, [512,433]], ...], ...]
+        if (Array.isArray(parsed[1])) {
+          return parsed[1].map((item: any) => item[0]).filter(Boolean);
+        }
+      }
+    }
+
+    // Fallback: suggestqueries endpoint
     const url = `https://suggestqueries.google.com/complete/search?client=firefox&ds=yt&q=${encodeURIComponent(seed)}`;
-    const res = await fetch(url);
-    if (!res.ok) return [];
-    const data = await res.json() as any;
+    const res2 = await fetch(url);
+    if (!res2.ok) return [];
+    const data = await res2.json() as any;
     return (data[1] as string[]) ?? [];
-  } catch {
+  } catch (err) {
+    console.log(`[seo] Autocomplete failed for "${seed}": ${(err as any).message}`);
     return [];
   }
 }
