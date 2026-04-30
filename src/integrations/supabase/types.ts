@@ -14,6 +14,236 @@ export type Database = {
   }
   public: {
     Tables: {
+      approval_feedback: {
+        Row: {
+          brand_id: string | null
+          id: string
+          optimization_output_id: string | null
+          output_content: string | null
+          output_type: string | null
+          rated_at: string | null
+          rated_by_user_email: string | null
+          rating: string
+          reason: string | null
+          thumbnail_generation_id: string | null
+        }
+        Insert: {
+          brand_id?: string | null
+          id?: string
+          optimization_output_id?: string | null
+          output_content?: string | null
+          output_type?: string | null
+          rated_at?: string | null
+          rated_by_user_email?: string | null
+          rating: string
+          reason?: string | null
+          thumbnail_generation_id?: string | null
+        }
+        Update: {
+          brand_id?: string | null
+          id?: string
+          optimization_output_id?: string | null
+          output_content?: string | null
+          output_type?: string | null
+          rated_at?: string | null
+          rated_by_user_email?: string | null
+          rating?: string
+          reason?: string | null
+          thumbnail_generation_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_feedback_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "approval_feedback_optimization_output_id_fkey"
+            columns: ["optimization_output_id"]
+            isOneToOne: false
+            referencedRelation: "optimization_outputs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "approval_feedback_thumbnail_generation_id_fkey"
+            columns: ["thumbnail_generation_id"]
+            isOneToOne: false
+            referencedRelation: "thumbnail_generations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_queue: {
+        Row: {
+          assigned_to_user_email: string | null
+          brand_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          opportunity_score: number | null
+          priority_rank: number | null
+          reasons: Json | null
+          status: string | null
+          youtube_video_id: string
+        }
+        Insert: {
+          assigned_to_user_email?: string | null
+          brand_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          opportunity_score?: number | null
+          priority_rank?: number | null
+          reasons?: Json | null
+          status?: string | null
+          youtube_video_id: string
+        }
+        Update: {
+          assigned_to_user_email?: string | null
+          brand_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          opportunity_score?: number | null
+          priority_rank?: number | null
+          reasons?: Json | null
+          status?: string | null
+          youtube_video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_queue_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_queue_youtube_video_id_fkey"
+            columns: ["youtube_video_id"]
+            isOneToOne: false
+            referencedRelation: "youtube_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brand_voice_profiles: {
+        Row: {
+          approved_description_examples: Json | null
+          approved_thumbnail_text_examples: Json | null
+          approved_title_examples: Json | null
+          audience_profile: string | null
+          banned_phrases: Json | null
+          brand_id: string
+          brand_promises: string | null
+          created_at: string | null
+          id: string
+          preferred_cta_styles: Json | null
+          rejected_title_examples: Json | null
+          required_phrases: Json | null
+          source_documents: Json | null
+          thumbnail_style_rules: string | null
+          tone_descriptors: Json | null
+          updated_at: string | null
+          voice_summary: string | null
+        }
+        Insert: {
+          approved_description_examples?: Json | null
+          approved_thumbnail_text_examples?: Json | null
+          approved_title_examples?: Json | null
+          audience_profile?: string | null
+          banned_phrases?: Json | null
+          brand_id: string
+          brand_promises?: string | null
+          created_at?: string | null
+          id?: string
+          preferred_cta_styles?: Json | null
+          rejected_title_examples?: Json | null
+          required_phrases?: Json | null
+          source_documents?: Json | null
+          thumbnail_style_rules?: string | null
+          tone_descriptors?: Json | null
+          updated_at?: string | null
+          voice_summary?: string | null
+        }
+        Update: {
+          approved_description_examples?: Json | null
+          approved_thumbnail_text_examples?: Json | null
+          approved_title_examples?: Json | null
+          audience_profile?: string | null
+          banned_phrases?: Json | null
+          brand_id?: string
+          brand_promises?: string | null
+          created_at?: string | null
+          id?: string
+          preferred_cta_styles?: Json | null
+          rejected_title_examples?: Json | null
+          required_phrases?: Json | null
+          source_documents?: Json | null
+          thumbnail_style_rules?: string | null
+          tone_descriptors?: Json | null
+          updated_at?: string | null
+          voice_summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_voice_profiles_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brands: {
+        Row: {
+          brand_color_accent: string | null
+          brand_color_primary: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          primary_youtube_channel_id: string | null
+          slug: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          brand_color_accent?: string | null
+          brand_color_primary?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          primary_youtube_channel_id?: string | null
+          slug: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          brand_color_accent?: string | null
+          brand_color_primary?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          primary_youtube_channel_id?: string | null
+          slug?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brands_primary_youtube_channel_id_fkey"
+            columns: ["primary_youtube_channel_id"]
+            isOneToOne: false
+            referencedRelation: "youtube_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaigns: {
         Row: {
           archived: boolean
@@ -1829,6 +2059,347 @@ export type Database = {
         }
         Relationships: []
       }
+      optimization_outputs: {
+        Row: {
+          approval_likelihood_score: number | null
+          brand_voice_score: number | null
+          content: string | null
+          content_json: Json | null
+          created_at: string | null
+          guardrail_warnings: Json | null
+          human_sounding_score: number | null
+          id: string
+          optimization_run_id: string
+          output_type: string
+          passed_guardrails: boolean | null
+          rationale: string | null
+          selected_at: string | null
+          selected_by_user: boolean | null
+          selected_by_user_email: string | null
+          seo_score: number | null
+          variant_index: number | null
+        }
+        Insert: {
+          approval_likelihood_score?: number | null
+          brand_voice_score?: number | null
+          content?: string | null
+          content_json?: Json | null
+          created_at?: string | null
+          guardrail_warnings?: Json | null
+          human_sounding_score?: number | null
+          id?: string
+          optimization_run_id: string
+          output_type: string
+          passed_guardrails?: boolean | null
+          rationale?: string | null
+          selected_at?: string | null
+          selected_by_user?: boolean | null
+          selected_by_user_email?: string | null
+          seo_score?: number | null
+          variant_index?: number | null
+        }
+        Update: {
+          approval_likelihood_score?: number | null
+          brand_voice_score?: number | null
+          content?: string | null
+          content_json?: Json | null
+          created_at?: string | null
+          guardrail_warnings?: Json | null
+          human_sounding_score?: number | null
+          id?: string
+          optimization_run_id?: string
+          output_type?: string
+          passed_guardrails?: boolean | null
+          rationale?: string | null
+          selected_at?: string | null
+          selected_by_user?: boolean | null
+          selected_by_user_email?: string | null
+          seo_score?: number | null
+          variant_index?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "optimization_outputs_optimization_run_id_fkey"
+            columns: ["optimization_run_id"]
+            isOneToOne: false
+            referencedRelation: "optimization_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      optimization_performance: {
+        Row: {
+          after_30d_ctr: number | null
+          after_30d_impressions: number | null
+          after_30d_taken_at: string | null
+          after_30d_views: number | null
+          after_30d_watch_time_minutes: number | null
+          after_7d_ctr: number | null
+          after_7d_impressions: number | null
+          after_7d_taken_at: string | null
+          after_7d_views: number | null
+          after_7d_watch_time_minutes: number | null
+          baseline_ctr: number | null
+          baseline_impressions: number | null
+          baseline_taken_at: string | null
+          baseline_views: number | null
+          baseline_watch_time_minutes: number | null
+          ctr_delta_pct: number | null
+          id: string
+          notes: string | null
+          optimization_run_id: string
+          optimization_won: boolean | null
+          views_delta_pct: number | null
+          watch_time_delta_pct: number | null
+          youtube_video_id: string
+        }
+        Insert: {
+          after_30d_ctr?: number | null
+          after_30d_impressions?: number | null
+          after_30d_taken_at?: string | null
+          after_30d_views?: number | null
+          after_30d_watch_time_minutes?: number | null
+          after_7d_ctr?: number | null
+          after_7d_impressions?: number | null
+          after_7d_taken_at?: string | null
+          after_7d_views?: number | null
+          after_7d_watch_time_minutes?: number | null
+          baseline_ctr?: number | null
+          baseline_impressions?: number | null
+          baseline_taken_at?: string | null
+          baseline_views?: number | null
+          baseline_watch_time_minutes?: number | null
+          ctr_delta_pct?: number | null
+          id?: string
+          notes?: string | null
+          optimization_run_id: string
+          optimization_won?: boolean | null
+          views_delta_pct?: number | null
+          watch_time_delta_pct?: number | null
+          youtube_video_id: string
+        }
+        Update: {
+          after_30d_ctr?: number | null
+          after_30d_impressions?: number | null
+          after_30d_taken_at?: string | null
+          after_30d_views?: number | null
+          after_30d_watch_time_minutes?: number | null
+          after_7d_ctr?: number | null
+          after_7d_impressions?: number | null
+          after_7d_taken_at?: string | null
+          after_7d_views?: number | null
+          after_7d_watch_time_minutes?: number | null
+          baseline_ctr?: number | null
+          baseline_impressions?: number | null
+          baseline_taken_at?: string | null
+          baseline_views?: number | null
+          baseline_watch_time_minutes?: number | null
+          ctr_delta_pct?: number | null
+          id?: string
+          notes?: string | null
+          optimization_run_id?: string
+          optimization_won?: boolean | null
+          views_delta_pct?: number | null
+          watch_time_delta_pct?: number | null
+          youtube_video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "optimization_performance_optimization_run_id_fkey"
+            columns: ["optimization_run_id"]
+            isOneToOne: false
+            referencedRelation: "optimization_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "optimization_performance_youtube_video_id_fkey"
+            columns: ["youtube_video_id"]
+            isOneToOne: false
+            referencedRelation: "youtube_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      optimization_runs: {
+        Row: {
+          ai_model: string | null
+          approved_at: string | null
+          brand_id: string
+          cost_usd: number | null
+          created_at: string | null
+          error: string | null
+          id: string
+          input_summary: string | null
+          latency_ms: number | null
+          published_at: string | null
+          raw_output: Json | null
+          status: string | null
+          trigger_type: string | null
+          triggered_by_user: string | null
+          youtube_video_id: string
+        }
+        Insert: {
+          ai_model?: string | null
+          approved_at?: string | null
+          brand_id: string
+          cost_usd?: number | null
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          input_summary?: string | null
+          latency_ms?: number | null
+          published_at?: string | null
+          raw_output?: Json | null
+          status?: string | null
+          trigger_type?: string | null
+          triggered_by_user?: string | null
+          youtube_video_id: string
+        }
+        Update: {
+          ai_model?: string | null
+          approved_at?: string | null
+          brand_id?: string
+          cost_usd?: number | null
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          input_summary?: string | null
+          latency_ms?: number | null
+          published_at?: string | null
+          raw_output?: Json | null
+          status?: string | null
+          trigger_type?: string | null
+          triggered_by_user?: string | null
+          youtube_video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "optimization_runs_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "optimization_runs_youtube_video_id_fkey"
+            columns: ["youtube_video_id"]
+            isOneToOne: false
+            referencedRelation: "youtube_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      thumbnail_generations: {
+        Row: {
+          brand_id: string | null
+          brand_voice_score: number | null
+          cost_usd: number | null
+          created_at: string | null
+          generation_model: string | null
+          id: string
+          image_url: string | null
+          layout_notes: string | null
+          optimization_run_id: string | null
+          prompt: string | null
+          selected_by_user: boolean | null
+          storage_path: string | null
+          text_overlay: string | null
+          variant_index: number | null
+          youtube_video_id: string | null
+        }
+        Insert: {
+          brand_id?: string | null
+          brand_voice_score?: number | null
+          cost_usd?: number | null
+          created_at?: string | null
+          generation_model?: string | null
+          id?: string
+          image_url?: string | null
+          layout_notes?: string | null
+          optimization_run_id?: string | null
+          prompt?: string | null
+          selected_by_user?: boolean | null
+          storage_path?: string | null
+          text_overlay?: string | null
+          variant_index?: number | null
+          youtube_video_id?: string | null
+        }
+        Update: {
+          brand_id?: string | null
+          brand_voice_score?: number | null
+          cost_usd?: number | null
+          created_at?: string | null
+          generation_model?: string | null
+          id?: string
+          image_url?: string | null
+          layout_notes?: string | null
+          optimization_run_id?: string | null
+          prompt?: string | null
+          selected_by_user?: boolean | null
+          storage_path?: string | null
+          text_overlay?: string | null
+          variant_index?: number | null
+          youtube_video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "thumbnail_generations_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "thumbnail_generations_optimization_run_id_fkey"
+            columns: ["optimization_run_id"]
+            isOneToOne: false
+            referencedRelation: "optimization_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "thumbnail_generations_youtube_video_id_fkey"
+            columns: ["youtube_video_id"]
+            isOneToOne: false
+            referencedRelation: "youtube_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_transcripts: {
+        Row: {
+          fetched_at: string | null
+          id: string
+          language: string | null
+          segments: Json | null
+          transcript_text: string | null
+          youtube_video_id: string
+        }
+        Insert: {
+          fetched_at?: string | null
+          id?: string
+          language?: string | null
+          segments?: Json | null
+          transcript_text?: string | null
+          youtube_video_id: string
+        }
+        Update: {
+          fetched_at?: string | null
+          id?: string
+          language?: string | null
+          segments?: Json | null
+          transcript_text?: string | null
+          youtube_video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_transcripts_youtube_video_id_fkey"
+            columns: ["youtube_video_id"]
+            isOneToOne: false
+            referencedRelation: "youtube_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       weekly_metric_snapshots: {
         Row: {
           created_at: string
@@ -1938,6 +2509,109 @@ export type Database = {
           status?: string | null
         }
         Relationships: []
+      }
+      youtube_videos: {
+        Row: {
+          avg_view_duration_seconds: number | null
+          brand_id: string | null
+          comments: number | null
+          content_id: string | null
+          created_at: string | null
+          ctr: number | null
+          current_description: string | null
+          current_tags: Json | null
+          current_thumbnail_url: string | null
+          current_title: string | null
+          duration_seconds: number | null
+          id: string
+          impressions: number | null
+          is_short: boolean | null
+          last_optimized_at: string | null
+          likes: number | null
+          optimization_status: string | null
+          published_at: string | null
+          raw: Json | null
+          updated_at: string | null
+          views: number | null
+          watch_time_minutes: number | null
+          youtube_channel_id: string | null
+          youtube_video_id: string
+        }
+        Insert: {
+          avg_view_duration_seconds?: number | null
+          brand_id?: string | null
+          comments?: number | null
+          content_id?: string | null
+          created_at?: string | null
+          ctr?: number | null
+          current_description?: string | null
+          current_tags?: Json | null
+          current_thumbnail_url?: string | null
+          current_title?: string | null
+          duration_seconds?: number | null
+          id?: string
+          impressions?: number | null
+          is_short?: boolean | null
+          last_optimized_at?: string | null
+          likes?: number | null
+          optimization_status?: string | null
+          published_at?: string | null
+          raw?: Json | null
+          updated_at?: string | null
+          views?: number | null
+          watch_time_minutes?: number | null
+          youtube_channel_id?: string | null
+          youtube_video_id: string
+        }
+        Update: {
+          avg_view_duration_seconds?: number | null
+          brand_id?: string | null
+          comments?: number | null
+          content_id?: string | null
+          created_at?: string | null
+          ctr?: number | null
+          current_description?: string | null
+          current_tags?: Json | null
+          current_thumbnail_url?: string | null
+          current_title?: string | null
+          duration_seconds?: number | null
+          id?: string
+          impressions?: number | null
+          is_short?: boolean | null
+          last_optimized_at?: string | null
+          likes?: number | null
+          optimization_status?: string | null
+          published_at?: string | null
+          raw?: Json | null
+          updated_at?: string | null
+          views?: number | null
+          watch_time_minutes?: number | null
+          youtube_channel_id?: string | null
+          youtube_video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "youtube_videos_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "youtube_videos_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "youtube_videos_youtube_channel_id_fkey"
+            columns: ["youtube_channel_id"]
+            isOneToOne: false
+            referencedRelation: "youtube_channels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
