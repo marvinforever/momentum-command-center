@@ -39,9 +39,11 @@ import { Route as AdminOptimizationPublishedRouteImport } from './routes/admin.o
 import { Route as AdminOptimizationNewRouteImport } from './routes/admin.optimization.new'
 import { Route as ApiPublicNotionCallbackRouteImport } from './routes/api/public/notion.callback'
 import { Route as ApiPublicHooksWeeklyRollupRouteImport } from './routes/api/public/hooks/weekly-rollup'
+import { Route as ApiPublicHooksPerformanceSnapshotRouteImport } from './routes/api/public/hooks/performance-snapshot'
 import { Route as ApiPublicHooksMetaSyncRouteImport } from './routes/api/public/hooks/meta-sync'
 import { Route as ApiPublicHooksCampaignIngestRouteImport } from './routes/api/public/hooks/campaign-ingest'
 import { Route as ApiPublicHooksCalendlyRouteImport } from './routes/api/public/hooks/calendly'
+import { Route as ApiPublicHooksAuditQueueBuildRouteImport } from './routes/api/public/hooks/audit-queue-build'
 import { Route as ApiPublicHooksCampaignLeadTokenRouteImport } from './routes/api/public/hooks/campaign-lead.$token'
 
 const YoutubeRoute = YoutubeRouteImport.update({
@@ -196,6 +198,12 @@ const ApiPublicHooksWeeklyRollupRoute =
     path: '/api/public/hooks/weekly-rollup',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksPerformanceSnapshotRoute =
+  ApiPublicHooksPerformanceSnapshotRouteImport.update({
+    id: '/api/public/hooks/performance-snapshot',
+    path: '/api/public/hooks/performance-snapshot',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksMetaSyncRoute = ApiPublicHooksMetaSyncRouteImport.update({
   id: '/api/public/hooks/meta-sync',
   path: '/api/public/hooks/meta-sync',
@@ -212,6 +220,12 @@ const ApiPublicHooksCalendlyRoute = ApiPublicHooksCalendlyRouteImport.update({
   path: '/api/public/hooks/calendly',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksAuditQueueBuildRoute =
+  ApiPublicHooksAuditQueueBuildRouteImport.update({
+    id: '/api/public/hooks/audit-queue-build',
+    path: '/api/public/hooks/audit-queue-build',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksCampaignLeadTokenRoute =
   ApiPublicHooksCampaignLeadTokenRouteImport.update({
     id: '/api/public/hooks/campaign-lead/$token',
@@ -248,9 +262,11 @@ export interface FileRoutesByFullPath {
   '/api/public/captivate-sync': typeof ApiPublicCaptivateSyncRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
+  '/api/public/hooks/audit-queue-build': typeof ApiPublicHooksAuditQueueBuildRoute
   '/api/public/hooks/calendly': typeof ApiPublicHooksCalendlyRoute
   '/api/public/hooks/campaign-ingest': typeof ApiPublicHooksCampaignIngestRoute
   '/api/public/hooks/meta-sync': typeof ApiPublicHooksMetaSyncRoute
+  '/api/public/hooks/performance-snapshot': typeof ApiPublicHooksPerformanceSnapshotRoute
   '/api/public/hooks/weekly-rollup': typeof ApiPublicHooksWeeklyRollupRoute
   '/api/public/notion/callback': typeof ApiPublicNotionCallbackRoute
   '/api/public/hooks/campaign-lead/$token': typeof ApiPublicHooksCampaignLeadTokenRoute
@@ -283,9 +299,11 @@ export interface FileRoutesByTo {
   '/api/public/captivate-sync': typeof ApiPublicCaptivateSyncRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
+  '/api/public/hooks/audit-queue-build': typeof ApiPublicHooksAuditQueueBuildRoute
   '/api/public/hooks/calendly': typeof ApiPublicHooksCalendlyRoute
   '/api/public/hooks/campaign-ingest': typeof ApiPublicHooksCampaignIngestRoute
   '/api/public/hooks/meta-sync': typeof ApiPublicHooksMetaSyncRoute
+  '/api/public/hooks/performance-snapshot': typeof ApiPublicHooksPerformanceSnapshotRoute
   '/api/public/hooks/weekly-rollup': typeof ApiPublicHooksWeeklyRollupRoute
   '/api/public/notion/callback': typeof ApiPublicNotionCallbackRoute
   '/api/public/hooks/campaign-lead/$token': typeof ApiPublicHooksCampaignLeadTokenRoute
@@ -320,9 +338,11 @@ export interface FileRoutesById {
   '/api/public/captivate-sync': typeof ApiPublicCaptivateSyncRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
+  '/api/public/hooks/audit-queue-build': typeof ApiPublicHooksAuditQueueBuildRoute
   '/api/public/hooks/calendly': typeof ApiPublicHooksCalendlyRoute
   '/api/public/hooks/campaign-ingest': typeof ApiPublicHooksCampaignIngestRoute
   '/api/public/hooks/meta-sync': typeof ApiPublicHooksMetaSyncRoute
+  '/api/public/hooks/performance-snapshot': typeof ApiPublicHooksPerformanceSnapshotRoute
   '/api/public/hooks/weekly-rollup': typeof ApiPublicHooksWeeklyRollupRoute
   '/api/public/notion/callback': typeof ApiPublicNotionCallbackRoute
   '/api/public/hooks/campaign-lead/$token': typeof ApiPublicHooksCampaignLeadTokenRoute
@@ -358,9 +378,11 @@ export interface FileRouteTypes {
     | '/api/public/captivate-sync'
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
+    | '/api/public/hooks/audit-queue-build'
     | '/api/public/hooks/calendly'
     | '/api/public/hooks/campaign-ingest'
     | '/api/public/hooks/meta-sync'
+    | '/api/public/hooks/performance-snapshot'
     | '/api/public/hooks/weekly-rollup'
     | '/api/public/notion/callback'
     | '/api/public/hooks/campaign-lead/$token'
@@ -393,9 +415,11 @@ export interface FileRouteTypes {
     | '/api/public/captivate-sync'
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
+    | '/api/public/hooks/audit-queue-build'
     | '/api/public/hooks/calendly'
     | '/api/public/hooks/campaign-ingest'
     | '/api/public/hooks/meta-sync'
+    | '/api/public/hooks/performance-snapshot'
     | '/api/public/hooks/weekly-rollup'
     | '/api/public/notion/callback'
     | '/api/public/hooks/campaign-lead/$token'
@@ -429,9 +453,11 @@ export interface FileRouteTypes {
     | '/api/public/captivate-sync'
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
+    | '/api/public/hooks/audit-queue-build'
     | '/api/public/hooks/calendly'
     | '/api/public/hooks/campaign-ingest'
     | '/api/public/hooks/meta-sync'
+    | '/api/public/hooks/performance-snapshot'
     | '/api/public/hooks/weekly-rollup'
     | '/api/public/notion/callback'
     | '/api/public/hooks/campaign-lead/$token'
@@ -456,9 +482,11 @@ export interface RootRouteChildren {
   ApiPublicCaptivateSyncRoute: typeof ApiPublicCaptivateSyncRoute
   ApiPublicKajabiSyncRoute: typeof ApiPublicKajabiSyncRoute
   ApiPublicZapierLeadRoute: typeof ApiPublicZapierLeadRoute
+  ApiPublicHooksAuditQueueBuildRoute: typeof ApiPublicHooksAuditQueueBuildRoute
   ApiPublicHooksCalendlyRoute: typeof ApiPublicHooksCalendlyRoute
   ApiPublicHooksCampaignIngestRoute: typeof ApiPublicHooksCampaignIngestRoute
   ApiPublicHooksMetaSyncRoute: typeof ApiPublicHooksMetaSyncRoute
+  ApiPublicHooksPerformanceSnapshotRoute: typeof ApiPublicHooksPerformanceSnapshotRoute
   ApiPublicHooksWeeklyRollupRoute: typeof ApiPublicHooksWeeklyRollupRoute
   ApiPublicNotionCallbackRoute: typeof ApiPublicNotionCallbackRoute
   ApiPublicHooksCampaignLeadTokenRoute: typeof ApiPublicHooksCampaignLeadTokenRoute
@@ -676,6 +704,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksWeeklyRollupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/performance-snapshot': {
+      id: '/api/public/hooks/performance-snapshot'
+      path: '/api/public/hooks/performance-snapshot'
+      fullPath: '/api/public/hooks/performance-snapshot'
+      preLoaderRoute: typeof ApiPublicHooksPerformanceSnapshotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/meta-sync': {
       id: '/api/public/hooks/meta-sync'
       path: '/api/public/hooks/meta-sync'
@@ -695,6 +730,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/calendly'
       fullPath: '/api/public/hooks/calendly'
       preLoaderRoute: typeof ApiPublicHooksCalendlyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/audit-queue-build': {
+      id: '/api/public/hooks/audit-queue-build'
+      path: '/api/public/hooks/audit-queue-build'
+      fullPath: '/api/public/hooks/audit-queue-build'
+      preLoaderRoute: typeof ApiPublicHooksAuditQueueBuildRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/campaign-lead/$token': {
@@ -771,9 +813,12 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCaptivateSyncRoute: ApiPublicCaptivateSyncRoute,
   ApiPublicKajabiSyncRoute: ApiPublicKajabiSyncRoute,
   ApiPublicZapierLeadRoute: ApiPublicZapierLeadRoute,
+  ApiPublicHooksAuditQueueBuildRoute: ApiPublicHooksAuditQueueBuildRoute,
   ApiPublicHooksCalendlyRoute: ApiPublicHooksCalendlyRoute,
   ApiPublicHooksCampaignIngestRoute: ApiPublicHooksCampaignIngestRoute,
   ApiPublicHooksMetaSyncRoute: ApiPublicHooksMetaSyncRoute,
+  ApiPublicHooksPerformanceSnapshotRoute:
+    ApiPublicHooksPerformanceSnapshotRoute,
   ApiPublicHooksWeeklyRollupRoute: ApiPublicHooksWeeklyRollupRoute,
   ApiPublicNotionCallbackRoute: ApiPublicNotionCallbackRoute,
   ApiPublicHooksCampaignLeadTokenRoute: ApiPublicHooksCampaignLeadTokenRoute,
