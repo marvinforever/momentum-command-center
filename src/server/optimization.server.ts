@@ -562,6 +562,7 @@ export async function buildAuditQueue(brandId?: string): Promise<{ queued: numbe
       if (seoRow.overall_score < 50) {
         reasons.push(`Low SEO score (${seoRow.overall_score})`);
       }
+    }
 
     if (reasons.length > 0) {
       entries.push({
