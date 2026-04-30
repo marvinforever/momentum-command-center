@@ -359,6 +359,7 @@ Respond with ONLY a valid JSON array. No prose, no markdown code fences, no expl
 
     return {
       keywords: top30.map(({ _composite, ...rest }) => rest),
+      seedCount: seeds.length,
     };
   } catch (err: any) {
     return { keywords: [], error: err.message };
