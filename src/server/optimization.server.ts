@@ -376,7 +376,7 @@ Return as JSON array: [{"prompt": "...", "text_overlay": "...", "layout_notes": 
     if (lovableKey) {
       try {
         // Use Lovable AI Gateway image generation model
-        const imgRes = await fetch(AI_GATEWAY_URL, {
+        const imgRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${lovableKey}`,
