@@ -547,6 +547,22 @@ export async function buildAuditQueue(brandId?: string): Promise<{ queued: numbe
       reasons.push("Never optimized, older than 90 days");
     }
 
+    // SEO score multiplier: low SEO score + high impressions = high priority
+    const { data: seoRow } = await (supabaseAdmin as any)
+      .from("video_seo_scores")
+      .select("overall_score")
+      .eq("youtube_video_id", v.id)
+      .order("scored_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (seoRow?.overall_score != null) {
+      const seoMultiplier = 1 + (100 - seoRow.overall_score) / 100;
+      score *= seoMultiplier;
+      if (seoRow.overall_score < 50) {
+        reasons.push(`Low SEO score (${seoRow.overall_score})`);
+      }
+
     if (reasons.length > 0) {
       entries.push({
         youtube_video_id: v.id,
