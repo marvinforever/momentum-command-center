@@ -5,6 +5,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+// Relaxed UUID pattern that accepts non-standard version nibbles (e.g. seed IDs like b1111111-...)
+const zUuid = z.string().regex(
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
+  "Invalid UUID format"
+);
+
 export const generateOptimization = createServerFn({ method: "POST" })
   .inputValidator((data: {
     youtubeVideoId: string;
@@ -12,8 +18,8 @@ export const generateOptimization = createServerFn({ method: "POST" })
     outputTypes: string[];
     triggeredBy?: string;
   }) => z.object({
-    youtubeVideoId: z.string().uuid(),
-    brandId: z.string().uuid(),
+    youtubeVideoId: zUuid,
+    brandId: zUuid,
     outputTypes: z.array(z.string().min(1).max(50)).min(1).max(10),
     triggeredBy: z.string().max(255).optional(),
   }).parse(data))
@@ -33,9 +39,9 @@ export const generateThumbnails = createServerFn({ method: "POST" })
     youtubeVideoId: string;
     brandId: string;
   }) => z.object({
-    optimizationRunId: z.string().uuid(),
-    youtubeVideoId: z.string().uuid(),
-    brandId: z.string().uuid(),
+    optimizationRunId: zUuid,
+    youtubeVideoId: zUuid,
+    brandId: zUuid,
   }).parse(data))
   .handler(async ({ data }) => {
     const { runThumbnailGenerate } = await import("./optimization.server");
@@ -44,7 +50,7 @@ export const generateThumbnails = createServerFn({ method: "POST" })
 
 export const buildAuditQueueFn = createServerFn({ method: "POST" })
   .inputValidator((data: { brandId?: string }) => z.object({
-    brandId: z.string().uuid().optional(),
+    brandId: zUuid.optional(),
   }).parse(data))
   .handler(async ({ data }) => {
     const { buildAuditQueue } = await import("./optimization.server");
@@ -56,7 +62,7 @@ export const fetchTranscriptFn = createServerFn({ method: "POST" })
     youtubeVideoId: string;
     externalVideoId: string;
   }) => z.object({
-    youtubeVideoId: z.string().uuid(),
+    youtubeVideoId: zUuid,
     externalVideoId: z.string().min(1).max(50),
   }).parse(data))
   .handler(async ({ data }) => {
@@ -66,7 +72,7 @@ export const fetchTranscriptFn = createServerFn({ method: "POST" })
 
 export const bootstrapVoiceFn = createServerFn({ method: "POST" })
   .inputValidator((data: { brandId: string }) => z.object({
-    brandId: z.string().uuid(),
+    brandId: zUuid,
   }).parse(data))
   .handler(async ({ data }) => {
     const { bootstrapVoiceFromContent } = await import("./optimization.server");
