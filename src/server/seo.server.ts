@@ -219,7 +219,7 @@ Return as JSON array of strings: ["seed phrase 1", "seed phrase 2", ...]`
     const top30 = keywordResults.slice(0, 30);
 
     // Clear old research for this video
-    await supabaseAdmin
+    await (supabaseAdmin as any)
       .from("seo_keyword_research")
       .delete()
       .eq("youtube_video_id", params.youtubeVideoId);
@@ -260,7 +260,7 @@ export async function runSeoScore(params: {
     if (!video) return { score: null, error: "Video not found" };
 
     // Load target keywords
-    const { data: targetKws } = await supabaseAdmin
+    const { data: targetKws } = await (supabaseAdmin as any)
       .from("seo_keyword_research")
       .select("keyword")
       .eq("youtube_video_id", params.youtubeVideoId)
@@ -542,7 +542,7 @@ export async function runKeywordRankingCheck(params: {
   const limit = params.limit ?? 100;
   try {
     // Get all target keywords with their videos
-    const { data: targets } = await supabaseAdmin
+    const { data: targets } = await (supabaseAdmin as any)
       .from("seo_keyword_research")
       .select("youtube_video_id, keyword, youtube_videos!inner(youtube_video_id)")
       .eq("is_target", true)
