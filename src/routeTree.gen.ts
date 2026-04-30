@@ -26,11 +26,17 @@ import { Route as CrmIndexRouteImport } from './routes/crm.index'
 import { Route as CampaignsIndexRouteImport } from './routes/campaigns.index'
 import { Route as CrmIdRouteImport } from './routes/crm.$id'
 import { Route as CampaignsIdRouteImport } from './routes/campaigns.$id'
+import { Route as AdminOptimizationRouteImport } from './routes/admin.optimization'
 import { Route as AdminIntegrationsRouteImport } from './routes/admin.integrations'
 import { Route as AdminImportMetricsRouteImport } from './routes/admin.import-metrics'
+import { Route as AdminBrandsRouteImport } from './routes/admin.brands'
 import { Route as ApiPublicZapierLeadRouteImport } from './routes/api/public/zapier-lead'
 import { Route as ApiPublicKajabiSyncRouteImport } from './routes/api/public/kajabi-sync'
 import { Route as ApiPublicCaptivateSyncRouteImport } from './routes/api/public/captivate-sync'
+import { Route as AdminOptimizationReviewRouteImport } from './routes/admin.optimization.review'
+import { Route as AdminOptimizationQueueRouteImport } from './routes/admin.optimization.queue'
+import { Route as AdminOptimizationPublishedRouteImport } from './routes/admin.optimization.published'
+import { Route as AdminOptimizationNewRouteImport } from './routes/admin.optimization.new'
 import { Route as ApiPublicNotionCallbackRouteImport } from './routes/api/public/notion.callback'
 import { Route as ApiPublicHooksWeeklyRollupRouteImport } from './routes/api/public/hooks/weekly-rollup'
 import { Route as ApiPublicHooksMetaSyncRouteImport } from './routes/api/public/hooks/meta-sync'
@@ -123,6 +129,11 @@ const CampaignsIdRoute = CampaignsIdRouteImport.update({
   path: '/campaigns/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminOptimizationRoute = AdminOptimizationRouteImport.update({
+  id: '/optimization',
+  path: '/optimization',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminIntegrationsRoute = AdminIntegrationsRouteImport.update({
   id: '/integrations',
   path: '/integrations',
@@ -131,6 +142,11 @@ const AdminIntegrationsRoute = AdminIntegrationsRouteImport.update({
 const AdminImportMetricsRoute = AdminImportMetricsRouteImport.update({
   id: '/import-metrics',
   path: '/import-metrics',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBrandsRoute = AdminBrandsRouteImport.update({
+  id: '/brands',
+  path: '/brands',
   getParentRoute: () => AdminRoute,
 } as any)
 const ApiPublicZapierLeadRoute = ApiPublicZapierLeadRouteImport.update({
@@ -147,6 +163,27 @@ const ApiPublicCaptivateSyncRoute = ApiPublicCaptivateSyncRouteImport.update({
   id: '/api/public/captivate-sync',
   path: '/api/public/captivate-sync',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminOptimizationReviewRoute = AdminOptimizationReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
+  getParentRoute: () => AdminOptimizationRoute,
+} as any)
+const AdminOptimizationQueueRoute = AdminOptimizationQueueRouteImport.update({
+  id: '/queue',
+  path: '/queue',
+  getParentRoute: () => AdminOptimizationRoute,
+} as any)
+const AdminOptimizationPublishedRoute =
+  AdminOptimizationPublishedRouteImport.update({
+    id: '/published',
+    path: '/published',
+    getParentRoute: () => AdminOptimizationRoute,
+  } as any)
+const AdminOptimizationNewRoute = AdminOptimizationNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AdminOptimizationRoute,
 } as any)
 const ApiPublicNotionCallbackRoute = ApiPublicNotionCallbackRouteImport.update({
   id: '/api/public/notion/callback',
@@ -196,12 +233,18 @@ export interface FileRoutesByFullPath {
   '/meta': typeof MetaRoute
   '/widgets': typeof WidgetsRoute
   '/youtube': typeof YoutubeRoute
+  '/admin/brands': typeof AdminBrandsRoute
   '/admin/import-metrics': typeof AdminImportMetricsRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
+  '/admin/optimization': typeof AdminOptimizationRouteWithChildren
   '/campaigns/$id': typeof CampaignsIdRoute
   '/crm/$id': typeof CrmIdRoute
   '/campaigns/': typeof CampaignsIndexRoute
   '/crm/': typeof CrmIndexRoute
+  '/admin/optimization/new': typeof AdminOptimizationNewRoute
+  '/admin/optimization/published': typeof AdminOptimizationPublishedRoute
+  '/admin/optimization/queue': typeof AdminOptimizationQueueRoute
+  '/admin/optimization/review': typeof AdminOptimizationReviewRoute
   '/api/public/captivate-sync': typeof ApiPublicCaptivateSyncRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
@@ -225,12 +268,18 @@ export interface FileRoutesByTo {
   '/meta': typeof MetaRoute
   '/widgets': typeof WidgetsRoute
   '/youtube': typeof YoutubeRoute
+  '/admin/brands': typeof AdminBrandsRoute
   '/admin/import-metrics': typeof AdminImportMetricsRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
+  '/admin/optimization': typeof AdminOptimizationRouteWithChildren
   '/campaigns/$id': typeof CampaignsIdRoute
   '/crm/$id': typeof CrmIdRoute
   '/campaigns': typeof CampaignsIndexRoute
   '/crm': typeof CrmIndexRoute
+  '/admin/optimization/new': typeof AdminOptimizationNewRoute
+  '/admin/optimization/published': typeof AdminOptimizationPublishedRoute
+  '/admin/optimization/queue': typeof AdminOptimizationQueueRoute
+  '/admin/optimization/review': typeof AdminOptimizationReviewRoute
   '/api/public/captivate-sync': typeof ApiPublicCaptivateSyncRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
@@ -256,12 +305,18 @@ export interface FileRoutesById {
   '/meta': typeof MetaRoute
   '/widgets': typeof WidgetsRoute
   '/youtube': typeof YoutubeRoute
+  '/admin/brands': typeof AdminBrandsRoute
   '/admin/import-metrics': typeof AdminImportMetricsRoute
   '/admin/integrations': typeof AdminIntegrationsRoute
+  '/admin/optimization': typeof AdminOptimizationRouteWithChildren
   '/campaigns/$id': typeof CampaignsIdRoute
   '/crm/$id': typeof CrmIdRoute
   '/campaigns/': typeof CampaignsIndexRoute
   '/crm/': typeof CrmIndexRoute
+  '/admin/optimization/new': typeof AdminOptimizationNewRoute
+  '/admin/optimization/published': typeof AdminOptimizationPublishedRoute
+  '/admin/optimization/queue': typeof AdminOptimizationQueueRoute
+  '/admin/optimization/review': typeof AdminOptimizationReviewRoute
   '/api/public/captivate-sync': typeof ApiPublicCaptivateSyncRoute
   '/api/public/kajabi-sync': typeof ApiPublicKajabiSyncRoute
   '/api/public/zapier-lead': typeof ApiPublicZapierLeadRoute
@@ -288,12 +343,18 @@ export interface FileRouteTypes {
     | '/meta'
     | '/widgets'
     | '/youtube'
+    | '/admin/brands'
     | '/admin/import-metrics'
     | '/admin/integrations'
+    | '/admin/optimization'
     | '/campaigns/$id'
     | '/crm/$id'
     | '/campaigns/'
     | '/crm/'
+    | '/admin/optimization/new'
+    | '/admin/optimization/published'
+    | '/admin/optimization/queue'
+    | '/admin/optimization/review'
     | '/api/public/captivate-sync'
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
@@ -317,12 +378,18 @@ export interface FileRouteTypes {
     | '/meta'
     | '/widgets'
     | '/youtube'
+    | '/admin/brands'
     | '/admin/import-metrics'
     | '/admin/integrations'
+    | '/admin/optimization'
     | '/campaigns/$id'
     | '/crm/$id'
     | '/campaigns'
     | '/crm'
+    | '/admin/optimization/new'
+    | '/admin/optimization/published'
+    | '/admin/optimization/queue'
+    | '/admin/optimization/review'
     | '/api/public/captivate-sync'
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
@@ -347,12 +414,18 @@ export interface FileRouteTypes {
     | '/meta'
     | '/widgets'
     | '/youtube'
+    | '/admin/brands'
     | '/admin/import-metrics'
     | '/admin/integrations'
+    | '/admin/optimization'
     | '/campaigns/$id'
     | '/crm/$id'
     | '/campaigns/'
     | '/crm/'
+    | '/admin/optimization/new'
+    | '/admin/optimization/published'
+    | '/admin/optimization/queue'
+    | '/admin/optimization/review'
     | '/api/public/captivate-sync'
     | '/api/public/kajabi-sync'
     | '/api/public/zapier-lead'
@@ -512,6 +585,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CampaignsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/optimization': {
+      id: '/admin/optimization'
+      path: '/optimization'
+      fullPath: '/admin/optimization'
+      preLoaderRoute: typeof AdminOptimizationRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/integrations': {
       id: '/admin/integrations'
       path: '/integrations'
@@ -524,6 +604,13 @@ declare module '@tanstack/react-router' {
       path: '/import-metrics'
       fullPath: '/admin/import-metrics'
       preLoaderRoute: typeof AdminImportMetricsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/brands': {
+      id: '/admin/brands'
+      path: '/brands'
+      fullPath: '/admin/brands'
+      preLoaderRoute: typeof AdminBrandsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/api/public/zapier-lead': {
@@ -546,6 +633,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/captivate-sync'
       preLoaderRoute: typeof ApiPublicCaptivateSyncRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/optimization/review': {
+      id: '/admin/optimization/review'
+      path: '/review'
+      fullPath: '/admin/optimization/review'
+      preLoaderRoute: typeof AdminOptimizationReviewRouteImport
+      parentRoute: typeof AdminOptimizationRoute
+    }
+    '/admin/optimization/queue': {
+      id: '/admin/optimization/queue'
+      path: '/queue'
+      fullPath: '/admin/optimization/queue'
+      preLoaderRoute: typeof AdminOptimizationQueueRouteImport
+      parentRoute: typeof AdminOptimizationRoute
+    }
+    '/admin/optimization/published': {
+      id: '/admin/optimization/published'
+      path: '/published'
+      fullPath: '/admin/optimization/published'
+      preLoaderRoute: typeof AdminOptimizationPublishedRouteImport
+      parentRoute: typeof AdminOptimizationRoute
+    }
+    '/admin/optimization/new': {
+      id: '/admin/optimization/new'
+      path: '/new'
+      fullPath: '/admin/optimization/new'
+      preLoaderRoute: typeof AdminOptimizationNewRouteImport
+      parentRoute: typeof AdminOptimizationRoute
     }
     '/api/public/notion/callback': {
       id: '/api/public/notion/callback'
@@ -592,14 +707,35 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminOptimizationRouteChildren {
+  AdminOptimizationNewRoute: typeof AdminOptimizationNewRoute
+  AdminOptimizationPublishedRoute: typeof AdminOptimizationPublishedRoute
+  AdminOptimizationQueueRoute: typeof AdminOptimizationQueueRoute
+  AdminOptimizationReviewRoute: typeof AdminOptimizationReviewRoute
+}
+
+const AdminOptimizationRouteChildren: AdminOptimizationRouteChildren = {
+  AdminOptimizationNewRoute: AdminOptimizationNewRoute,
+  AdminOptimizationPublishedRoute: AdminOptimizationPublishedRoute,
+  AdminOptimizationQueueRoute: AdminOptimizationQueueRoute,
+  AdminOptimizationReviewRoute: AdminOptimizationReviewRoute,
+}
+
+const AdminOptimizationRouteWithChildren =
+  AdminOptimizationRoute._addFileChildren(AdminOptimizationRouteChildren)
+
 interface AdminRouteChildren {
+  AdminBrandsRoute: typeof AdminBrandsRoute
   AdminImportMetricsRoute: typeof AdminImportMetricsRoute
   AdminIntegrationsRoute: typeof AdminIntegrationsRoute
+  AdminOptimizationRoute: typeof AdminOptimizationRouteWithChildren
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminBrandsRoute: AdminBrandsRoute,
   AdminImportMetricsRoute: AdminImportMetricsRoute,
   AdminIntegrationsRoute: AdminIntegrationsRoute,
+  AdminOptimizationRoute: AdminOptimizationRouteWithChildren,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
